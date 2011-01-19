@@ -3,27 +3,28 @@
 module Main where
 
 import AddBase
+import AddCabal
 
-import System.Console.CmdArgs
 import Control.Monad
+import System.Console.CmdArgs
 import System.Directory
 import System.FilePath
 
 progName = "cblrepo"
 
 data Cmds
-    = AddBasePkg {dbLoc :: Maybe String, pkg :: [(String, String)]}
-    | AddPkg {dbLoc :: Maybe String, cblLoc :: [FilePath]}
+    = AddBasePkg {dbLoc :: Maybe String, pkgs :: [(String, String)]}
+    | AddPkg {dbLoc :: Maybe String, cbls :: [FilePath]}
     deriving(Show, Data, Typeable)
 
 cmdAddBasePkg = AddBasePkg
     { dbLoc = Nothing &= help "DB location"
-    , pkg = def &= args &= typ "STRING,STRING"
+    , pkgs = def &= args &= typ "STRING,STRING"
     }
 
 cmdAddPkg = AddPkg
     { dbLoc = Nothing &= help "DB location"
-    , cblLoc = def &= args &= typFile
+    , cbls = def &= args &= typFile
     }
 
 cmds = modes
@@ -40,5 +41,5 @@ main = do
         let dbF = maybe defDbfp id (dbLoc c)
         createDirectoryIfMissing True (dropFileName dbF)
         case c of
-            AddBasePkg {} -> addBase dbF (pkg c)
-            AddPkg {} -> print c >> error "add package not implemented"
+            AddBasePkg {} -> addBase dbF (pkgs c)
+            AddPkg {} -> addCabal dbF (cbls c)

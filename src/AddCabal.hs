@@ -1,7 +1,6 @@
 module AddCabal where
 
 import PkgDB
-import SystemPkgs
 import Utils
 
 import Data.List
@@ -28,7 +27,7 @@ addCabal dbFp cbls = do
             mapM_ printBrksOth brksOthrs
         Right newDb -> do
             putStrLn "Success"
-            saveDB newDb dbFp
+            saveDb newDb dbFp
 
 readCabalFile = readPackageDescription silent
 
