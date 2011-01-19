@@ -12,12 +12,19 @@ import System.FilePath
 progName = "cblrepo"
 
 data Cmds
-    = AddBasePkg {pkg :: [(String, String)]}
-    | AddPkg {cblLoc :: [FilePath]}
+    = AddBasePkg {dbLoc :: Maybe String, pkg :: [(String, String)]}
+    | AddPkg {dbLoc :: Maybe String, cblLoc :: [FilePath]}
     deriving(Show, Data, Typeable)
 
-cmdAddBasePkg = AddBasePkg { pkg = def &= args &= typ "STRING,STRING" }
-cmdAddPkg = AddPkg {cblLoc = def &= args &= typFile}
+cmdAddBasePkg = AddBasePkg
+    { dbLoc = Nothing &= help "DB location"
+    , pkg = def &= args &= typ "STRING,STRING"
+    }
+
+cmdAddPkg = AddPkg
+    { dbLoc = Nothing &= help "DB location"
+    , cblLoc = def &= args &= typFile
+    }
 
 cmds = modes
     [ cmdAddBasePkg &= name "addbasepkg"
@@ -28,9 +35,10 @@ cmds = modes
     &= help "maintain a database of dependencies of CABAL packages"
 
 main = do
-    appDir <- getAppUserDataDirectory progName
-    createDirectoryIfMissing True appDir
-    let dbfp = appDir </> (progName ++ ".db")
-    cmdArgs cmds >>= \ c -> case c of
-        AddBasePkg {} -> addBase dbfp (pkg c)
-        AddPkg {} -> print c >> error "add package not implemented"
+    defDbfp <- liftM (</> (progName ++ ".db")) (getAppUserDataDirectory progName)
+    cmdArgs cmds >>= \ c -> do
+        let dbF = maybe defDbfp id (dbLoc c)
+        createDirectoryIfMissing True (dropFileName dbF)
+        case c of
+            AddBasePkg {} -> addBase dbF (pkg c)
+            AddPkg {} -> print c >> error "add package not implemented"
