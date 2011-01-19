@@ -4,6 +4,7 @@ module Main where
 
 import AddBase
 import AddCabal
+import PrintUsers
 
 import Control.Monad
 import System.Console.CmdArgs
@@ -13,13 +14,14 @@ import System.FilePath
 progName = "cblrepo"
 
 data Cmds
-    = AddBasePkg {dbLoc :: Maybe String, pkgs :: [(String, String)]}
+    = AddBasePkg {dbLoc :: Maybe String, pkgVers :: [(String, String)]}
     | AddPkg {dbLoc :: Maybe String, cbls :: [FilePath]}
+    | PrintUsers {dbLoc :: Maybe String, pkgs :: [String]}
     deriving(Show, Data, Typeable)
 
 cmdAddBasePkg = AddBasePkg
     { dbLoc = Nothing &= help "DB location"
-    , pkgs = def &= args &= typ "STRING,STRING"
+    , pkgVers = def &= args &= typ "STRING,STRING"
     }
 
 cmdAddPkg = AddPkg
@@ -27,9 +29,15 @@ cmdAddPkg = AddPkg
     , cbls = def &= args &= typFile
     }
 
+cmdPrintUsers = PrintUsers
+    { dbLoc = Nothing &= help "DB location"
+    , pkgs = def &= args &= typ "PKG"
+    }
+
 cmds = modes
     [ cmdAddBasePkg &= name "addbasepkg"
     , cmdAddPkg &= name "add"
+    , cmdPrintUsers &= name "users"
     ]
     &= program progName
     &= summary "CblRepo v0.0"
@@ -41,5 +49,6 @@ main = do
         let dbF = maybe defDbfp id (dbLoc c)
         createDirectoryIfMissing True (dropFileName dbF)
         case c of
-            AddBasePkg {} -> addBase dbF (pkgs c)
+            AddBasePkg {} -> addBase dbF (pkgVers c)
             AddPkg {} -> addCabal dbF (cbls c)
+            PrintUsers {} -> print c >> printUsers dbF (pkgs c)
