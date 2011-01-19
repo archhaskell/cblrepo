@@ -1,0 +1,87 @@
+Commands
+	addbasepkg <pkg name> <version>
+		Description
+			: Add a package without dependencies to the database.
+		Steps
+			: 1. Look up all packages that has pkg as a dependency, check that
+			: they can be built with the version we're adding.
+			: 2. Add pkg to the database.
+		Errors
+			: 1. If any of the packages depending on pkg would break, then
+			: print each such package and the dependency it has, and exit
+			: without changes.
+		Comments
+			: I'm not sure this is a very good way of dealing with basic
+			: packages; I think it's too labour intensive when GHC is updated.
+			: It would most likely be good enough for when packages make it
+			: into one of the official repos though.
+	add (<filename>|<url>|<pkg name : version>)+
+		Description
+			: Add packages from CABAL files.
+		Steps
+			: 1. Process each CABAL file, extract the package name, version,
+			: and dependencies.  Let finalizePackageDescription check that
+			: each package can be built with the available packages.
+			: 2. For each package, find all packages that have pkg as a
+			: dependency and check that they can be build with the version
+			: we're adding.
+			: 3. Add all packages to the database.
+		Errors
+			: 1. If any of the packages can't be built with the available
+			: packages, then write out the package and its unsatisfied
+			: dependencies and exit without changes.
+			: 2. If any of the packages depending on those that are being
+			: added can't be built, then write out the package and its
+			: dependencies.  Exit without changes.
+		Comments
+			: To deal with adding/updating several packages at once:
+			:  1. Read all the cabal files, extract the package name and
+			:  remove the packages from the database.
+			:  2. Finalise each cabal file with this database.  For the
+			:  packages that succeed, add them to the database.  For the
+			:  packages that fail retry with the updated database.  (Use
+			:  partition?)
+			:  3. Finish when no more packages can be finilised.  If there are
+			:  no packages left to finalise, then write the new database to
+			:  disk and declare success.  If there are packages left, then
+			:  fail without updating the DB on disk.
+			: This strategy ensures that all packages are added to the
+			: database bottom-up and that if one fails, then all that depend
+			: on it fail too.
+	del <pkg name>
+		Description
+			: Delete a package from the database.
+		Steps
+			: 1. Find if there are any packages that depend on pkg, remove pkg
+			: from the database if there are none.
+		Errors
+			: 1. If there are any packages that depend on pkg, then print each
+			: and exit without making any changes.
+	deps <pkg name>+
+		Description
+			: Print out all packages that are required for the named packages,
+			: including the packages themselves, in "build order".
+		Steps
+			: 1. Walk the dependency graph in breadth-first order.
+			: 2. Print the nodes in reverse order.
+		Errors
+			: None.
+	users <pkg name>+
+		Description
+			: Print out all packages that depend on the packages, not
+			: including the packages themselves, in "build order".
+		Steps
+			: 1. Walk the dependency graph "backwards" in breadth-first order.
+			: 2. Print the nodes in order.
+		Errors
+			: None
+	dump
+		Description
+			: Dump the database.
+	idxupdate
+		Description
+			: Update the package index, i.e. download
+			: http://hackage.haskell.org/packages/archive/00-index.tar.gz
+	idxversions <pkg name>+
+		Description
+			: List the available versions of the named packages.
