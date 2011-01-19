@@ -1,0 +1,10 @@
+module Main where
+
+import SystemPkgs
+import PkgDB
+
+import System.Environment
+
+main = do
+    (fp:_) <- getArgs
+    saveDB theDb fp
