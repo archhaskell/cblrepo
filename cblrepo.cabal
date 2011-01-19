@@ -1,0 +1,18 @@
+name: cblrepo
+version: 0.0
+cabal-version: >= 1.6
+license: GPL
+copyright: Copyright (c) 2011 Magnus Therning
+author: Magnus Therning
+maintainer: Magnus Therning <magnus@therning.org>
+stability: experimental
+bug-reports: mailto:magnus@therning.org
+synopsis: Tool to maintain a database of CABAL packages and their dependencies
+description: TBD
+category: Utils, Distribution
+build-type: Custom
+
+executable cblrepo
+    hs-source-dirs: src
+    main-is: Main.hs
+    build-depends: base ==4.2.*, cmdargs ==0.6.*
