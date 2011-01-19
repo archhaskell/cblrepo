@@ -1,5 +1,5 @@
 Commands
-	addbasepkg <pkg name> <version>
+	addbasepkg (<pkg name>,<version>)+
 		Description
 			: Add a package without dependencies to the database.
 		Steps

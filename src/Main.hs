@@ -2,27 +2,35 @@
 
 module Main where
 
+import AddBase
+
 import System.Console.CmdArgs
+import Control.Monad
+import System.Directory
+import System.FilePath
+
+progName = "cblrepo"
 
 data Cmds
-    = AddBasePkg {pkgName :: String, pkgVer :: String}
+    = AddBasePkg {pkg :: [(String, String)]}
     | AddPkg {cblLoc :: [FilePath]}
     deriving(Show, Data, Typeable)
 
-cmdAddBasePkg = AddBasePkg
-    { pkgName = def &= argPos 0 &= typ "NAME"
-    , pkgVer = def &= argPos 1 &= typ "VERSION"
-    }
+cmdAddBasePkg = AddBasePkg { pkg = def &= args &= typ "STRING,STRING" }
 cmdAddPkg = AddPkg {cblLoc = def &= args &= typFile}
 
 cmds = modes
     [ cmdAddBasePkg &= name "addbasepkg"
     , cmdAddPkg &= name "add"
     ]
-    &= program "cblrepo"
+    &= program progName
     &= summary "CblRepo v0.0"
     &= help "maintain a database of dependencies of CABAL packages"
 
-main = cmdArgs cmds >>= \ c -> case c of
-    AddBasePkg {} -> error "add base package not implemented"
-    AddPkg {} -> error "add package not implemented"
+main = do
+    appDir <- getAppUserDataDirectory progName
+    createDirectoryIfMissing True appDir
+    let dbfp = appDir </> (progName ++ ".db")
+    cmdArgs cmds >>= \ c -> case c of
+        AddBasePkg {} -> addBase dbfp (pkg c)
+        AddPkg {} -> print c >> error "add package not implemented"

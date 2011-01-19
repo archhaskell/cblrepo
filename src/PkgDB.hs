@@ -85,8 +85,8 @@ readDb fp = (flip CE.catch)
             Ok a -> return a
             Error s -> fail s
 
-saveDB :: CblDB -> FilePath -> IO ()
-saveDB db fp = writeFile fp s
+saveDb :: CblDB -> FilePath -> IO ()
+saveDb db fp = writeFile fp s
     where
         s = unlines $ map (encode . showJSON) db
 

@@ -19,7 +19,7 @@ addBase dbFp pkgs = do
             mapM_ printBrksOth brkOthrs
         Right newDb -> do
             putStrLn "Success"
-            saveDB newDb dbFp
+            saveDb newDb dbFp
 
 doAddBase db pkgs = let
         (_, fails) = partition (\ (n, v) -> canBeAdded db n v) pkgs
