@@ -1,5 +1,5 @@
-Commands
-	addbasepkg (<pkg name>,<version>)+
+[_] 37% Commands
+	[X] addepkg (<pkg name>,<version>)+
 		Description
 			: Add a package without dependencies to the database.
 		Steps
@@ -15,7 +15,7 @@ Commands
 			: packages; I think it's too labour intensive when GHC is updated.
 			: It would most likely be good enough for when packages make it
 			: into one of the official repos though.
-	add (<filename>|<url>|<pkg name : version>)+
+	[X] add (<filename>|<url>|<pkg name : version>)+
 		Description
 			: Add packages from CABAL files.
 		Steps
@@ -48,7 +48,26 @@ Commands
 			: This strategy ensures that all packages are added to the
 			: database bottom-up and that if one fails, then all that depend
 			: on it fail too.
-	del <pkg name>
+	[X] bump <pkg name>+
+		Description
+			: Print all packages that need their release version bumped if the
+			: given packages are updated.
+		Steps
+			: 1. Walk the dependency graph.
+			: 2. Remove the updated packages from the list.
+		Errors
+			: None
+	[_] build <pkg name>+
+		Description
+			: Print out all packages that need to be re-built if the given
+			: packages are updated.  They are printed in (one possible) build
+			: order.
+		Steps
+			: 1. Walk the dependency graph in depth-first order.
+			: 2. Keep only the last entry of each package in the list.
+		Errors
+			: None.
+	[_] del <pkg name>
 		Description
 			: Delete a package from the database.
 		Steps
@@ -57,31 +76,13 @@ Commands
 		Errors
 			: 1. If there are any packages that depend on pkg, then print each
 			: and exit without making any changes.
-	deps <pkg name>+
-		Description
-			: Print out all packages that are required for the named packages,
-			: including the packages themselves, in "build order".
-		Steps
-			: 1. Walk the dependency graph in breadth-first order.
-			: 2. Print the nodes in reverse order.
-		Errors
-			: None.
-	bump <pkg name>+
-		Description
-			: Print all packages that need their release version bumped if the
-			: given packages are updated.
-		Steps
-			: 1. Walk the dependency graph "backwards" in breadth-first order.
-			: 2. Remove the updated packages from the list.
-		Errors
-			: None
-	dump
+	[_] dump
 		Description
 			: Dump the database.
-	idxupdate
+	[_] idxupdate
 		Description
 			: Update the package index, i.e. download
 			: http://hackage.haskell.org/packages/archive/00-index.tar.gz
-	idxversions <pkg name>+
+	[_] idxversions <pkg name>+
 		Description
 			: List the available versions of the named packages.
