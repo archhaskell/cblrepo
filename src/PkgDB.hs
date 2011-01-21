@@ -74,6 +74,11 @@ checkDependants db n v = let
         fails = filter (not . withinRange v . depVersionRange . fromJust . snd) d2
     in fails
 
+transitiveDependants db pkgs = keepLast $ concat $ map transUsersOfOne pkgs
+    where
+        transUsersOfOne pkg = pkg : (keepLast $ concat $ map (transUsersOfOne) (lookupDependants db pkg))
+        keepLast = reverse . nub . reverse
+
 readDb :: FilePath -> IO CblDB
 readDb fp = (flip CE.catch)
     (\ e -> if isDoesNotExistError e
