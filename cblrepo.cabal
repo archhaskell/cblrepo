@@ -12,9 +12,22 @@ description: TBD
 category: Utils, Distribution
 build-type: Custom
 
+flag BuildTests
+    Description: Build tests
+    Default: False
+
 executable cblrepo
     hs-source-dirs: src
     main-is: Main.hs
     other-modules: Utils PkgDB AddBase AddCabal BumpPkgs BuildPkgs
     build-depends: base ==4.2.*, cmdargs ==0.6.*, filepath ==1.1.*,
         directory ==1.0.*, Cabal ==1.8.*, json ==0.4.*
+
+executable tests
+    hs-source-dirs: tst src
+    main-is: tst.hs
+    if flag(BuildTests)
+        build-depends: base ==4.2.*, test-framework-th ==0.1.*, HUnit ==1.2.*,
+            test-framework-hunit ==0.2.*
+    else
+        buildable: False
