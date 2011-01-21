@@ -15,10 +15,11 @@ import Distribution.Verbosity
 import Distribution.Version
 import qualified Distribution.Package as P
 import Data.Maybe
+import Network.Download
 
 addCabal dbFp cbls = do
     db <- readDb dbFp
-    genPkgs <- mapM readCabalFile cbls
+    genPkgs <- mapM readCabal cbls
     let pkgNames = map ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) genPkgs
     let tmpDb = filter (\ p -> not $ pkgName p `elem` pkgNames) db
     case doAddCabal tmpDb genPkgs of
@@ -29,7 +30,19 @@ addCabal dbFp cbls = do
             putStrLn "Success"
             saveDb newDb dbFp
 
-readCabalFile = readPackageDescription silent
+readCabal loc = let
+        readFile = readPackageDescription silent
+        readURI uri = do
+            r <- openURIString uri
+            case r of
+                Left e -> error e
+                Right cbl -> case parsePackageDescription cbl of
+                    ParseFailed e -> error $ show e
+                    ParseOk _ pd -> return pd
+
+    in if isInfixOf "://" loc
+        then readURI loc
+        else readFile loc
 
 doAddCabal db pkgs = let
         (succs, fails) = partition (canBeAdded db) pkgs
