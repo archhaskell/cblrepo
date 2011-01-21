@@ -4,7 +4,7 @@ module Main where
 
 import AddBase
 import AddCabal
-import PrintUsers
+import BumpPkgs
 
 import Control.Monad
 import System.Console.CmdArgs
@@ -16,28 +16,28 @@ progName = "cblrepo"
 data Cmds
     = AddBasePkg {dbLoc :: Maybe String, pkgVers :: [(String, String)]}
     | AddPkg {dbLoc :: Maybe String, cbls :: [FilePath]}
-    | PrintUsers {dbLoc :: Maybe String, pkgs :: [String]}
+    | BumpPkgs {dbLoc :: Maybe String, pkgs :: [String]}
     deriving(Show, Data, Typeable)
 
 cmdAddBasePkg = AddBasePkg
-    { dbLoc = Nothing &= help "DB location"
+    { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
     , pkgVers = def &= args &= typ "STRING,STRING"
     }
 
 cmdAddPkg = AddPkg
-    { dbLoc = Nothing &= help "DB location"
+    { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
     , cbls = def &= args &= typFile
     }
 
-cmdPrintUsers = PrintUsers
-    { dbLoc = Nothing &= help "DB location"
+cmdBumpPkgs = BumpPkgs
+    { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
     , pkgs = def &= args &= typ "PKG"
     }
 
-cmds = modes
+cmds = cmdArgsMode $ modes
     [ cmdAddBasePkg &= name "addbasepkg"
     , cmdAddPkg &= name "add"
-    , cmdPrintUsers &= name "users"
+    , cmdBumpPkgs &= name "bump"
     ]
     &= program progName
     &= summary "CblRepo v0.0"
@@ -45,10 +45,10 @@ cmds = modes
 
 main = do
     defDbfp <- liftM (</> (progName ++ ".db")) (getAppUserDataDirectory progName)
-    cmdArgs cmds >>= \ c -> do
+    cmdArgsRun cmds >>= \ c -> do
         let dbF = maybe defDbfp id (dbLoc c)
         createDirectoryIfMissing True (dropFileName dbF)
         case c of
             AddBasePkg {} -> addBase dbF (pkgVers c)
             AddPkg {} -> addCabal dbF (cbls c)
-            PrintUsers {} -> print c >> printUsers dbF (pkgs c)
+            BumpPkgs {} -> bumpPkgs dbF (pkgs c)
