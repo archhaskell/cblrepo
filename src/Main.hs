@@ -17,6 +17,7 @@ data Cmds
     = AddBasePkg {dbLoc :: Maybe String, pkgVers :: [(String, String)]}
     | AddPkg {dbLoc :: Maybe String, cbls :: [FilePath]}
     | BumpPkgs {dbLoc :: Maybe String, pkgs :: [String]}
+    | BuildPkgs {dbLoc :: Maybe String, pkgs :: [String]}
     deriving(Show, Data, Typeable)
 
 cmdAddBasePkg = AddBasePkg
@@ -34,10 +35,16 @@ cmdBumpPkgs = BumpPkgs
     , pkgs = def &= args &= typ "PKG"
     }
 
+cmdBuildPkgs = BuildPkgs
+    { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
+    , pkgs = def &= args &= typ "PKG"
+    }
+
 cmds = cmdArgsMode $ modes
     [ cmdAddBasePkg &= name "addbasepkg"
     , cmdAddPkg &= name "add"
     , cmdBumpPkgs &= name "bump"
+    , cmdBuildPkgs &= name "build"
     ]
     &= program progName
     &= summary "CblRepo v0.0"
@@ -52,3 +59,4 @@ main = do
             AddBasePkg {} -> addBase dbF (pkgVers c)
             AddPkg {} -> addCabal dbF (cbls c)
             BumpPkgs {} -> bumpPkgs dbF (pkgs c)
+            BuildPkgs {} -> error "build: TBD"
