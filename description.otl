@@ -1,4 +1,4 @@
-[_] 37% Commands
+[_] 50% Commands
 	[X] addepkg (<pkg name>,<version>)+
 		Description
 			: Add a package without dependencies to the database.
@@ -57,7 +57,7 @@
 			: 2. Remove the updated packages from the list.
 		Errors
 			: None
-	[_] build <pkg name>+
+	[X] build <pkg name>+
 		Description
 			: Print out all packages that need to be re-built if the given
 			: packages are updated.  They are printed in (one possible) build
