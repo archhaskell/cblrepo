@@ -5,6 +5,7 @@ module Main where
 import AddBase
 import AddCabal
 import BumpPkgs
+import BuildPkgs
 
 import Control.Monad
 import System.Console.CmdArgs
@@ -59,4 +60,4 @@ main = do
             AddBasePkg {} -> addBase dbF (pkgVers c)
             AddPkg {} -> addCabal dbF (cbls c)
             BumpPkgs {} -> bumpPkgs dbF (pkgs c)
-            BuildPkgs {} -> error "build: TBD"
+            BuildPkgs {} -> buildPkgs dbF (pkgs c)
