@@ -1,0 +1,11 @@
+#! /bin/bash
+
+habsdir=$1
+
+for d in ${habsdir}/habs/*; do
+    . ${d}/PKGBUILD
+    wget http://hackage.haskell.org/packages/archive/${_hkgname}/${pkgver}/${_hkgname}.cabal
+done
+
+# finally get haskell-platform
+wget http://hackage.haskell.org/platform/2010.2.0.0/haskell-platform.cabal

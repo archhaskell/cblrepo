@@ -40,6 +40,9 @@ ghcProvides =
     , "template-haskell ==2.4.0.1"
     , "time ==1.1.4"
     , "unix ==2.4.0.2"
+    , "ghc-prim ==0.2.0.0"
+    , "ghc ==6.12.3"
+
     ]
 
 extraProvides =
