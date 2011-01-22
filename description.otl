@@ -1,5 +1,5 @@
-[_] 50% Commands
-	[X] addepkg (<pkg name>,<version>)+
+[_] 37% Commands
+	[X] addebasepkg (<pkg name>,<version>)+
 		Description
 			: Add a package without dependencies to the database.
 		Steps
@@ -15,7 +15,7 @@
 			: packages; I think it's too labour intensive when GHC is updated.
 			: It would most likely be good enough for when packages make it
 			: into one of the official repos though.
-	[X] add (<filename>|<url>|<pkg name : version>)+
+	[_] add (<filename>|<url>|<pkg name : version>)+
 		Description
 			: Add packages from CABAL files.
 		Steps
