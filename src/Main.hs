@@ -6,6 +6,7 @@ import AddBase
 import AddCabal
 import BumpPkgs
 import BuildPkgs
+import IdxUpdate
 
 import Control.Monad
 import System.Console.CmdArgs
@@ -19,6 +20,7 @@ data Cmds
     | AddPkg {dbLoc :: Maybe String, cbls :: [FilePath]}
     | BumpPkgs {dbLoc :: Maybe String, pkgs :: [String]}
     | BuildPkgs {dbLoc :: Maybe String, pkgs :: [String]}
+    | IdxUpdate {dbLoc :: Maybe String}
     deriving(Show, Data, Typeable)
 
 cmdAddBasePkg = AddBasePkg
@@ -41,11 +43,16 @@ cmdBuildPkgs = BuildPkgs
     , pkgs = def &= args &= typ "PKG"
     }
 
+cmdIdxUpdate = IdxUpdate
+    { dbLoc = Nothing &= ignore
+    }
+
 cmds = cmdArgsMode $ modes
     [ cmdAddBasePkg &= name "addbasepkg"
     , cmdAddPkg &= name "add"
     , cmdBumpPkgs &= name "bump"
     , cmdBuildPkgs &= name "build"
+    , cmdIdxUpdate
     ]
     &= program progName
     &= summary "CblRepo v0.0"
@@ -61,3 +68,4 @@ main = do
             AddPkg {} -> addCabal dbF (cbls c)
             BumpPkgs {} -> bumpPkgs dbF (pkgs c)
             BuildPkgs {} -> buildPkgs dbF (pkgs c)
+            IdxUpdate {} -> idxUpdate
