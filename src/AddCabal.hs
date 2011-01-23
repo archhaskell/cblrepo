@@ -3,7 +3,11 @@ module AddCabal where
 import PkgDB
 import Utils
 
+import Codec.Archive.Tar as Tar
+import Codec.Compression.GZip as GZip
+import Control.Monad
 import Data.List
+import Data.Maybe
 import Data.Version
 import Distribution.Compiler
 import Distribution.PackageDescription
@@ -13,9 +17,10 @@ import Distribution.System
 import Distribution.Text
 import Distribution.Verbosity
 import Distribution.Version
-import qualified Distribution.Package as P
-import Data.Maybe
 import Network.Download
+import System.FilePath
+import qualified Data.ByteString.Lazy.Char8 as BS
+import qualified Distribution.Package as P
 
 addCabal dbFp cbls = do
     db <- readDb dbFp
@@ -30,19 +35,56 @@ addCabal dbFp cbls = do
             putStrLn "Success"
             saveDb newDb dbFp
 
+data LocType = Url | Idx | File
+
 readCabal loc = let
-        readFile = readPackageDescription silent
-        readURI uri = do
-            r <- openURIString uri
+        locType
+            | isInfixOf "://" loc = Url
+            | ',' `elem` loc = Idx
+            | otherwise = File
+
+        readFile = readPackageDescription silent loc
+
+        readURI = do
+            r <- openURIString loc
             case r of
                 Left e -> error e
                 Right cbl -> case parsePackageDescription cbl of
                     ParseFailed e -> error $ show e
                     ParseOk _ pd -> return pd
+        readIdx = let
+                (p, (_: v)) = span (/= ',') loc
+                path = p </> v </> p ++ ".cabal"
+                pkgStr = p ++ " " ++ v
 
-    in if isInfixOf "://" loc
-        then readURI loc
-        else readFile loc
+                esFindEntry p (Next e es) = if p == (entryPath e)
+                    then Just e
+                    else esFindEntry p es
+                esFindEntry _ _ = Nothing
+
+                eGetContent e = let
+                        ec = entryContent e
+                    in case ec of
+                        NormalFile c _ -> Just $ BS.unpack c
+                        _ -> Nothing
+
+            in do
+                es <- liftM (Tar.read . GZip.decompress)
+                    (BS.readFile "/home/magnus/.cblrepo/00-index.tar.gz")
+                e <- maybe (error $ "No entry for " ++ pkgStr)
+                    return
+                    (esFindEntry path es)
+                cbl <- maybe (error $ "Failed to extract contents for " ++ pkgStr)
+                    return
+                    (eGetContent e)
+                case parsePackageDescription cbl of
+                    ParseFailed e -> error $ show e
+                    ParseOk _ pd -> return pd
+
+    in case locType of
+        Url -> readURI
+        File -> readFile
+        Idx -> readIdx
 
 doAddCabal db pkgs = let
         (succs, fails) = partition (canBeAdded db) pkgs
