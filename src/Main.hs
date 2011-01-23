@@ -68,4 +68,4 @@ main = do
             AddPkg {} -> addCabal dbF (cbls c)
             BumpPkgs {} -> bumpPkgs dbF (pkgs c)
             BuildPkgs {} -> buildPkgs dbF (pkgs c)
-            IdxUpdate {} -> idxUpdate (dropFileName dbF)
+            IdxUpdate {} -> getAppUserDataDirectory progName >>= idxUpdate

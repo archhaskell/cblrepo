@@ -21,6 +21,7 @@ import Network.Download
 import System.FilePath
 import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Distribution.Package as P
+import System.Directory
 
 addCabal dbFp cbls = do
     db <- readDb dbFp
@@ -69,8 +70,9 @@ readCabal loc = let
                         _ -> Nothing
 
             in do
+                fp <- getAppUserDataDirectory "cblrepo"
                 es <- liftM (Tar.read . GZip.decompress)
-                    (BS.readFile "/home/magnus/.cblrepo/00-index.tar.gz")
+                    (BS.readFile $ fp </> "00-index.tar.gz")
                 e <- maybe (error $ "No entry for " ++ pkgStr)
                     return
                     (esFindEntry path es)
