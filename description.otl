@@ -1,4 +1,4 @@
-[_] 37% Commands
+[_] 66% Commands
 	[X] addebasepkg (<pkg name>,<version>)+
 		Description
 			: Add a package without dependencies to the database.
@@ -15,7 +15,7 @@
 			: packages; I think it's too labour intensive when GHC is updated.
 			: It would most likely be good enough for when packages make it
 			: into one of the official repos though.
-	[_] add (<filename>|<url>|<pkg name>,<version>)+
+	[X] add (<filename>|<url>|<pkg name>,<version>)+
 		Description
 			: Add packages from CABAL files.
 		Steps
@@ -67,6 +67,15 @@
 			: 2. Keep only the last entry of each package in the list.
 		Errors
 			: None.
+	[X] idxupdate
+		Description
+			: Update the package index, i.e. download
+			: http://hackage.haskell.org/packages/archive/00-index.tar.gz
+	[X] updates
+		Description
+			: List all packages that have available updates.
+		Steps
+		Errors
 	[_] del <pkg name>
 		Description
 			: Delete a package from the database.
@@ -79,10 +88,6 @@
 	[_] dump
 		Description
 			: Dump the database.
-	[_] idxupdate
-		Description
-			: Update the package index, i.e. download
-			: http://hackage.haskell.org/packages/archive/00-index.tar.gz
 	[_] idxversions <pkg name>+
 		Description
 			: List the available versions of the named packages.
