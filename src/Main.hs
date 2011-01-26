@@ -7,6 +7,7 @@ import AddCabal
 import BumpPkgs
 import BuildPkgs
 import IdxUpdate
+import Updates
 
 import Control.Monad
 import System.Console.CmdArgs
@@ -21,6 +22,7 @@ data Cmds
     | BumpPkgs {dbLoc :: Maybe String, pkgs :: [String]}
     | BuildPkgs {dbLoc :: Maybe String, pkgs :: [String]}
     | IdxUpdate {dbLoc :: Maybe String}
+    | Updates {dbLoc :: Maybe String}
     deriving(Show, Data, Typeable)
 
 cmdAddBasePkg = AddBasePkg
@@ -47,12 +49,17 @@ cmdIdxUpdate = IdxUpdate
     { dbLoc = Nothing &= ignore
     }
 
+cmdUpdates = Updates
+    { dbLoc = Nothing &= ignore
+    } &= name "updates"
+
 cmds = cmdArgsMode $ modes
     [ cmdAddBasePkg
     , cmdAddPkg
     , cmdBumpPkgs
     , cmdBuildPkgs
     , cmdIdxUpdate
+    , cmdUpdates
     ]
     &= program progName
     &= summary "CblRepo v0.0"
@@ -69,3 +76,4 @@ main = do
             BumpPkgs {} -> bumpPkgs dbF (pkgs c)
             BuildPkgs {} -> buildPkgs dbF (pkgs c)
             IdxUpdate {} -> getAppUserDataDirectory progName >>= idxUpdate
+            Updates {} -> getAppUserDataDirectory progName >>= updates
