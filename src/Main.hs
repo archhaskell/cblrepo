@@ -26,32 +26,32 @@ data Cmds
 cmdAddBasePkg = AddBasePkg
     { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
     , pkgVers = def &= args &= typ "STRING,STRING"
-    }
+    } &= name "addbasepkg"
 
 cmdAddPkg = AddPkg
     { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
     , cbls = def &= args &= typFile
-    }
+    } &= name "add"
 
 cmdBumpPkgs = BumpPkgs
     { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
     , pkgs = def &= args &= typ "PKG"
-    }
+    } &= name "bump"
 
 cmdBuildPkgs = BuildPkgs
     { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
     , pkgs = def &= args &= typ "PKG"
-    }
+    } &= name "build"
 
 cmdIdxUpdate = IdxUpdate
     { dbLoc = Nothing &= ignore
     }
 
 cmds = cmdArgsMode $ modes
-    [ cmdAddBasePkg &= name "addbasepkg"
-    , cmdAddPkg &= name "add"
-    , cmdBumpPkgs &= name "bump"
-    , cmdBuildPkgs &= name "build"
+    [ cmdAddBasePkg
+    , cmdAddPkg
+    , cmdBumpPkgs
+    , cmdBuildPkgs
     , cmdIdxUpdate
     ]
     &= program progName
