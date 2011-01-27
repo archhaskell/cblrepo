@@ -36,6 +36,8 @@ createCblPkg pd = (name, (version, deps))
 getDependencyOn :: String -> CblPkg -> Maybe P.Dependency
 getDependencyOn n p = find (\ d -> depName d == n) (pkgDeps p)
 
+isBasePkg (_, (_, ds)) = null ds
+
 emptyPkgDB :: CblDB
 emptyPkgDB = []
 

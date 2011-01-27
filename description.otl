@@ -1,4 +1,4 @@
-[_] 66% Commands
+[_] 70% Commands
 	[X] addebasepkg (<pkg name>,<version>)+
 		Description
 			: Add a package without dependencies to the database.
@@ -74,6 +74,11 @@
 	[X] updates
 		Description
 			: List all packages that have available updates.
+		Steps
+		Errors
+	[X] list
+		Description
+			: List all packages
 		Steps
 		Errors
 	[_] del <pkg name>

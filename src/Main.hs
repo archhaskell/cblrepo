@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable #-}
-
 module Main where
 
 import AddBase
@@ -8,22 +6,14 @@ import BumpPkgs
 import BuildPkgs
 import IdxUpdate
 import Updates
+import Utils
+import ListPkgs
 
 import Control.Monad
 import System.Console.CmdArgs
 import System.Directory
 import System.FilePath
-
-progName = "cblrepo"
-
-data Cmds
-    = AddBasePkg {dbLoc :: Maybe String, pkgVers :: [(String, String)]}
-    | AddPkg {dbLoc :: Maybe String, cbls :: [FilePath]}
-    | BumpPkgs {dbLoc :: Maybe String, pkgs :: [String]}
-    | BuildPkgs {dbLoc :: Maybe String, pkgs :: [String]}
-    | IdxUpdate {dbLoc :: Maybe String}
-    | Updates {dbLoc :: Maybe String}
-    deriving(Show, Data, Typeable)
+import Control.Monad.Trans.Reader
 
 cmdAddBasePkg = AddBasePkg
     { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
@@ -53,6 +43,11 @@ cmdUpdates = Updates
     { dbLoc = Nothing &= ignore
     } &= name "updates"
 
+cmdListPkgs = ListPkgs
+    { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
+    , incBase = False &= help "include base packages in listing"
+    } &= name "list"
+
 cmds = cmdArgsMode $ modes
     [ cmdAddBasePkg
     , cmdAddPkg
@@ -60,6 +55,7 @@ cmds = cmdArgsMode $ modes
     , cmdBuildPkgs
     , cmdIdxUpdate
     , cmdUpdates
+    , cmdListPkgs
     ]
     &= program progName
     &= summary "CblRepo v0.0"
@@ -69,11 +65,13 @@ main = do
     defDbfp <- liftM (</> (progName ++ ".db")) (getAppUserDataDirectory progName)
     cmdArgsRun cmds >>= \ c -> do
         let dbF = maybe defDbfp id (dbLoc c)
+        let c' = c {dbLoc = Just dbF}
         createDirectoryIfMissing True (dropFileName dbF)
-        case c of
+        case c' of
             AddBasePkg {} -> addBase dbF (pkgVers c)
             AddPkg {} -> addCabal dbF (cbls c)
             BumpPkgs {} -> bumpPkgs dbF (pkgs c)
             BuildPkgs {} -> buildPkgs dbF (pkgs c)
             IdxUpdate {} -> getAppUserDataDirectory progName >>= idxUpdate
             Updates {} -> getAppUserDataDirectory progName >>= updates
+            ListPkgs {} -> runReaderT listPkgs c'

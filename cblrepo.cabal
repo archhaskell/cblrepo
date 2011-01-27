@@ -1,5 +1,5 @@
 name: cblrepo
-version: 0.0
+version: 0.1
 cabal-version: >= 1.6
 license: GPL
 copyright: Copyright (c) 2011 Magnus Therning
@@ -20,11 +20,11 @@ executable cblrepo
     hs-source-dirs: src
     main-is: Main.hs
     other-modules: Utils PkgDB AddBase AddCabal BumpPkgs BuildPkgs IdxUpdate
-        Updates
+        Updates ListPkgs
     build-depends: base ==4.2.*, cmdargs ==0.6.*, filepath ==1.1.*,
         directory ==1.0.*, Cabal ==1.8.*, json ==0.4.*,
         download >=0.3.1 && < 0.4, bytestring ==0.9.*, tar ==0.3.*,
-        zlib ==0.5.*
+        zlib ==0.5.*, transformers ==0.2.*
 
 executable tests
     hs-source-dirs: tst src
