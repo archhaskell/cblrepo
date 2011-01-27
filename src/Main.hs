@@ -15,6 +15,7 @@ import System.Directory
 import System.FilePath
 import Control.Monad.Trans.Reader
 
+-- {{{1 command line arguments
 cmdAddBasePkg = AddBasePkg
     { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
     , pkgVers = def &= args &= typ "STRING,STRING"
@@ -61,8 +62,9 @@ cmds = cmdArgsMode $ modes
     &= summary "CblRepo v0.0"
     &= help "maintain a database of dependencies of CABAL packages"
 
+-- {{{1 main
 main = do
-    defDbfp <- liftM (</> (progName ++ ".db")) (getAppUserDataDirectory progName)
+    defDbfp <- liftM (</> dbName) (getAppUserDataDirectory progName)
     cmdArgsRun cmds >>= \ c -> do
         let dbF = maybe defDbfp id (dbLoc c)
         let c' = c {dbLoc = Just dbF}
