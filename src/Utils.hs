@@ -28,13 +28,13 @@ dbName = progName ++ ".db"
 
 -- {{{1 command line argument type
 data Cmds
-    = AddBasePkg {dbLoc :: Maybe String, pkgVers :: [(String, String)]}
-    | AddPkg {dbLoc :: Maybe String, cbls :: [FilePath]}
-    | BumpPkgs {dbLoc :: Maybe String, pkgs :: [String]}
-    | BuildPkgs {dbLoc :: Maybe String, pkgs :: [String]}
-    | IdxUpdate {dbLoc :: Maybe String}
-    | Updates {dbLoc :: Maybe String}
-    | ListPkgs {dbLoc :: Maybe String, incBase :: Bool}
+    = AddBasePkg {appDir :: String, pkgVers :: [(String, String)]}
+    | AddPkg {appDir :: String, cbls :: [FilePath]}
+    | BumpPkgs {appDir :: String, pkgs :: [String]}
+    | BuildPkgs {appDir :: String, pkgs :: [String]}
+    | IdxUpdate {appDir :: String}
+    | Updates {appDir :: String}
+    | ListPkgs {appDir :: String, incBase :: Bool}
     deriving(Show, Data, Typeable)
 
 cfgGet f = liftM f ask

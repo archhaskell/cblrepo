@@ -10,19 +10,20 @@ import Data.List
 import Data.Maybe
 import Distribution.Text
 import Distribution.Version
+import System.FilePath
 
 addBase :: ReaderT Cmds IO ()
 addBase = do
     pkgs <- cfgGet pkgVers
     guard $ isJust $ (sequence $ map (simpleParse . snd) pkgs :: Maybe [Version])
     let ps = map (\ (n, v) -> (n, fromJust $ simpleParse v)) pkgs
-    dbFp <- cfgGet $ fromJust . dbLoc
-    db <- liftIO $ readDb dbFp
+    dbFn <- liftM (</> dbName) $ cfgGet appDir
+    db <- liftIO $ readDb dbFn
     case doAddBase db ps of
         Left brkOthrs -> liftIO $ mapM_ printBrksOth brkOthrs
         Right newDb -> do
             liftIO $ putStrLn "Success"
-            liftIO $ saveDb newDb dbFp
+            liftIO $ saveDb newDb dbFn
 
 doAddBase db pkgs = let
         (_, fails) = partition (\ (n, v) -> canBeAdded db n v) pkgs

@@ -8,11 +8,12 @@ import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
 import Data.Maybe
 import Distribution.Text
+import System.FilePath
 
 listPkgs :: ReaderT Cmds IO ()
 listPkgs = do
     iB <- cfgGet incBase
-    db <- cfgGet (fromJust . dbLoc) >>= liftIO . readDb
+    db <- liftM (</> dbName) (cfgGet appDir) >>= liftIO . readDb
     let pkgs = if not iB
             then filter (not . isBasePkg) db
             else db

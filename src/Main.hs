@@ -9,43 +9,46 @@ import Updates
 import Utils
 import ListPkgs
 
+import Paths_cblrepo
+
 import Control.Monad
 import System.Console.CmdArgs
 import System.Directory
 import System.FilePath
 import Control.Monad.Trans.Reader
+import Distribution.Text
 
 -- {{{1 command line arguments
 cmdAddBasePkg = AddBasePkg
-    { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
+    { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     , pkgVers = def &= args &= typ "STRING,STRING"
     } &= name "addbasepkg"
 
 cmdAddPkg = AddPkg
-    { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
-    , cbls = def &= args &= typFile
+    { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
+    , cbls = def &= args &= typ "CABAL"
     } &= name "add"
 
 cmdBumpPkgs = BumpPkgs
-    { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
+    { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     , pkgs = def &= args &= typ "PKG"
     } &= name "bump"
 
 cmdBuildPkgs = BuildPkgs
-    { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
+    { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     , pkgs = def &= args &= typ "PKG"
     } &= name "build"
 
 cmdIdxUpdate = IdxUpdate
-    { dbLoc = Nothing &= ignore
+    { appDir = def &= ignore
     }
 
 cmdUpdates = Updates
-    { dbLoc = Nothing &= ignore
+    { appDir = def &= ignore
     } &= name "updates"
 
 cmdListPkgs = ListPkgs
-    { dbLoc = Nothing &= explicit &= name "db" &= help "DB location" &= typFile
+    { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     , incBase = False &= help "include base packages in listing"
     } &= name "list"
 
@@ -59,16 +62,16 @@ cmds = cmdArgsMode $ modes
     , cmdListPkgs
     ]
     &= program progName
-    &= summary "CblRepo v0.0"
+    &= summary ("CblRepo v" ++ (display version))
     &= help "maintain a database of dependencies of CABAL packages"
 
 -- {{{1 main
 main = do
-    defDbfp <- liftM (</> dbName) (getAppUserDataDirectory progName)
+    defAppDir <- getAppUserDataDirectory progName
     cmdArgsRun cmds >>= \ c -> do
-        let dbF = maybe defDbfp id (dbLoc c)
-        let c' = c {dbLoc = Just dbF}
-        createDirectoryIfMissing True (dropFileName dbF)
+        let aD = if null (appDir c) then defAppDir else (appDir c)
+        let c' = c { appDir = aD }
+        createDirectoryIfMissing True (aD)
         case c' of
             AddBasePkg {} -> runReaderT addBase c'
             AddPkg {} -> runReaderT addCabal c'

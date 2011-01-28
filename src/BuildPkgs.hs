@@ -7,9 +7,11 @@ import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
 import Data.List
 import Data.Maybe
+import Control.Monad
+import System.FilePath
 
 buildPkgs :: ReaderT Cmds IO ()
 buildPkgs = do
-    db <- cfgGet (fromJust . dbLoc) >>= liftIO . readDb
+    db <- liftM (</> dbName) (cfgGet appDir) >>= liftIO . readDb
     pkgs <- cfgGet pkgs
     liftIO $ mapM_ putStrLn $ transitiveDependants db pkgs

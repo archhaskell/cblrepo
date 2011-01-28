@@ -27,15 +27,15 @@ import qualified Distribution.Package as P
 
 addCabal :: ReaderT Cmds IO ()
 addCabal = do
-    dbFp <- cfgGet (fromJust . dbLoc)
-    db <- liftIO $ readDb dbFp
+    dbFn <- liftM (</> dbName) $ cfgGet appDir
+    db <- liftIO $ readDb dbFn
     cbls <- cfgGet cbls
     genPkgs <- liftIO $ mapM readCabal cbls
     let pkgNames = map ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) genPkgs
     let tmpDb = filter (\ p -> not $ pkgName p `elem` pkgNames) db
     case doAddCabal tmpDb genPkgs of
         Left (unSats, brksOthrs) -> liftIO (mapM_ printUnSat unSats >> mapM_ printBrksOth brksOthrs)
-        Right newDb -> liftIO (putStrLn "Success" >> saveDb newDb dbFp)
+        Right newDb -> liftIO (putStrLn "Success" >> saveDb newDb dbFn)
 
 data LocType = Url | Idx | File
 
