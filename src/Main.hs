@@ -70,10 +70,10 @@ main = do
         let c' = c {dbLoc = Just dbF}
         createDirectoryIfMissing True (dropFileName dbF)
         case c' of
-            AddBasePkg {} -> addBase dbF (pkgVers c)
-            AddPkg {} -> addCabal dbF (cbls c)
-            BumpPkgs {} -> bumpPkgs dbF (pkgs c)
-            BuildPkgs {} -> buildPkgs dbF (pkgs c)
+            AddBasePkg {} -> runReaderT addBase c'
+            AddPkg {} -> runReaderT addCabal c'
+            BumpPkgs {} -> runReaderT bumpPkgs c'
+            BuildPkgs {} -> runReaderT buildPkgs c'
             IdxUpdate {} -> getAppUserDataDirectory progName >>= idxUpdate
             Updates {} -> getAppUserDataDirectory progName >>= updates
             ListPkgs {} -> runReaderT listPkgs c'

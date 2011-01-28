@@ -11,8 +11,8 @@ import Distribution.Text
 
 listPkgs :: ReaderT Cmds IO ()
 listPkgs = do
-    iB <- liftM incBase ask
-    db <- liftM (fromJust . dbLoc) ask >>= liftIO . readDb
+    iB <- cfgGet incBase
+    db <- cfgGet (fromJust . dbLoc) >>= liftIO . readDb
     let pkgs = if not iB
             then filter (not . isBasePkg) db
             else db

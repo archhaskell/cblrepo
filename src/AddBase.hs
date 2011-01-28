@@ -4,22 +4,25 @@ import PkgDB
 import Utils
 
 import Control.Monad
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Reader
 import Data.List
 import Data.Maybe
 import Distribution.Text
 import Distribution.Version
 
-addBase :: FilePath -> [(String, String)] -> IO ()
-addBase dbFp pkgs = do
+addBase :: ReaderT Cmds IO ()
+addBase = do
+    pkgs <- cfgGet pkgVers
     guard $ isJust $ (sequence $ map (simpleParse . snd) pkgs :: Maybe [Version])
     let ps = map (\ (n, v) -> (n, fromJust $ simpleParse v)) pkgs
-    db <- readDb dbFp
+    dbFp <- cfgGet $ fromJust . dbLoc
+    db <- liftIO $ readDb dbFp
     case doAddBase db ps of
-        Left brkOthrs -> do
-            mapM_ printBrksOth brkOthrs
+        Left brkOthrs -> liftIO $ mapM_ printBrksOth brkOthrs
         Right newDb -> do
-            putStrLn "Success"
-            saveDb newDb dbFp
+            liftIO $ putStrLn "Success"
+            liftIO $ saveDb newDb dbFp
 
 doAddBase db pkgs = let
         (_, fails) = partition (\ (n, v) -> canBeAdded db n v) pkgs

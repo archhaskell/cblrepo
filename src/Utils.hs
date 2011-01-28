@@ -2,8 +2,10 @@
 
 module Utils where
 
-import Data.Typeable
+import Control.Monad
+import Control.Monad.Trans.Reader
 import Data.Data
+import Data.Typeable
 import Distribution.Package
 import Distribution.Text
 
@@ -34,3 +36,5 @@ data Cmds
     | Updates {dbLoc :: Maybe String}
     | ListPkgs {dbLoc :: Maybe String, incBase :: Bool}
     deriving(Show, Data, Typeable)
+
+cfgGet f = liftM f ask

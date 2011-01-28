@@ -6,6 +6,8 @@ import Utils
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip
 import Control.Monad
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Reader
 import Data.List
 import Data.Maybe
 import Data.Version
@@ -18,23 +20,22 @@ import Distribution.Text
 import Distribution.Verbosity
 import Distribution.Version
 import Network.Download
+import System.Directory
 import System.FilePath
 import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Distribution.Package as P
-import System.Directory
 
-addCabal dbFp cbls = do
-    db <- readDb dbFp
-    genPkgs <- mapM readCabal cbls
+addCabal :: ReaderT Cmds IO ()
+addCabal = do
+    dbFp <- cfgGet (fromJust . dbLoc)
+    db <- liftIO $ readDb dbFp
+    cbls <- cfgGet cbls
+    genPkgs <- liftIO $ mapM readCabal cbls
     let pkgNames = map ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) genPkgs
     let tmpDb = filter (\ p -> not $ pkgName p `elem` pkgNames) db
     case doAddCabal tmpDb genPkgs of
-        Left (unSats, brksOthrs) -> do
-            mapM_ printUnSat unSats
-            mapM_ printBrksOth brksOthrs
-        Right newDb -> do
-            putStrLn "Success"
-            saveDb newDb dbFp
+        Left (unSats, brksOthrs) -> liftIO (mapM_ printUnSat unSats >> mapM_ printBrksOth brksOthrs)
+        Right newDb -> liftIO (putStrLn "Success" >> saveDb newDb dbFp)
 
 data LocType = Url | Idx | File
 
