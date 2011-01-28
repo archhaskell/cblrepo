@@ -30,12 +30,15 @@ addCabal = do
     dbFn <- liftM (</> dbName) $ cfgGet appDir
     db <- liftIO $ readDb dbFn
     cbls <- cfgGet cbls
+    dR <- cfgGet dryRun
     genPkgs <- liftIO $ mapM readCabal cbls
     let pkgNames = map ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) genPkgs
     let tmpDb = filter (\ p -> not $ pkgName p `elem` pkgNames) db
     case doAddCabal tmpDb genPkgs of
         Left (unSats, brksOthrs) -> liftIO (mapM_ printUnSat unSats >> mapM_ printBrksOth brksOthrs)
-        Right newDb -> liftIO (putStrLn "Success" >> saveDb newDb dbFn)
+        Right newDb -> liftIO $ do
+            putStrLn "Success"
+            unless dR $ saveDb newDb dbFn
 
 data LocType = Url | Idx | File
 

@@ -21,12 +21,14 @@ import System.FilePath
 -- {{{1 command line arguments
 cmdAddBasePkg = AddBasePkg
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
+    , dryRun = False &= explicit &= name "n" &= help "dry run"
     , pkgVers = def &= args &= typ "STRING,STRING"
     } &= name "addbasepkg" &= help "add base packages" &= details
         [ "The format for a package is <name>,<version>." ]
 
 cmdAddPkg = AddPkg
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
+    , dryRun = False &= explicit &= name "n" &= help "dry run"
     , cbls = def &= args &= typ "CABAL"
     } &= name "add" &= help "add a package from a Cabal file" &= details
         [ "There are three ways to specify the location of the Cabal file:"

@@ -28,8 +28,8 @@ dbName = progName ++ ".db"
 
 -- {{{1 command line argument type
 data Cmds
-    = AddBasePkg { appDir :: String, pkgVers :: [(String, String)] }
-    | AddPkg { appDir :: String, cbls :: [FilePath] }
+    = AddBasePkg { appDir :: String, dryRun :: Bool, pkgVers :: [(String, String)] }
+    | AddPkg { appDir :: String, dryRun :: Bool, cbls :: [FilePath] }
     | BumpPkgs { appDir :: String, pkgs :: [String] }
     | BuildPkgs { appDir :: String, pkgs :: [String] }
     | IdxUpdate { appDir :: String }

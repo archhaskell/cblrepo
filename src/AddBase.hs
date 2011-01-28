@@ -15,15 +15,16 @@ import System.FilePath
 addBase :: ReaderT Cmds IO ()
 addBase = do
     pkgs <- cfgGet pkgVers
+    dR <- cfgGet dryRun
     guard $ isJust $ (sequence $ map (simpleParse . snd) pkgs :: Maybe [Version])
     let ps = map (\ (n, v) -> (n, fromJust $ simpleParse v)) pkgs
     dbFn <- liftM (</> dbName) $ cfgGet appDir
     db <- liftIO $ readDb dbFn
     case doAddBase db ps of
         Left brkOthrs -> liftIO $ mapM_ printBrksOth brkOthrs
-        Right newDb -> do
-            liftIO $ putStrLn "Success"
-            liftIO $ saveDb newDb dbFn
+        Right newDb -> liftIO $ do
+            putStrLn "Success"
+            unless dR $ saveDb newDb dbFn
 
 doAddBase db pkgs = let
         (_, fails) = partition (\ (n, v) -> canBeAdded db n v) pkgs
