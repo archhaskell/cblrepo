@@ -2,21 +2,21 @@ module Main where
 
 import AddBase
 import AddCabal
-import BumpPkgs
 import BuildPkgs
+import BumpPkgs
 import IdxUpdate
+import ListPkgs
 import Updates
 import Utils
-import ListPkgs
 
 import Paths_cblrepo
 
 import Control.Monad
+import Control.Monad.Trans.Reader
+import Distribution.Text
 import System.Console.CmdArgs
 import System.Directory
 import System.FilePath
-import Control.Monad.Trans.Reader
-import Distribution.Text
 
 -- {{{1 command line arguments
 cmdAddBasePkg = AddBasePkg
@@ -40,11 +40,11 @@ cmdBuildPkgs = BuildPkgs
     } &= name "build"
 
 cmdIdxUpdate = IdxUpdate
-    { appDir = def &= ignore
+    { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     }
 
 cmdUpdates = Updates
-    { appDir = def &= ignore
+    { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     } &= name "updates"
 
 cmdListPkgs = ListPkgs
@@ -77,6 +77,6 @@ main = do
             AddPkg {} -> runReaderT addCabal c'
             BumpPkgs {} -> runReaderT bumpPkgs c'
             BuildPkgs {} -> runReaderT buildPkgs c'
-            IdxUpdate {} -> getAppUserDataDirectory progName >>= idxUpdate
-            Updates {} -> getAppUserDataDirectory progName >>= updates
+            IdxUpdate {} -> runReaderT idxUpdate c'
+            Updates {} -> runReaderT updates c'
             ListPkgs {} -> runReaderT listPkgs c'

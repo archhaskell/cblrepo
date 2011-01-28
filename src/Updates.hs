@@ -1,27 +1,32 @@
 module Updates where
 
 import PkgDB
+import Utils
 
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip
 import Control.Monad
-import System.FilePath
-import qualified Data.ByteString.Lazy.Char8 as BS
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Reader
 import Data.Maybe
 import Distribution.Text
 import Distribution.Version
+import System.FilePath
+import qualified Data.ByteString.Lazy.Char8 as BS
 
-updates dn = do
-    entries <- liftM (Tar.read . GZip.decompress)
-        (BS.readFile $ dn </> "00-index.tar.gz")
-    db <- readDb $ dn </> "cblrepo.db"
+updates :: ReaderT Cmds IO ()
+updates = do
+    aD <- cfgGet appDir
+    entries <- liftIO $ liftM (Tar.read . GZip.decompress)
+        (BS.readFile $ aD </> "00-index.tar.gz")
+    db <- liftIO $ readDb $ aD </> dbName
     let nonBasePkgs = filter (\ (_, (_, ds)) -> not $ null ds) db
     let pkgsNVers = map (\ (p, (v, _)) -> (p, v)) nonBasePkgs
     let availPkgs = catMaybes $ eMap extractPkgVer entries
     let outdated = filter
             (\ (p, v) -> maybe False (> v) (latestVer p availPkgs))
             pkgsNVers
-    mapM_ (flip printOutdated availPkgs) outdated
+    liftIO $ mapM_ (flip printOutdated availPkgs) outdated
 
 type PkgVer = (String, Version)
 
