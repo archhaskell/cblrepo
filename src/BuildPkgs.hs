@@ -3,11 +3,11 @@ module BuildPkgs where
 import PkgDB
 import Utils
 
+import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Reader
 import Data.List
 import Data.Maybe
-import Control.Monad
 import System.FilePath
 
 buildPkgs :: ReaderT Cmds IO ()
