@@ -22,35 +22,42 @@ import System.FilePath
 cmdAddBasePkg = AddBasePkg
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     , pkgVers = def &= args &= typ "STRING,STRING"
-    } &= name "addbasepkg"
+    } &= name "addbasepkg" &= help "add base packages" &= details
+        [ "The format for a package is <name>,<version>." ]
 
 cmdAddPkg = AddPkg
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     , cbls = def &= args &= typ "CABAL"
-    } &= name "add"
+    } &= name "add" &= help "add a package from a Cabal file" &= details
+        [ "There are three ways to specify the location of the Cabal file:"
+        , " 1. The filename of the Cabal file."
+        , " 2. A URL where the Cabal can be found (for file:// URLs the full absolute path is required)."
+        , " 3. A pair, <name>,<version>, will load the Cabal file out of an index file (see idxupdate)"
+        , "All three format may be mixed on the command line."
+        ]
 
 cmdBumpPkgs = BumpPkgs
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     , pkgs = def &= args &= typ "PKG"
-    } &= name "bump"
+    } &= name "bump" &= help "list packages that need bumping"
 
 cmdBuildPkgs = BuildPkgs
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     , pkgs = def &= args &= typ "PKG"
-    } &= name "build"
+    } &= name "build" &= help "list packages that need rebuilding, in order"
 
 cmdIdxUpdate = IdxUpdate
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
-    }
+    } &= help "update the index"
 
 cmdUpdates = Updates
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
-    } &= name "updates"
+    } &= name "updates" &= help "check for availabale updates"
 
 cmdListPkgs = ListPkgs
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     , incBase = False &= help "include base packages in listing"
-    } &= name "list"
+    } &= name "list" &= help "list packages in repo"
 
 cmds = cmdArgsMode $ modes
     [ cmdAddBasePkg
@@ -62,7 +69,7 @@ cmds = cmdArgsMode $ modes
     , cmdListPkgs
     ]
     &= program progName
-    &= summary ("CblRepo v" ++ (display version))
+    &= summary (progName ++ " v" ++ (display version))
     &= help "maintain a database of dependencies of CABAL packages"
 
 -- {{{1 main
