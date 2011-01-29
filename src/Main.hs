@@ -5,6 +5,7 @@ import AddCabal
 import BuildPkgs
 import BumpPkgs
 import IdxUpdate
+import IdxVersion
 import ListPkgs
 import Updates
 import Utils
@@ -52,6 +53,11 @@ cmdIdxUpdate = IdxUpdate
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     } &= help "update the index"
 
+cmdIdxVersion = IdxVersion
+    { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
+    , pkgs = def &= args &= typ "PKG"
+    } &= help "list available versions"
+
 cmdUpdates = Updates
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     } &= name "updates" &= help "check for availabale updates"
@@ -67,6 +73,7 @@ cmds = cmdArgsMode $ modes
     , cmdBumpPkgs
     , cmdBuildPkgs
     , cmdIdxUpdate
+    , cmdIdxVersion
     , cmdUpdates
     , cmdListPkgs
     ]
@@ -87,5 +94,6 @@ main = do
             BumpPkgs {} -> runReaderT bumpPkgs c'
             BuildPkgs {} -> runReaderT buildPkgs c'
             IdxUpdate {} -> runReaderT idxUpdate c'
+            IdxVersion {} -> runReaderT idxVersion c'
             Updates {} -> runReaderT updates c'
             ListPkgs {} -> runReaderT listPkgs c'

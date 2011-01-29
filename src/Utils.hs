@@ -33,6 +33,7 @@ data Cmds
     | BumpPkgs { appDir :: String, pkgs :: [String] }
     | BuildPkgs { appDir :: String, pkgs :: [String] }
     | IdxUpdate { appDir :: String }
+    | IdxVersion { appDir :: String, pkgs :: [String] }
     | Updates { appDir :: String }
     | ListPkgs { appDir :: String, incBase :: Bool }
     deriving (Show, Data, Typeable)
