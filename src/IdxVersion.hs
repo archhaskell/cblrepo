@@ -27,7 +27,7 @@ findVersions es p = (p, findV p es [])
         findV pkgName (Next e es) acc = let
                 eP = entryPath e
                 (ePkg:v:_) = splitDirectories eP
-            in if pkgName `isPrefixOf` eP
+            in if ('/' `elem` eP) && (pkgName == ePkg)
                 then findV pkgName es (v:acc)
                 else findV pkgName es acc
 
