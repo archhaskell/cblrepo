@@ -1,5 +1,5 @@
 name: cblrepo
-version: 0.1
+version: 0.1.999
 cabal-version: >= 1.6
 license: GPL
 copyright: Copyright (c) 2011 Magnus Therning
