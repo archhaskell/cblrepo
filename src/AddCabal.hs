@@ -36,9 +36,7 @@ addCabal = do
     let tmpDb = filter (\ p -> not $ pkgName p `elem` pkgNames) db
     case doAddCabal tmpDb genPkgs of
         Left (unSats, brksOthrs) -> liftIO (mapM_ printUnSat unSats >> mapM_ printBrksOth brksOthrs)
-        Right newDb -> liftIO $ do
-            putStrLn "Success"
-            unless dR $ saveDb newDb dbFn
+        Right newDb -> liftIO $ unless dR $ saveDb newDb dbFn
 
 data LocType = Url | Idx | File
 

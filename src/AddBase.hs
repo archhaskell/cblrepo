@@ -22,9 +22,7 @@ addBase = do
     db <- liftIO $ readDb dbFn
     case doAddBase db ps of
         Left brkOthrs -> liftIO $ mapM_ printBrksOth brkOthrs
-        Right newDb -> liftIO $ do
-            putStrLn "Success"
-            unless dR $ saveDb newDb dbFn
+        Right newDb -> liftIO $ unless dR $ saveDb newDb dbFn
 
 doAddBase db pkgs = let
         (_, fails) = partition (\ (n, v) -> canBeAdded db n v) pkgs
