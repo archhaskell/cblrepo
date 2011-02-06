@@ -9,6 +9,7 @@ import IdxVersion
 import ListPkgs
 import Updates
 import Utils
+import Urls
 
 import Paths_cblrepo
 
@@ -67,15 +68,22 @@ cmdListPkgs = ListPkgs
     , incBase = False &= help "include base packages in listing"
     } &= name "list" &= help "list packages in repo"
 
+cmdUrls = Urls
+    { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
+    , pkgVers = def &= args &= typ "STRING,STRING"
+    } &= help "list urls of cabal files for the given packages" &= details
+        [ "The format for a package is <name>,<version>." ]
+
 cmds = cmdArgsMode $ modes
     [ cmdAddBasePkg
     , cmdAddPkg
-    , cmdBumpPkgs
     , cmdBuildPkgs
+    , cmdBumpPkgs
     , cmdIdxUpdate
     , cmdIdxVersion
-    , cmdUpdates
     , cmdListPkgs
+    , cmdUpdates
+    , cmdUrls
     ]
     &= program progName
     &= summary (progName ++ " v" ++ (display version))
@@ -91,9 +99,10 @@ main = do
         case c' of
             AddBasePkg {} -> runReaderT addBase c'
             AddPkg {} -> runReaderT addCabal c'
-            BumpPkgs {} -> runReaderT bumpPkgs c'
             BuildPkgs {} -> runReaderT buildPkgs c'
+            BumpPkgs {} -> runReaderT bumpPkgs c'
             IdxUpdate {} -> runReaderT idxUpdate c'
             IdxVersion {} -> runReaderT idxVersion c'
-            Updates {} -> runReaderT updates c'
             ListPkgs {} -> runReaderT listPkgs c'
+            Updates {} -> runReaderT updates c'
+            Urls {} -> runReaderT urls c'

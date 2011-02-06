@@ -30,12 +30,13 @@ dbName = progName ++ ".db"
 data Cmds
     = AddBasePkg { appDir :: String, dryRun :: Bool, pkgVers :: [(String, String)] }
     | AddPkg { appDir :: String, dryRun :: Bool, cbls :: [FilePath] }
-    | BumpPkgs { appDir :: String, pkgs :: [String] }
     | BuildPkgs { appDir :: String, pkgs :: [String] }
+    | BumpPkgs { appDir :: String, pkgs :: [String] }
     | IdxUpdate { appDir :: String }
     | IdxVersion { appDir :: String, pkgs :: [String] }
-    | Updates { appDir :: String }
     | ListPkgs { appDir :: String, incBase :: Bool }
+    | Updates { appDir :: String }
+    | Urls { appDir :: String, pkgVers :: [(String, String)] }
     deriving (Show, Data, Typeable)
 
 cfgGet f = liftM f ask
