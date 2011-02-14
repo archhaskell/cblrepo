@@ -23,6 +23,7 @@ import System.FilePath
 -- {{{1 command line arguments
 cmdAddBasePkg = AddBasePkg
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
+    , dbFile = "cblrepo.db" &= explicit &= name "db" &= help "package database" &= typFile
     , dryRun = False &= explicit &= name "n" &= help "dry run"
     , pkgVers = def &= args &= typ "STRING,STRING"
     } &= name "addbasepkg" &= help "add base packages" &= details
@@ -30,6 +31,7 @@ cmdAddBasePkg = AddBasePkg
 
 cmdAddPkg = AddPkg
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
+    , dbFile = "cblrepo.db" &= explicit &= name "db" &= help "package database" &= typFile
     , dryRun = False &= explicit &= name "n" &= help "dry run"
     , cbls = def &= args &= typ "CABAL"
     } &= name "add" &= help "add a package from a Cabal file" &= details
@@ -42,11 +44,13 @@ cmdAddPkg = AddPkg
 
 cmdBumpPkgs = BumpPkgs
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
+    , dbFile = "cblrepo.db" &= explicit &= name "db" &= help "package database" &= typFile
     , pkgs = def &= args &= typ "PKG"
     } &= name "bump" &= help "list packages that need bumping"
 
 cmdBuildPkgs = BuildPkgs
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
+    , dbFile = "cblrepo.db" &= explicit &= name "db" &= help "package database" &= typFile
     , pkgs = def &= args &= typ "PKG"
     } &= name "build" &= help "list packages that need rebuilding, in order"
 
@@ -61,10 +65,12 @@ cmdIdxVersion = IdxVersion
 
 cmdUpdates = Updates
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
+    , dbFile = "cblrepo.db" &= explicit &= name "db" &= help "package database" &= typFile
     } &= name "updates" &= help "check for availabale updates"
 
 cmdListPkgs = ListPkgs
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
+    , dbFile = "cblrepo.db" &= explicit &= name "db" &= help "package database" &= typFile
     , incBase = False &= help "include base packages in listing"
     } &= name "list" &= help "list packages in repo"
 

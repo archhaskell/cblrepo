@@ -27,7 +27,7 @@ import qualified Distribution.Package as P
 
 addCabal :: ReaderT Cmds IO ()
 addCabal = do
-    dbFn <- liftM (</> dbName) $ cfgGet appDir
+    dbFn <- cfgGet dbFile
     db <- liftIO $ readDb dbFn
     cbls <- cfgGet cbls
     dR <- cfgGet dryRun

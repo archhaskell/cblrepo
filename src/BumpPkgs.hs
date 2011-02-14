@@ -12,7 +12,7 @@ import System.FilePath
 
 bumpPkgs :: ReaderT Cmds IO ()
 bumpPkgs = do
-    db <- liftM (</> dbName) (cfgGet appDir) >>= liftIO . readDb
+    db <- cfgGet dbFile >>= liftIO . readDb
     pkgs <- cfgGet pkgs
     liftIO $ mapM_ putStrLn $ transDependants db pkgs
 

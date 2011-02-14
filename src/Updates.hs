@@ -16,10 +16,10 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 
 updates :: ReaderT Cmds IO ()
 updates = do
+    db <- cfgGet dbFile >>= liftIO . readDb
     aD <- cfgGet appDir
     entries <- liftIO $ liftM (Tar.read . GZip.decompress)
         (BS.readFile $ aD </> "00-index.tar.gz")
-    db <- liftIO $ readDb $ aD </> dbName
     let nonBasePkgs = filter (\ (_, (_, ds)) -> not $ null ds) db
     let pkgsNVers = map (\ (p, (v, _)) -> (p, v)) nonBasePkgs
     let availPkgs = catMaybes $ eMap extractPkgVer entries

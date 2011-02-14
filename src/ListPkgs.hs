@@ -13,7 +13,7 @@ import System.FilePath
 listPkgs :: ReaderT Cmds IO ()
 listPkgs = do
     iB <- cfgGet incBase
-    db <- liftM (</> dbName) (cfgGet appDir) >>= liftIO . readDb
+    db <- cfgGet dbFile >>= liftIO . readDb
     let pkgs = if not iB
             then filter (not . isBasePkg) db
             else db

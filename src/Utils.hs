@@ -28,15 +28,15 @@ dbName = progName ++ ".db"
 
 -- {{{1 command line argument type
 data Cmds
-    = AddBasePkg { appDir :: String, dryRun :: Bool, pkgVers :: [(String, String)] }
-    | AddPkg { appDir :: String, dryRun :: Bool, cbls :: [FilePath] }
-    | BuildPkgs { appDir :: String, pkgs :: [String] }
-    | BumpPkgs { appDir :: String, pkgs :: [String] }
-    | IdxSync { appDir :: String }
-    | IdxVersion { appDir :: String, pkgs :: [String] }
-    | ListPkgs { appDir :: String, incBase :: Bool }
-    | Updates { appDir :: String }
-    | Urls { appDir :: String, pkgVers :: [(String, String)] }
+    = AddBasePkg { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, pkgVers :: [(String, String)] }
+    | AddPkg { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, cbls :: [FilePath] }
+    | BuildPkgs { appDir :: FilePath, dbFile :: FilePath, pkgs :: [String] }
+    | BumpPkgs { appDir :: FilePath, dbFile :: FilePath, pkgs :: [String] }
+    | IdxSync { appDir :: FilePath }
+    | IdxVersion { appDir :: FilePath, pkgs :: [String] }
+    | ListPkgs { appDir :: FilePath, dbFile :: FilePath, incBase :: Bool }
+    | Updates { appDir :: FilePath, dbFile :: FilePath }
+    | Urls { appDir :: FilePath, pkgVers :: [(String, String)] }
     deriving (Show, Data, Typeable)
 
 cfgGet f = liftM f ask

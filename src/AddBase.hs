@@ -18,7 +18,7 @@ addBase = do
     dR <- cfgGet dryRun
     guard $ isJust $ (sequence $ map (simpleParse . snd) pkgs :: Maybe [Version])
     let ps = map (\ (n, v) -> (n, fromJust $ simpleParse v)) pkgs
-    dbFn <- liftM (</> dbName) $ cfgGet appDir
+    dbFn <- cfgGet dbFile
     db <- liftIO $ readDb dbFn
     case doAddBase db ps of
         Left brkOthrs -> liftIO $ mapM_ printBrksOth brkOthrs
