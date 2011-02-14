@@ -4,7 +4,7 @@ import AddBase
 import AddCabal
 import BuildPkgs
 import BumpPkgs
-import IdxUpdate
+import IdxSync
 import IdxVersion
 import ListPkgs
 import Updates
@@ -50,7 +50,7 @@ cmdBuildPkgs = BuildPkgs
     , pkgs = def &= args &= typ "PKG"
     } &= name "build" &= help "list packages that need rebuilding, in order"
 
-cmdIdxUpdate = IdxUpdate
+cmdIdxSync = IdxSync
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     } &= help "update the index"
 
@@ -79,7 +79,7 @@ cmds = cmdArgsMode $ modes
     , cmdAddPkg
     , cmdBuildPkgs
     , cmdBumpPkgs
-    , cmdIdxUpdate
+    , cmdIdxSync
     , cmdIdxVersion
     , cmdListPkgs
     , cmdUpdates
@@ -101,7 +101,7 @@ main = do
             AddPkg {} -> runReaderT addCabal c'
             BuildPkgs {} -> runReaderT buildPkgs c'
             BumpPkgs {} -> runReaderT bumpPkgs c'
-            IdxUpdate {} -> runReaderT idxUpdate c'
+            IdxSync {} -> runReaderT idxSync c'
             IdxVersion {} -> runReaderT idxVersion c'
             ListPkgs {} -> runReaderT listPkgs c'
             Updates {} -> runReaderT updates c'

@@ -1,4 +1,4 @@
-module IdxUpdate where
+module IdxSync where
 
 import Utils
 
@@ -8,8 +8,8 @@ import Data.ByteString as BS
 import Network.Download
 import System.FilePath
 
-idxUpdate :: ReaderT Cmds IO ()
-idxUpdate = do
+idxSync :: ReaderT Cmds IO ()
+idxSync = do
     aD <- cfgGet appDir
     r <- liftIO $ openURI "http://hackage.haskell.org/packages/archive/00-index.tar.gz"
     liftIO $ either (\ e -> error e) (\ b -> BS.writeFile (aD </> "00-index.tar.gz") b) r

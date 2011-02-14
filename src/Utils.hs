@@ -32,7 +32,7 @@ data Cmds
     | AddPkg { appDir :: String, dryRun :: Bool, cbls :: [FilePath] }
     | BuildPkgs { appDir :: String, pkgs :: [String] }
     | BumpPkgs { appDir :: String, pkgs :: [String] }
-    | IdxUpdate { appDir :: String }
+    | IdxSync { appDir :: String }
     | IdxVersion { appDir :: String, pkgs :: [String] }
     | ListPkgs { appDir :: String, incBase :: Bool }
     | Updates { appDir :: String }
