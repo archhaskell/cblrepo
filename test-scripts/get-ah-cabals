@@ -5,7 +5,7 @@ habsdir=$1
 for d in ${habsdir}/habs/*; do
     . ${d}/PKGBUILD
     case $_hkgname in
-        (datetime|haskell-platform)
+        (datetime|haskell-platform|yi)
             ;;
         (*)
             echo ${_hkgname},${pkgver}
