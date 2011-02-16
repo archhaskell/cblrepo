@@ -4,8 +4,7 @@ import Utils
 import PkgDB
 
 import Control.Monad
-import Control.Monad.IO.Class
-import Control.Monad.Trans.Reader
+import Control.Monad.Reader
 import Data.Maybe
 import Distribution.Text
 import System.FilePath

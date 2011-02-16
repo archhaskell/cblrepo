@@ -3,7 +3,7 @@
 module Utils where
 
 import Control.Monad
-import Control.Monad.Trans.Reader
+import Control.Monad.Reader
 import Data.Data
 import Data.Typeable
 import Distribution.Package

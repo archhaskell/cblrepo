@@ -6,8 +6,7 @@ import Utils
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip
 import Control.Monad
-import Control.Monad.IO.Class
-import Control.Monad.Trans.Reader
+import Control.Monad.Reader
 import Data.Maybe
 import Distribution.Text
 import Distribution.Version

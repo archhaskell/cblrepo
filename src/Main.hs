@@ -14,7 +14,7 @@ import Urls
 import Paths_cblrepo
 
 import Control.Monad
-import Control.Monad.Trans.Reader
+import Control.Monad.Reader
 import Distribution.Text
 import System.Console.CmdArgs
 import System.Directory

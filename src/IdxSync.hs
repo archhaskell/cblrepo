@@ -2,8 +2,7 @@ module IdxSync where
 
 import Utils
 
-import Control.Monad.IO.Class
-import Control.Monad.Trans.Reader
+import Control.Monad.Reader
 import Data.ByteString as BS
 import Network.Download
 import System.FilePath

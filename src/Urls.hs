@@ -2,8 +2,7 @@ module Urls where
 
 import Utils
 
-import Control.Monad.Trans.Reader
-import Control.Monad.IO.Class
+import Control.Monad.Reader
 
 urls :: ReaderT Cmds IO ()
 urls = do
