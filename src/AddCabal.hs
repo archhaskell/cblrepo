@@ -23,6 +23,8 @@ import System.Directory
 import System.FilePath
 import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Distribution.Package as P
+import System.Posix.Files
+import System.Unix.Directory
 
 addCabal :: ReaderT Cmds IO ()
 addCabal = do
@@ -30,7 +32,7 @@ addCabal = do
     db <- liftIO $ readDb dbFn
     cbls <- cfgGet cbls
     dR <- cfgGet dryRun
-    genPkgs <- liftIO $ mapM readCabal cbls
+    genPkgs <- liftIO $ mapM (\ c -> withTemporaryDirectory "/tmp/cblrepo." (readCabal c)) cbls
     let pkgNames = map ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) genPkgs
     let tmpDb = filter (\ p -> not $ pkgName p `elem` pkgNames) db
     case doAddCabal tmpDb genPkgs of
@@ -39,26 +41,26 @@ addCabal = do
 
 data LocType = Url | Idx | File
 
-readCabal loc = let
+readCabal loc tmpDir = let
         locType
             | isInfixOf "://" loc = Url
             | ',' `elem` loc = Idx
             | otherwise = File
 
-        readFile = readPackageDescription silent loc
+        copyCabal tmpDir loc = copyFile loc fn >> return fn
+            where fn = tmpDir </> takeFileName loc
 
-        readURI = do
-            r <- runErrorT $ getFromURL loc
-            case r of
-                Left e -> error e
-                Right cbl -> case parsePackageDescription cbl of
-                    ParseFailed e -> error $ show e
-                    ParseOk _ pd -> return pd
+        downloadCabal tmpDir loc = let
+                fn = tmpDir </> takeFileName loc
+            in do
+                r <- runErrorT $ getFromURL loc
+                either error (\ cbl -> writeFile fn cbl >> return fn) r
 
-        readIdx = let
+        extractCabal tmpDir loc = let
                 (p, (_: v)) = span (/= ',') loc
                 path = p </> v </> p ++ ".cabal"
                 pkgStr = p ++ " " ++ v
+                fn = tmpDir </> (p ++ ".cabal")
 
                 esFindEntry p (Next e es) = if p == (entryPath e)
                     then Just e
@@ -81,14 +83,38 @@ readCabal loc = let
                 cbl <- maybe (error $ "Failed to extract contents for " ++ pkgStr)
                     return
                     (eGetContent e)
-                case parsePackageDescription cbl of
-                    ParseFailed e -> error $ show e
-                    ParseOk _ pd -> return pd
+                writeFile fn cbl
+                return fn
 
-    in case locType of
-        Url -> readURI
-        File -> readFile
-        Idx -> readIdx
+        extractName fn = liftM name $ readPackageDescription silent fn
+            where
+                packageName (P.PackageName s) = s
+                name = packageName . P.pkgName . package . packageDescription
+
+        applyPatch oFn pFn = let
+                doApply = liftIO (myReadProcess "patch" [oFn, pFn] "") >>= (\ r ->
+                    either
+                        (\ _ -> throwError $ "Unable to patch " ++ oFn)
+                        (\ _ -> liftIO $ return ())
+                        r)
+            in do
+                r <- runErrorT $ doApply
+                case r of
+                    Left e -> error e
+                    Right _ -> return ()
+
+    in do
+        fn <- case locType of
+            File -> copyCabal tmpDir loc
+            Idx -> extractCabal tmpDir loc
+            Url -> downloadCabal tmpDir loc
+        pn <- extractName fn
+        let patchName = "patch.cabal." ++ pn
+        doPatch <- fileExist patchName
+        if doPatch
+            then applyPatch fn patchName
+            else return ()
+        readPackageDescription silent fn
 
 doAddCabal db pkgs = let
         (succs, fails) = partition (canBeAdded db) pkgs
