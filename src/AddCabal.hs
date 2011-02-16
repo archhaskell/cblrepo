@@ -6,6 +6,7 @@ import Utils
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip
 import Control.Monad
+import Control.Monad.Error
 import Control.Monad.Reader
 import Data.List
 import Data.Maybe
@@ -18,7 +19,6 @@ import Distribution.System
 import Distribution.Text
 import Distribution.Verbosity
 import Distribution.Version
-import Network.Download
 import System.Directory
 import System.FilePath
 import qualified Data.ByteString.Lazy.Char8 as BS
@@ -48,12 +48,13 @@ readCabal loc = let
         readFile = readPackageDescription silent loc
 
         readURI = do
-            r <- openURIString loc
+            r <- runErrorT $ getFromURL loc
             case r of
                 Left e -> error e
                 Right cbl -> case parsePackageDescription cbl of
                     ParseFailed e -> error $ show e
                     ParseOk _ pd -> return pd
+
         readIdx = let
                 (p, (_: v)) = span (/= ',') loc
                 path = p </> v </> p ++ ".cabal"

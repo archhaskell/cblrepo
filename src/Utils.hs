@@ -1,13 +1,18 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-
 module Utils where
 
+import Control.Concurrent
 import Control.Monad
+import Control.Monad.Error
 import Control.Monad.Reader
 import Data.Data
 import Data.Typeable
 import Distribution.Package
 import Distribution.Text
+import System.Exit
+import System.IO
+import System.Process
+import qualified Control.Exception as CE
 
 -- {{{1 Dependency
 depName (Dependency (PackageName n) _) = n
@@ -40,3 +45,44 @@ data Cmds
     deriving (Show, Data, Typeable)
 
 cfgGet f = liftM f ask
+
+-- {{{1 URL and process stuff
+-- taken from cabal2arch
+getFromURL :: String -> ErrorT String IO String
+getFromURL url = liftIO (myReadProcess "curl" ["-f", url] "") >>= (\ r ->
+    either
+    (\ _ -> throwError $ "Unable to retrieve " ++ url)
+    (\ s -> liftIO $ return s)
+    r)
+
+myReadProcess :: FilePath -- ^ command to run
+    -> [String] -- ^ any arguments
+    -> String -- ^ standard input
+    -> IO (Either (ExitCode, String, String) String) -- ^ either the stdout, or an exitcode and any output
+
+myReadProcess cmd _args input = CE.handle (return . handler) $ do
+    (inh, outh, errh, pid) <- runInteractiveProcess cmd _args Nothing Nothing
+
+    output  <- hGetContents outh
+    outMVar <- newEmptyMVar
+    _ <- forkIO $ (CE.evaluate (length output) >> putMVar outMVar ())
+
+    errput  <- hGetContents errh
+    errMVar <- newEmptyMVar
+    _ <- forkIO $ (CE.evaluate (length errput) >> putMVar errMVar ())
+
+    when (not (null input)) $ hPutStr inh input
+    takeMVar outMVar
+    takeMVar errMVar
+    ex <- CE.catch (waitForProcess pid) ((const :: a -> CE.SomeException -> a) $ return ExitSuccess)
+    hClose outh
+    hClose inh -- done with stdin
+    hClose errh -- ignore stderr
+
+    return $ case ex of
+        ExitSuccess   -> Right output
+        ExitFailure _ -> Left (ex, errput, output)
+
+    where
+        handler (ExitFailure e) = Left (ExitFailure e,"","")
+        handler e = Left (ExitFailure 1, show e, "")
