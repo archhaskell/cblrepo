@@ -48,8 +48,8 @@ cfgGet f = liftM f ask
 
 -- {{{1 URL and process stuff
 -- taken from cabal2arch
-getFromURL :: String -> ErrorT String IO String
-getFromURL url = liftIO (myReadProcess "curl" ["-f", url] "") >>= (\ r ->
+getFromURL :: String -> FilePath -> ErrorT String IO String
+getFromURL url fn = liftIO (myReadProcess "curl" ["-f", "-o", fn, url] "") >>= (\ r ->
     either
     (\ _ -> throwError $ "Unable to retrieve " ++ url)
     (\ s -> liftIO $ return s)
@@ -59,7 +59,6 @@ myReadProcess :: FilePath -- ^ command to run
     -> [String] -- ^ any arguments
     -> String -- ^ standard input
     -> IO (Either (ExitCode, String, String) String) -- ^ either the stdout, or an exitcode and any output
-
 myReadProcess cmd _args input = CE.handle (return . handler) $ do
     (inh, outh, errh, pid) <- runInteractiveProcess cmd _args Nothing Nothing
 

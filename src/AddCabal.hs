@@ -53,8 +53,8 @@ readCabal loc tmpDir = let
         downloadCabal tmpDir loc = let
                 fn = tmpDir </> takeFileName loc
             in do
-                r <- runErrorT $ getFromURL loc
-                either error (\ cbl -> writeFile fn cbl >> return fn) r
+                r <- runErrorT $ getFromURL loc fn
+                either error (\ _ -> return fn) r
 
         extractCabal tmpDir loc = let
                 (p, (_: v)) = span (/= ',') loc
