@@ -25,6 +25,9 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Distribution.Package as P
 import System.Posix.Files
 import System.Unix.Directory
+import System.Process
+import System.Exit
+import System.IO
 
 addCabal :: ReaderT Cmds IO ()
 addCabal = do
@@ -50,11 +53,9 @@ readCabal loc tmpDir = let
         copyCabal tmpDir loc = copyFile loc fn >> return fn
             where fn = tmpDir </> takeFileName loc
 
-        downloadCabal tmpDir loc = let
+        downloadCabal tmpDir loc = getFromURL loc fn >> return fn
+            where
                 fn = tmpDir </> takeFileName loc
-            in do
-                r <- runErrorT $ getFromURL loc fn
-                either error (\ _ -> return fn) r
 
         extractCabal tmpDir loc = let
                 (p, (_: v)) = span (/= ',') loc
@@ -91,17 +92,11 @@ readCabal loc tmpDir = let
                 packageName (P.PackageName s) = s
                 name = packageName . P.pkgName . package . packageDescription
 
-        applyPatch oFn pFn = let
-                doApply = liftIO (myReadProcess "patch" [oFn, pFn] "") >>= (\ r ->
-                    either
-                        (\ _ -> throwError $ "Unable to patch " ++ oFn)
-                        (\ _ -> liftIO $ return ())
-                        r)
-            in do
-                r <- runErrorT $ doApply
-                case r of
-                    Left e -> error e
-                    Right _ -> return ()
+        applyPatch oFn pFn = do
+            (ec, _, err) <- readProcessWithExitCode "patch" [oFn, pFn] ""
+            case ec of
+                ExitSuccess -> return ()
+                ExitFailure _ -> hPutStrLn stderr "Failed patching the .cabal file" >> exitFailure
 
     in do
         fn <- case locType of
