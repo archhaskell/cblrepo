@@ -1,4 +1,4 @@
-[_] 70% Commands
+[_] 80% Commands
 	[X] addebasepkg (<pkg name>,<version>)+
 		Description
 			: Add a package without dependencies to the database.
@@ -81,6 +81,9 @@
 			: List all packages
 		Steps
 		Errors
+	[X] idxversion <pkg name>+
+		Description
+			: List the available versions of the named packages.
 	[_] del <pkg name>
 		Description
 			: Delete a package from the database.
@@ -93,6 +96,6 @@
 	[_] dump
 		Description
 			: Dump the database.
-	[_] idxversions <pkg name>+
+	[_] pkgbuild <pkg name>
 		Description
-			: List the available versions of the named packages.
+			: Create the files necessary for an Arch source package.
