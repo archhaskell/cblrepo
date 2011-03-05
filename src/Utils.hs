@@ -66,7 +66,7 @@ getFromURL url fn = do
             hPutStrLn stderr er
             exitFailure
 
--- {{{1 manipulations of Cabal files
+-- {{{1 readCabal
 data LocType = Url | Idx | File
 
 -- | Read in a Cabal file.
@@ -135,3 +135,16 @@ readCabal patchDir loc tmpDir = let
         return patchFn
         fileExist patchFn >>= flip when (applyPatch cblFn patchFn)
         readPackageDescription silent cblFn
+
+-- {{{1 allPatches
+allPatches pn patchDir = let
+        cblPatch = patchDir </> "patch.cabal." ++ pn
+        pkgPatch = patchDir </> "patch.pkgbuild." ++ pn
+        bldPatch = patchDir </> "patch.build." ++ pn
+    in do
+        cE <- fileExist cblPatch
+        pE <- fileExist pkgPatch
+        bE <- fileExist bldPatch
+        return (if cE then Just cblPatch else Nothing,
+            if pE then Just pkgPatch else Nothing,
+            if bE then Just bldPatch else Nothing)
