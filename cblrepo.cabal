@@ -29,8 +29,9 @@ executable cblrepo
 executable tests
     hs-source-dirs: tst src
     main-is: tst.hs
+    other-modules: TestSystem TestPkgDB
     if flag(BuildTests)
         build-depends: base ==4.2.*, test-framework-th ==0.1.*, HUnit ==1.2.*,
-            test-framework-hunit ==0.2.*
+            test-framework-hunit ==0.2.*, test-framework ==0.3.*
     else
         buildable: False
