@@ -96,6 +96,18 @@
 	[_] dump
 		Description
 			: Dump the database.
-	[_] pkgbuild <pkg name>
+	[_] pkgbuild <pkg name>+
 		Description
 			: Create the files necessary for an Arch source package.
+		Steps
+			: 1. Extract version name from the DB
+			: 2. load Cabal file
+			: 3. convert it to a PKGBUILD + .install
+			:   - apply Cabal patch
+			:   - finalize PD
+			:   - translate, including getting specific dependencies
+			:   - generate PKGBUILD and apply patch
+			: 4. save all files into the output dir
+		Comments
+			: Should the output be like that produced by cabal2arch, or should
+			: it create a source bundle (as produced by 'makepkg --source')?
