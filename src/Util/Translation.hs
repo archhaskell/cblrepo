@@ -1,4 +1,4 @@
-module ArchLnx.Translation where
+module Util.Translation where
 
 --
 import AddCabal
@@ -7,7 +7,7 @@ import Distribution.Verbosity
 --
 
 import PkgDB as DB
-import Utils
+import Util.Misc
 
 import Data.Monoid
 import Text.PrettyPrint.ANSI.Leijen hiding((</>))

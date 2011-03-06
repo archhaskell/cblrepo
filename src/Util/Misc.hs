@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-module Utils where
+module Util.Misc where
 
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip

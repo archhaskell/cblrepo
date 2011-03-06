@@ -1,7 +1,7 @@
 module AddBase where
 
 import PkgDB
-import Utils
+import Util.Misc
 
 import Control.Monad
 import Control.Monad.Reader

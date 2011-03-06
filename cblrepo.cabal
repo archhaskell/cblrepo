@@ -19,7 +19,7 @@ flag BuildTests
 executable cblrepo
     hs-source-dirs: src
     main-is: Main.hs
-    other-modules: Utils PkgDB AddBase AddCabal BumpPkgs BuildPkgs IdxSync
+    other-modules: Util.Misc PkgDB AddBase AddCabal BumpPkgs BuildPkgs IdxSync
         IdxVersion Updates ListPkgs Urls
     build-depends: base ==4.2.*, cmdargs ==0.6.*, filepath ==1.1.*,
         directory ==1.0.*, Cabal ==1.8.*, json ==0.4.*,

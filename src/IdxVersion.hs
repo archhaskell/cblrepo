@@ -1,6 +1,6 @@
 module IdxVersion where
 
-import Utils
+import Util.Misc
 
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip

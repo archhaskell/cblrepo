@@ -1,6 +1,6 @@
 module PkgDB where
 
-import Utils
+import Util.Misc
 
 import Control.Exception as CE
 import Data.List

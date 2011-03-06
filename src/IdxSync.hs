@@ -1,6 +1,6 @@
 module IdxSync where
 
-import Utils
+import Util.Misc
 
 import Control.Monad.Reader
 import System.FilePath

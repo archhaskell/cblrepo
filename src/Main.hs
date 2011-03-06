@@ -8,7 +8,7 @@ import IdxSync
 import IdxVersion
 import ListPkgs
 import Updates
-import Utils
+import Util.Misc
 import Urls
 
 import Paths_cblrepo

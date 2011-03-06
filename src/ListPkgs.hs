@@ -1,6 +1,6 @@
 module ListPkgs where
 
-import Utils
+import Util.Misc
 import PkgDB
 
 import Control.Monad
