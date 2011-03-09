@@ -33,9 +33,10 @@ addCabal :: ReaderT Cmds IO ()
 addCabal = do
     dbFn <- cfgGet dbFile
     db <- liftIO $ readDb dbFn
+    pD <- cfgGet patchDir
     cbls <- cfgGet cbls
     dR <- cfgGet dryRun
-    genPkgs <- liftIO $ mapM (\ c -> withTemporaryDirectory "/tmp/cblrepo." (readCabal "patches" c)) cbls
+    genPkgs <- liftIO $ mapM (\ c -> withTemporaryDirectory "/tmp/cblrepo." (readCabal pD c)) cbls
     let pkgNames = map ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) genPkgs
     let tmpDb = filter (\ p -> not $ pkgName p `elem` pkgNames) db
     case doAddCabal tmpDb genPkgs of

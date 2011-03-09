@@ -32,6 +32,7 @@ cmdAddBasePkg = AddBasePkg
 cmdAddPkg = AddPkg
     { appDir = def &= explicit &= name "appdir" &= help "application data directory" &= typDir
     , dbFile = "cblrepo.db" &= explicit &= name "db" &= help "package database" &= typFile
+    , patchDir = "patches" &= explicit &= name "patchdir" &= help "location of patches" &= typDir
     , dryRun = False &= explicit &= name "n" &= help "dry run"
     , cbls = def &= args &= typ "CABAL"
     } &= name "add" &= help "add a package from a Cabal file" &= details
