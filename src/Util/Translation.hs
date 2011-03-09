@@ -52,55 +52,62 @@ instance Pretty a => Pretty (ShVar a) where
     pretty (ShVar n v) = text n <> char '=' <> pretty v
 
 -- {{{1 ArchPkg
+-- TODO: patches, flags
 data ArchPkg = ArchPkg
-    { apHkgName :: ShVar String
-    , apPkgName :: ShVar String
-    , apPkgVer :: ShVar Version
-    , apPkgRel :: ShVar Int
-    , apPkgDesc :: ShVar ShQuotedString
-    , apUrl :: ShVar ShQuotedString
-    , apLicence :: ShVar ShArray
-    , apMakeDepends :: ShVar ShArray
-    , apDepends :: ShVar ShArray
-    , apSource :: ShVar ShArray
-    , apInstall :: Maybe (ShVar ShQuotedString)
-    , apSha256Sums :: ShVar ShArray
+    { apPkgName :: String
+    , apHasLibrary :: Bool
+    -- shell bits
+    , apShHkgName :: ShVar String
+    , apShPkgName :: ShVar String
+    , apShPkgVer :: ShVar Version
+    , apShPkgRel :: ShVar Int
+    , apShPkgDesc :: ShVar ShQuotedString
+    , apShUrl :: ShVar ShQuotedString
+    , apShLicence :: ShVar ShArray
+    , apShMakeDepends :: ShVar ShArray
+    , apShDepends :: ShVar ShArray
+    , apShSource :: ShVar ShArray
+    , apShInstall :: Maybe (ShVar ShQuotedString)
+    , apShSha256Sums :: ShVar ShArray
     } deriving (Eq, Show)
 
 -- {{{2 baseArchPkg
 baseArchPkg = ArchPkg
-    { apHkgName = ShVar "_hkgname" ""
-    , apPkgName = ShVar "pkgname" ""
-    , apPkgVer = ShVar "pkgver" (Version [] [])
-    , apPkgRel = ShVar "pkgrel" 0
-    , apPkgDesc = ShVar "pkgdesc" (ShQuotedString "")
-    , apUrl = ShVar "url" (ShQuotedString "http://hackage.haskell.org/package/${_hkgname}")
-    , apLicence = ShVar "license" (ShArray [])
-    , apMakeDepends = ShVar "makedepends" (ShArray [])
-    , apDepends = ShVar "depends" (ShArray [])
-    , apSource = ShVar "source" (ShArray [])
-    , apInstall = Just $ ShVar "install" (ShQuotedString "${pkgname}.install")
+    { apPkgName = ""
+    , apHasLibrary = False
+    , apShHkgName = ShVar "_hkgname" ""
+    , apShPkgName = ShVar "pkgname" ""
+    , apShPkgVer = ShVar "pkgver" (Version [] [])
+    , apShPkgRel = ShVar "pkgrel" 0
+    , apShPkgDesc = ShVar "pkgdesc" (ShQuotedString "")
+    , apShUrl = ShVar "url" (ShQuotedString "http://hackage.haskell.org/package/${_hkgname}")
+    , apShLicence = ShVar "license" (ShArray [])
+    , apShMakeDepends = ShVar "makedepends" (ShArray [])
+    , apShDepends = ShVar "depends" (ShArray [])
+    , apShSource = ShVar "source" (ShArray ["http://hackage.haskell.org/packages/archive/${_hkgname}/${pkgver}/${_hkgname}-${pkgver}.tar.gz"])
+    , apShInstall = Just $ ShVar "install" (ShQuotedString "${pkgname}.install")
     -- this is a trick to make sure that the user's setting for integrity
     -- checking in makepkg.conf isn't used, as long as this array contains
     -- something non-empty it will overrule
-    , apSha256Sums = ShVar "sha256sums" (ShArray ["0"])
+    , apShSha256Sums = ShVar "sha256sums" (ShArray ["0"])
     }
 
 -- {{{2 Pretty instance
 instance Pretty ArchPkg where
     pretty (ArchPkg
-        { apHkgName = hgkName
-        , apPkgName = pkgName
-        , apPkgVer = pkgVer
-        , apPkgRel = pkgRel
-        , apPkgDesc = pkgDesc
-        , apUrl = url
-        , apLicence = pkgLicense
-        , apMakeDepends = makeDepends
-        , apDepends = depends
-        , apSource = source
-        , apInstall = install
-        , apSha256Sums = sha256sums
+        { apHasLibrary = hasLib
+        , apShHkgName = hgkName
+        , apShPkgName = pkgName
+        , apShPkgVer = pkgVer
+        , apShPkgRel = pkgRel
+        , apShPkgDesc = pkgDesc
+        , apShUrl = url
+        , apShLicence = pkgLicense
+        , apShMakeDepends = makeDepends
+        , apShDepends = depends
+        , apShSource = source
+        , apShInstall = install
+        , apShSha256Sums = sha256sums
         }) = vsep
             [ text "# custom variables"
             , pretty hgkName
@@ -119,13 +126,13 @@ instance Pretty ArchPkg where
             , maybe empty pretty install
             , pretty sha256sums
             , empty, text "# PKGBUILD functions"
-            , buildFunction
+            , if hasLib then libBuildFunction else exeBuildFunction
             , empty
-            , packageFunction
+            , if hasLib then libPackageFunction else exePackageFunction
             , empty
             ]
             where
-                buildFunction = text "build() {" <>
+                libBuildFunction = text "build() {" <>
                     nest 4 (empty <$>
                         text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
                         nest 4 (text "runhaskell Setup configure -O --enable-split-objs --enable-shared \\" <$>
@@ -139,7 +146,14 @@ instance Pretty ArchPkg where
                         ) <$>
                     char '}'
 
-                packageFunction = text "package() {" <>
+                exeBuildFunction = text "build() {" <>
+                    nest 4 (empty <$> text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
+                        text "runhaskell Setup configure --prefix=/usr --docdir=/usr/share/doc/${pkgname} -O" <$>
+                        text "runhaskell Setup build"
+                        ) <$>
+                    char '}'
+
+                libPackageFunction = text "package() {" <>
                     nest 4 (empty <$>
                         text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
                         text "install -D -m744 register.sh   ${pkgdir}/usr/share/haskell/${pkgname}/register.sh" <$>
@@ -152,6 +166,53 @@ instance Pretty ArchPkg where
                         ) <$>
                     char '}'
 
+                exePackageFunction = text "package() {" <>
+                    nest 4 (empty <$> text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
+                        text "runhaskell Setup copy --destdir=${pkgdir}"
+                        ) <$>
+                    char '}'
+
+-- {{{1 ArchInstall
+data ArchInstall = ArchInstall
+    { aiShPkgName :: ShVar String
+    } deriving (Eq, Show)
+
+-- {{{2 baseArchInstall
+baseArchInstall = ArchInstall
+    { aiShPkgName = ShVar "_pkgname" ""
+    }
+
+-- {{{2 ArchInstall from ArchPackage
+aiFromAP (ArchPkg { apShPkgName = pkgName }) =
+    ArchInstall { aiShPkgName = pkgName }
+
+-- {{{2 Pretty instance
+instance Pretty ArchInstall where
+    pretty (ArchInstall
+        { aiShPkgName = pkgName
+        }) = vsep
+            [ text "# custom variables"
+            , pretty pkgName
+            , pretty (ShVar "HS_DIR" "usr/share/haskell/${_pkgname}")
+            , empty, text "# functions"
+            , postInstallFunction
+            , empty, preUpgradeFunction
+            , empty, postUpgradeFunction
+            , empty, preRemoveFunction
+            , empty, postRemoveFunction
+            ]
+            where
+                postInstallFunction = text "post_install() {" <>
+                    nest 4 (empty <$> text "${HS_DIR}/register.sh" <$>
+                        text "(cd usr/share/doc/ghc/html/libraries; ./gen_contents_index)") <$>
+                    char '}'
+                preUpgradeFunction = text "pre_upgrade() {" <>
+                    nest 4 (empty <$> text "${HS_DIR}/register.sh") <$>
+                    char '}'
+                postUpgradeFunction = postInstallFunction
+                preRemoveFunction = preUpgradeFunction
+                postRemoveFunction = postInstallFunction
+
 -- {{{1 extra instances
 instance Pretty Version where
     pretty (Version b _) = encloseSep empty empty (char '.') (map pretty b)
@@ -160,7 +221,7 @@ instance Pretty Version where
 -- TODO:
 --  • add flags
 --  • add patches to sources
-translate pd db = let
+translate db pd = let
         ap = baseArchPkg
         (PackageName hkgName) = packageName pd
         pkgVer = packageVersion pd
@@ -170,22 +231,22 @@ translate pd db = let
         pkgDesc = synopsis pd
         url = if null (homepage pd) then "http://hackage.haskell.org/package/${_hkgname}" else (homepage pd)
         lic = display (license pd)
-        makeDepends = if hasLib then [] else ["ghc=6.12.3"] ++ calcExactDeps db pd
-        depends = if hasLib then ["ghc=6.12.3"] ++ calcExactDeps db pd else []
-        src = "http://hackage.haskell.org/packages/archive/" ++ hkgName ++ "/" ++ display pkgVer ++ "/" ++ hkgName ++ ".cabal"
-        install = if hasLib then (apInstall ap) else Nothing
+        makeDepends = if hasLib then [] else ["ghc=7.0.2"] ++ calcExactDeps db pd
+        depends = if hasLib then ["ghc=7.0.2"] ++ calcExactDeps db pd else []
+        install = if hasLib then (apShInstall ap) else Nothing
     in ap
-        { apHkgName = shVarNewValue (apHkgName ap) hkgName
-        , apPkgName = shVarNewValue (apPkgName ap) archName
-        , apPkgVer = shVarNewValue (apPkgVer ap) pkgVer
-        , apPkgRel = shVarNewValue (apPkgRel ap) pkgRel
-        , apPkgDesc = shVarNewValue (apPkgDesc ap) (ShQuotedString pkgDesc)
-        , apUrl = shVarNewValue (apUrl ap) (ShQuotedString url)
-        , apLicence = shVarNewValue (apLicence ap) (ShArray [lic])
-        , apMakeDepends = shVarNewValue (apMakeDepends ap) (ShArray makeDepends)
-        , apDepends = shVarNewValue (apDepends ap) (ShArray depends)
-        , apSource = shVarNewValue (apSource ap) (ShArray [src])
-        , apInstall = install
+        { apPkgName = archName
+        , apHasLibrary = hasLib
+        , apShHkgName = shVarNewValue (apShHkgName ap) hkgName
+        , apShPkgName = shVarNewValue (apShPkgName ap) archName
+        , apShPkgVer = shVarNewValue (apShPkgVer ap) pkgVer
+        , apShPkgRel = shVarNewValue (apShPkgRel ap) pkgRel
+        , apShPkgDesc = shVarNewValue (apShPkgDesc ap) (ShQuotedString pkgDesc)
+        , apShUrl = shVarNewValue (apShUrl ap) (ShQuotedString url)
+        , apShLicence = shVarNewValue (apShLicence ap) (ShArray [lic])
+        , apShMakeDepends = shVarNewValue (apShMakeDepends ap) (ShArray makeDepends)
+        , apShDepends = shVarNewValue (apShDepends ap) (ShArray depends)
+        , apShInstall = install
         }
 
 -- Calculate exact dependencies based on the package in a CblDB.  We assume the
@@ -220,5 +281,5 @@ addHashes ap tmpDir = let
                 return ap
             ExitSuccess -> do
                 if "sha256sums=(" `isPrefixOf` out
-                    then return ap { apSha256Sums = shVarNewValue (apSha256Sums ap) (ShArray $ hashes out) }
+                    then return ap { apShSha256Sums = shVarNewValue (apShSha256Sums ap) (ShArray $ hashes out) }
                     else return ap

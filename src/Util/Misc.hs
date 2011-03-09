@@ -1,6 +1,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 module Util.Misc where
 
+import {-# SOURCE #-} PkgDB
+
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip
 import Control.Concurrent
@@ -10,11 +12,15 @@ import Control.Monad.Reader
 import Data.Data
 import Data.List
 import Data.Typeable
+import Distribution.Compiler
 import Distribution.Package
 import Distribution.PackageDescription
+import Distribution.PackageDescription.Configuration
 import Distribution.PackageDescription.Parse
+import Distribution.System
 import Distribution.Text
 import Distribution.Verbosity
+import Distribution.Version
 import System.Directory
 import System.Exit
 import System.FilePath
@@ -52,6 +58,7 @@ data Cmds
     | ListPkgs { appDir :: FilePath, dbFile :: FilePath, incBase :: Bool }
     | Updates { appDir :: FilePath, dbFile :: FilePath }
     | Urls { appDir :: FilePath, pkgVers :: [(String, String)] }
+    | PkgBuild { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, pkgs :: [String] }
     deriving (Show, Data, Typeable)
 
 defAddBasePkg = AddBasePkg "" "" True []
@@ -77,7 +84,8 @@ getFromURL url fn = do
             hPutStrLn stderr er
             exitFailure
 
--- {{{1 readCabal
+-- {{{1 package descriptions
+-- {{{2 readCabal
 data LocType = Url | Idx | File
 
 -- | Read in a Cabal file.
@@ -146,6 +154,21 @@ readCabal patchDir loc tmpDir = let
         return patchFn
         fileExist patchFn >>= flip when (applyPatch cblFn patchFn)
         readPackageDescription silent cblFn
+
+-- {{{2 finalising
+finalizePkg db = finalizePackageDescription
+    [] -- no flags
+    (checkAgainstDb db)
+    (Platform X86_64 buildOS) -- platform
+    (CompilerId GHC (Version [7,0,2] []))  -- compiler version
+    [] -- no additional constraints
+
+checkAgainstDb db dep = let
+        dN = depName dep
+        dVR = depVersionRange dep
+    in case lookupPkg db dN of
+        Nothing -> False
+        Just (_, (v, _)) -> withinRange v dVR
 
 -- {{{1 allPatches
 allPatches pn patchDir = let

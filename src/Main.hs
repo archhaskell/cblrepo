@@ -10,6 +10,7 @@ import ListPkgs
 import Updates
 import Util.Misc
 import Urls
+import PkgBuild
 
 import Paths_cblrepo
 
@@ -74,6 +75,12 @@ cmdUrls = record defUrls
     ] += help "list urls of cabal files for the given packages" += details
         [ "The format for a package is <name>,<version>." ]
 
+cmdPkgBuild = record defPkgBuild
+    [ argAppDir, argDbFile
+    , patchDir := "patches" += explicit += name "patchdir" += help "location of patches" += typDir
+    , pkgs := def += args += typ "PKG"
+    ] += help "create a PKGBUILD, and other files necessary for an Arch package"
+
 cmds = cmdArgsMode_ $ modes_
     [ cmdAddBasePkg
     , cmdAddPkg
@@ -84,6 +91,7 @@ cmds = cmdArgsMode_ $ modes_
     , cmdListPkgs
     , cmdUpdates
     , cmdUrls
+    , cmdPkgBuild
     ]
     += program progName
     += summary (progName ++ " v" ++ (display version))
@@ -106,3 +114,4 @@ main = do
             ListPkgs {} -> runReaderT listPkgs c'
             Updates {} -> runReaderT updates c'
             Urls {} -> runReaderT urls c'
+            PkgBuild {} -> runReaderT pkgBuild c'

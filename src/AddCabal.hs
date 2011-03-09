@@ -70,17 +70,3 @@ finalizeToCblPkg db p = case finalizePkg db p of
 finalizeToDeps db p = case finalizePkg db p of
     Left ds -> Just $ (((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) p, ds)
     _ -> Nothing
-
-finalizePkg db = finalizePackageDescription
-    [] -- no flags
-    (checkAgainstDb db)
-    (Platform X86_64 buildOS) -- platform
-    (CompilerId GHC (Version [7,0,2] []))  -- compiler version
-    [] -- no additional constraints
-
-checkAgainstDb db dep = let
-        dN = depName dep
-        dVR = depVersionRange dep
-    in case lookupPkg db dN of
-        Nothing -> False
-        Just (_, (v, _)) -> withinRange v dVR
