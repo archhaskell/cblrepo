@@ -54,6 +54,17 @@ data Cmds
     | Urls { appDir :: FilePath, pkgVers :: [(String, String)] }
     deriving (Show, Data, Typeable)
 
+defAddBasePkg = AddBasePkg "" "" True []
+defAddPkg = AddPkg "" "" "" True []
+defBuildPkgs =  BuildPkgs "" "" []
+defBumpPkgs =  BumpPkgs "" "" []
+defIdxSync =  IdxSync ""
+defIdxVersion =  IdxVersion "" []
+defListPkgs =  ListPkgs "" "" True
+defUpdates =  Updates "" ""
+defUrls =  Urls "" []
+defPkgBuild =  PkgBuild "" "" "" []
+
 cfgGet f = liftM f ask
 
 -- {{{1 URL and process stuff
