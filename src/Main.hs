@@ -21,17 +21,18 @@ import System.Directory
 import System.FilePath
 
 -- {{{1 command line arguments
+argAppDir = appDir := def += explicit += name "appdir" += help "application data directory" += typDir
+argDbFile = dbFile := "cblrepo.db" += explicit += name "db" += help "package database" += typFile
+
 cmdAddBasePkg = record defAddBasePkg
-    [ appDir := def += explicit += name "appdir" += help "application data directory" += typDir
-    , dbFile := "cblrepo.db" += explicit += name "db" += help "package database" += typFile
+    [ argAppDir, argDbFile
     , dryRun := False += explicit += name "n" += help "dry run"
     , pkgVers := def += args += typ "STRING,STRING"
     ] += name "addbasepkg" += help "add base packages" += details
         [ "The format for a package is <name>,<version>." ]
 
 cmdAddPkg = record defAddPkg
-    [ appDir := def += explicit += name "appdir" += help "application data directory" += typDir
-    , dbFile := "cblrepo.db" += explicit += name "db" += help "package database" += typFile
+    [ argAppDir, argDbFile
     , patchDir := "patches" += explicit += name "patchdir" += help "location of patches" += typDir
     , dryRun := False += explicit += name "n" += help "dry run"
     , cbls := def += args += typ "CABAL"
@@ -44,39 +45,31 @@ cmdAddPkg = record defAddPkg
         ]
 
 cmdBumpPkgs = record defBumpPkgs
-    [ appDir := def += explicit += name "appdir" += help "application data directory" += typDir
-    , dbFile := "cblrepo.db" += explicit += name "db" += help "package database" += typFile
+    [ argAppDir, argDbFile
     , pkgs := def += args += typ "PKG"
     ] += name "bump" += help "list packages that need bumping"
 
 cmdBuildPkgs = record defBuildPkgs
-    [ appDir := def += explicit += name "appdir" += help "application data directory" += typDir
-    , dbFile := "cblrepo.db" += explicit += name "db" += help "package database" += typFile
+    [ argAppDir, argDbFile
     , pkgs := def += args += typ "PKG"
     ] += name "build" += help "list packages that need rebuilding, in order"
 
-cmdIdxSync = record defIdxSync
-    [ appDir := def += explicit += name "appdir" += help "application data directory" += typDir
-    ] += help "update the index"
+cmdIdxSync = record defIdxSync [ argAppDir ] += help "update the index"
 
 cmdIdxVersion = record defIdxVersion
-    [ appDir := def += explicit += name "appdir" += help "application data directory" += typDir
+    [ argAppDir
     , pkgs := def += args += typ "PKG"
     ] += help "list available versions"
 
-cmdUpdates = record defUpdates
-    [ appDir := def += explicit += name "appdir" += help "application data directory" += typDir
-    , dbFile := "cblrepo.db" += explicit += name "db" += help "package database" += typFile
-    ] += name "updates" += help "check for availabale updates"
+cmdUpdates = record defUpdates [ argAppDir , argDbFile ] += name "updates" += help "check for availabale updates"
 
 cmdListPkgs = record defListPkgs
-    [ appDir := def += explicit += name "appdir" += help "application data directory" += typDir
-    , dbFile := "cblrepo.db" += explicit += name "db" += help "package database" += typFile
+    [ argAppDir, argDbFile
     , incBase := False += help "include base packages in listing"
     ] += name "list" += help "list packages in repo"
 
 cmdUrls = record defUrls
-    [ appDir := def += explicit += name "appdir" += help "application data directory" += typDir
+    [ argAppDir
     , pkgVers := def += args += typ "STRING,STRING"
     ] += help "list urls of cabal files for the given packages" += details
         [ "The format for a package is <name>,<version>." ]
