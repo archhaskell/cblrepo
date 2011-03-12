@@ -75,7 +75,7 @@ finalizePkg db = finalizePackageDescription
     [] -- no flags
     (checkAgainstDb db)
     (Platform X86_64 buildOS) -- platform
-    (CompilerId GHC (Version [6,12,3] []))  -- compiler version
+    (CompilerId GHC (Version [7,0,2] []))  -- compiler version
     [] -- no additional constraints
 
 checkAgainstDb db dep = let

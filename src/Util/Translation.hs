@@ -201,7 +201,7 @@ calcExactDeps db pd = let
 
 -- {{{2 ghcPkgs
 -- libraries included in GHC, but not marked as provided by the Arch package
-ghcPkgs = ["base", "bin-package-db", "dph-base", "dph-par", "dph-prim-interface", "dph-prim-par", "dph-prim-seq", "dph-seq", "ffi", "ghc", "ghc-binary", "ghc-prim", "integer-gmp", "rts"]
+ghcPkgs = ["base", "bin-package-db", "ffi", "ghc", "ghc-binary", "ghc-prim", "haskell2010", "integer-gmp", "rts"]
 
 -- {{{1 addHashes
 -- TODO:
