@@ -52,7 +52,7 @@ instance Pretty a => Pretty (ShVar a) where
     pretty (ShVar n v) = text n <> char '=' <> pretty v
 
 -- {{{1 ArchPkg
--- TODO: patches, flags
+-- TODO: license file, patches, flags
 data ArchPkg = ArchPkg
     { apPkgName :: String
     , apHasLibrary :: Bool
@@ -225,7 +225,7 @@ translate db pd = let
         ap = baseArchPkg
         (PackageName hkgName) = packageName pd
         pkgVer = packageVersion pd
-        pkgRel = 1 -- this should be grabbed out of DB
+        pkgRel = pkgRelease $ fromJust $ lookupPkg db hkgName
         hasLib = maybe False (const True) (library pd)
         archName = (if hasLib then "haskell-" else "") ++ (map toLower hkgName)
         pkgDesc = synopsis pd

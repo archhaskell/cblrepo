@@ -26,8 +26,8 @@ pkgVersion (_, (v, _, _)) = v
 pkgDeps :: CblPkg -> [P.Dependency]
 pkgDeps (_, (_, ds, _)) = ds
 
-pkgRel :: CblPkg -> Int
-pkgRel (_, (_, _, i)) = i
+pkgRelease :: CblPkg -> Int
+pkgRelease (_, (_, _, i)) = i
 
 createCblPkg :: PackageDescription -> CblPkg
 createCblPkg pd = (name, (version, deps, 1))
@@ -85,7 +85,7 @@ transitiveDependants db pkgs = keepLast $ concat $ map transUsersOfOne pkgs
         keepLast = reverse . nub . reverse
 
 lookupRelease :: CblDB -> String -> Maybe Int
-lookupRelease db n = lookupPkg db n >>= return . pkgRel
+lookupRelease db n = lookupPkg db n >>= return . pkgRelease
 
 bumpRelease db n = let
         bump (n', (v', d', r')) = (n', (v', d', r' + 1))
