@@ -33,7 +33,7 @@ pkgBuild = let
         liftIO $ print aps
         aps' <- liftIO $ mapM (\ a -> withTemporaryDirectory "/tmp/cblrepo." (addHashes a)) aps
         liftIO $ print aps'
-        liftIO $ mapM_ (\ a -> createDirectory (apPkgName a)) aps'
+        liftIO $ mapM_ (\ a -> createDirectoryIfMissing False (apPkgName a)) aps'
         liftIO $ mapM_ (\ a -> withWorkingDirectory (apPkgName a) $ do
             hF <- openFile "PKGBUILD" WriteMode 
             hPutDoc hF $ pretty a
