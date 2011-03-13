@@ -52,7 +52,7 @@ data Cmds
     = AddBasePkg { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, pkgVers :: [(String, String)] }
     | AddPkg { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, dryRun :: Bool, cbls :: [FilePath] }
     | BuildPkgs { appDir :: FilePath, dbFile :: FilePath, pkgs :: [String] }
-    | BumpPkgs { appDir :: FilePath, dbFile :: FilePath, pkgs :: [String] }
+    | BumpPkgs { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, pkgs :: [String] }
     | IdxSync { appDir :: FilePath }
     | IdxVersion { appDir :: FilePath, pkgs :: [String] }
     | ListPkgs { appDir :: FilePath, dbFile :: FilePath, incBase :: Bool }
@@ -64,7 +64,7 @@ data Cmds
 defAddBasePkg = AddBasePkg "" "" True []
 defAddPkg = AddPkg "" "" "" True []
 defBuildPkgs =  BuildPkgs "" "" []
-defBumpPkgs =  BumpPkgs "" "" []
+defBumpPkgs =  BumpPkgs "" "" False []
 defIdxSync =  IdxSync ""
 defIdxVersion =  IdxVersion "" []
 defListPkgs =  ListPkgs "" "" True
@@ -168,7 +168,7 @@ checkAgainstDb db dep = let
         dVR = depVersionRange dep
     in case lookupPkg db dN of
         Nothing -> False
-        Just (_, (v, _)) -> withinRange v dVR
+        Just (_, (v, _, _)) -> withinRange v dVR
 
 -- {{{1 allPatches
 allPatches pn patchDir = let

@@ -19,8 +19,8 @@ updates = do
     aD <- cfgGet appDir
     entries <- liftIO $ liftM (Tar.read . GZip.decompress)
         (BS.readFile $ aD </> "00-index.tar.gz")
-    let nonBasePkgs = filter (\ (_, (_, ds)) -> not $ null ds) db
-    let pkgsNVers = map (\ (p, (v, _)) -> (p, v)) nonBasePkgs
+    let nonBasePkgs = filter (\ (_, (_, ds, _)) -> not $ null ds) db
+    let pkgsNVers = map (\ (p, (v, _, _)) -> (p, v)) nonBasePkgs
     let availPkgs = catMaybes $ eMap extractPkgVer entries
     let outdated = filter
             (\ (p, v) -> maybe False (> v) (latestVer p availPkgs))

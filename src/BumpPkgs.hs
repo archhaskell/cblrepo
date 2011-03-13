@@ -11,8 +11,14 @@ import System.FilePath
 
 bumpPkgs :: ReaderT Cmds IO ()
 bumpPkgs = do
-    db <- cfgGet dbFile >>= liftIO . readDb
+    dbFn <- cfgGet dbFile
+    db <- liftIO $ readDb dbFn
+    dR <- cfgGet dryRun
     pkgs <- cfgGet pkgs
-    liftIO $ mapM_ putStrLn $ transDependants db pkgs
+    let bpkgs = transDependants db pkgs
+    let newDb = foldl (\ db p -> bumpRelease db p) db bpkgs
+    if dR
+        then liftIO $ putStrLn "Would bump:" >> mapM_ putStrLn bpkgs
+        else liftIO $ saveDb newDb dbFn
 
 transDependants db pkgs = filter (not . flip elem pkgs) $ transitiveDependants db pkgs

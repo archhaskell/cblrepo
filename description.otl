@@ -53,16 +53,17 @@
 			: package is added.
 	[X] bump <pkg name>+
 		Description
-			: Print all packages that need their release version bumped if the
-			: given packages are updated.
+			: Bump all packages that need their release version bumped when
+			: the given packages are updated.
 		Steps
 			: 1. Walk the dependency graph.
 			: 2. Remove the updated packages from the list.
+			: 3. Bump all the packages on the remaining list.
 		Errors
 			: None
 	[X] build <pkg name>+
 		Description
-			: Print out all packages that need to be re-built if the given
+			: Print out all packages that need to be re-built when the given
 			: packages are updated.  They are printed in (one possible) build
 			: order.
 		Steps

@@ -18,5 +18,5 @@ listPkgs = do
             else db
     liftIO $ mapM_ printCblPkgShort pkgs
 
-printCblPkgShort (p, (v, _)) =
+printCblPkgShort (p, (v, _, _)) =
     putStrLn $ p ++ " ==" ++ (display v)

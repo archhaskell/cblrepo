@@ -14,20 +14,23 @@ import Text.JSON
 import qualified Distribution.Package as P
 import qualified Distribution.Version as V
 
-type CblPkg = (String, (V.Version, [P.Dependency]))
+type CblPkg = (String, (V.Version, [P.Dependency], Int))
 type CblDB = [CblPkg]
 
 pkgName :: CblPkg -> String
 pkgName (n, _) = n
 
 pkgVersion :: CblPkg -> V.Version
-pkgVersion (_, (v, _)) = v
+pkgVersion (_, (v, _, _)) = v
 
 pkgDeps :: CblPkg -> [P.Dependency]
-pkgDeps (_, (_, ds)) = ds
+pkgDeps (_, (_, ds, _)) = ds
+
+pkgRel :: CblPkg -> Int
+pkgRel (_, (_, _, i)) = i
 
 createCblPkg :: PackageDescription -> CblPkg
-createCblPkg pd = (name, (version, deps))
+createCblPkg pd = (name, (version, deps, 1))
     where
         name = (\ (P.PackageName n) -> n) (P.pkgName $ package pd)
         version = P.pkgVersion $ package pd
@@ -36,20 +39,20 @@ createCblPkg pd = (name, (version, deps))
 getDependencyOn :: String -> CblPkg -> Maybe P.Dependency
 getDependencyOn n p = find (\ d -> depName d == n) (pkgDeps p)
 
-isBasePkg (_, (_, ds)) = null ds
+isBasePkg (_, (_, ds, _)) = null ds
 
 emptyPkgDB :: CblDB
 emptyPkgDB = []
 
-addPkg :: CblDB -> String -> V.Version -> [P.Dependency] -> CblDB
-addPkg db n v ds = nubBy cmp newdb
+addPkg :: CblDB -> String -> V.Version -> [P.Dependency] -> Int -> CblDB
+addPkg db n v ds r = nubBy cmp newdb
     where
         cmp (n1, _) (n2, _) = n1 == n2
-        newdb = (n, (v, ds)) : db
+        newdb = (n, (v, ds, r)) : db
 
-addPkg2 db (n, (v, ds)) = addPkg db n v ds
+addPkg2 db (n, (v, ds, r)) = addPkg db n v ds r
 
-addBasePkg db n v = addPkg db n v []
+addBasePkg db n v = addPkg db n v [] 0
 
 delPkg :: CblDB -> String -> CblDB
 delPkg db n = filter (\ p -> n /= pkgName p) db
@@ -81,6 +84,12 @@ transitiveDependants db pkgs = keepLast $ concat $ map transUsersOfOne pkgs
         transUsersOfOne pkg = pkg : (keepLast $ concat $ map (transUsersOfOne) (lookupDependants db pkg))
         keepLast = reverse . nub . reverse
 
+lookupRelease :: CblDB -> String -> Maybe Int
+lookupRelease db n = lookupPkg db n >>= return . pkgRel
+
+bumpRelease db n = let
+        bump (n', (v', d', r')) = (n', (v', d', r' + 1))
+    in maybe db (addPkg2 db . bump) (lookupPkg db n)
 readDb :: FilePath -> IO CblDB
 readDb fp = (flip CE.catch)
     (\ e -> if isDoesNotExistError e

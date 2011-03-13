@@ -24,10 +24,10 @@ import System.FilePath
 -- {{{1 command line arguments
 argAppDir = appDir := def += explicit += name "appdir" += help "application data directory" += typDir
 argDbFile = dbFile := "cblrepo.db" += explicit += name "db" += help "package database" += typFile
+argDryRun = dryRun := False += explicit += name "n" += help "dry run"
 
 cmdAddBasePkg = record defAddBasePkg
-    [ argAppDir, argDbFile
-    , dryRun := False += explicit += name "n" += help "dry run"
+    [ argAppDir, argDbFile, argDryRun
     , pkgVers := def += args += typ "STRING,STRING"
     ] += name "addbasepkg" += help "add base packages" += details
         [ "The format for a package is <name>,<version>." ]
@@ -35,7 +35,7 @@ cmdAddBasePkg = record defAddBasePkg
 cmdAddPkg = record defAddPkg
     [ argAppDir, argDbFile
     , patchDir := "patches" += explicit += name "patchdir" += help "location of patches" += typDir
-    , dryRun := False += explicit += name "n" += help "dry run"
+    , argDryRun
     , cbls := def += args += typ "CABAL"
     ] += name "add" += help "add a package from a Cabal file" += details
         [ "There are three ways to specify the location of the Cabal file:"
@@ -47,8 +47,9 @@ cmdAddPkg = record defAddPkg
 
 cmdBumpPkgs = record defBumpPkgs
     [ argAppDir, argDbFile
+    , argDryRun
     , pkgs := def += args += typ "PKG"
-    ] += name "bump" += help "list packages that need bumping"
+    ] += name "bump" += help "bump packages that need it after updating the named packages"
 
 cmdBuildPkgs = record defBuildPkgs
     [ argAppDir, argDbFile

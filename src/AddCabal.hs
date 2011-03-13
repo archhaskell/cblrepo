@@ -55,7 +55,6 @@ doAddCabal db pkgs = let
         ([], _) -> Left (unSats, brksOthrs)
         (_, _) -> doAddCabal newDb fails
 
-
 canBeAdded db p = let
         finable = either (const False) (const True) (finalizePkg db p)
         n = ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) p
