@@ -56,6 +56,7 @@ instance Pretty a => Pretty (ShVar a) where
 data ArchPkg = ArchPkg
     { apPkgName :: String
     , apHasLibrary :: Bool
+    , apLicenseFile :: Maybe FilePath
     -- shell bits
     , apShHkgName :: ShVar String
     , apShPkgName :: ShVar String
@@ -75,6 +76,7 @@ data ArchPkg = ArchPkg
 baseArchPkg = ArchPkg
     { apPkgName = ""
     , apHasLibrary = False
+    , apLicenseFile = Nothing
     , apShHkgName = ShVar "_hkgname" ""
     , apShPkgName = ShVar "pkgname" ""
     , apShPkgVer = ShVar "pkgver" (Version [] [])
@@ -96,6 +98,7 @@ baseArchPkg = ArchPkg
 instance Pretty ArchPkg where
     pretty (ArchPkg
         { apHasLibrary = hasLib
+        , apLicenseFile = licenseFile
         , apShHkgName = hgkName
         , apShPkgName = pkgName
         , apShPkgVer = pkgVer
@@ -111,6 +114,7 @@ instance Pretty ArchPkg where
         }) = vsep
             [ text "# custom variables"
             , pretty hgkName
+            , maybe empty (\ fn -> pretty $ ShVar "_licensefile" fn) licenseFile
             , empty, text "# PKGBUILD options/directives"
             , pretty pkgName
             , pretty pkgVer
@@ -161,8 +165,8 @@ instance Pretty ArchPkg where
                         text "install -d -m755 ${pkgdir}/usr/share/doc/ghc/html/libraries" <$>
                         text "ln -s /usr/share/doc/${pkgname}/html ${pkgdir}/usr/share/doc/ghc/html/libraries/${_hkgname}" <$>
                         text "runhaskell Setup copy --destdir=${pkgdir}" <$>
-                        text "install -D -m644 LICENSE ${pkgdir}/usr/share/licenses/${pkgname}/LICENSE" <$>
-                        text "rm -f ${pkgdir}/usr/share/doc/${pkgname}/LICENSE"
+                        (maybe empty (\ _ -> text "install -D -m644 ${_licensefile} ${pkgdir}/usr/share/licenses/${pkgname}/LICENSE" <$>
+                            text "rm -f ${pkgdir}/usr/share/doc/${pkgname}/${_licensefile}") licenseFile)
                         ) <$>
                     char '}'
 
@@ -225,8 +229,9 @@ translate db pd = let
         ap = baseArchPkg
         (PackageName hkgName) = packageName pd
         pkgVer = packageVersion pd
-        pkgRel = pkgRelease $ fromJust $ lookupPkg db hkgName
+        pkgRel = maybe 1 pkgRelease $ lookupPkg db hkgName
         hasLib = maybe False (const True) (library pd)
+        licFn = let l = licenseFile pd in if null l then Nothing else Just l
         archName = (if hasLib then "haskell-" else "") ++ (map toLower hkgName)
         pkgDesc = synopsis pd
         url = if null (homepage pd) then "http://hackage.haskell.org/package/${_hkgname}" else (homepage pd)
@@ -237,6 +242,7 @@ translate db pd = let
     in ap
         { apPkgName = archName
         , apHasLibrary = hasLib
+        , apLicenseFile = licFn
         , apShHkgName = shVarNewValue (apShHkgName ap) hkgName
         , apShPkgName = shVarNewValue (apShPkgName ap) archName
         , apShPkgVer = shVarNewValue (apShPkgVer ap) pkgVer
