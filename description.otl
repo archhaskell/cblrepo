@@ -48,6 +48,9 @@
 			: This strategy ensures that all packages are added to the
 			: database bottom-up and that if one fails, then all that depend
 			: on it fail too.
+		Extensions
+			: Automatic bumping of all packages that need rebuilding when this
+			: package is added.
 	[X] bump <pkg name>+
 		Description
 			: Print all packages that need their release version bumped if the
@@ -84,18 +87,6 @@
 	[X] idxversion <pkg name>+
 		Description
 			: List the available versions of the named packages.
-	[_] del <pkg name>
-		Description
-			: Delete a package from the database.
-		Steps
-			: 1. Find if there are any packages that depend on pkg, remove pkg
-			: from the database if there are none.
-		Errors
-			: 1. If there are any packages that depend on pkg, then print each
-			: and exit without making any changes.
-	[_] dump
-		Description
-			: Dump the database.
 	[_] pkgbuild <pkg name>+
 		Description
 			: Create the files necessary for an Arch source package.
@@ -111,3 +102,24 @@
 		Comments
 			: Should the output be like that produced by cabal2arch, or should
 			: it create a source bundle (as produced by 'makepkg --source')?
+		Extensions
+			: Output source package files for all packages that depend on the
+			: named ones (directly and indirectly).  So that it's possible to
+			: just call 'add' and then 'pkgbuild' to get a directory
+			: containing everything that needs (re-)building.
+			:
+			: Output source package files for all packages that are required
+			: by the named ones.  So that it's easy to create a complete set
+			: of source packages for building the named ones.
+	[_] del <pkg name>
+		Description
+			: Delete a package from the database.
+		Steps
+			: 1. Find if there are any packages that depend on pkg, remove pkg
+			: from the database if there are none.
+		Errors
+			: 1. If there are any packages that depend on pkg, then print each
+			: and exit without making any changes.
+	[_] dump
+		Description
+			: Dump the database.
