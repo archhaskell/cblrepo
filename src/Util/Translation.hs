@@ -264,7 +264,7 @@ translate db pd = let
 calcExactDeps db pd = let
         deps = filter (not . flip elem ghcPkgs) (map depName (buildDepends pd))
         lookupPkgVer = display . DB.pkgVersion . fromJust . lookupPkg db
-    in map (\ n -> "haskell-" ++ n ++ "=" ++ (lookupPkgVer n)) deps
+    in map (\ n -> "haskell-" ++ (map toLower n) ++ "=" ++ (lookupPkgVer n)) deps
 
 -- {{{2 ghcPkgs
 -- libraries included in GHC, but not marked as provided by the Arch package
