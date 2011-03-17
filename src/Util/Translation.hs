@@ -183,7 +183,7 @@ data ArchInstall = ArchInstall
 
 -- {{{2 baseArchInstall
 baseArchInstall = ArchInstall
-    { aiShPkgName = ShVar "_pkgname" ""
+    { aiShPkgName = ShVar "pkgname" ""
     }
 
 -- {{{2 ArchInstall from ArchPackage
@@ -197,7 +197,7 @@ instance Pretty ArchInstall where
         }) = vsep
             [ text "# custom variables"
             , pretty pkgName
-            , pretty (ShVar "HS_DIR" "usr/share/haskell/${_pkgname}")
+            , pretty (ShVar "HS_DIR" "usr/share/haskell/${pkgname}")
             , empty, text "# functions"
             , postInstallFunction
             , empty, preUpgradeFunction
