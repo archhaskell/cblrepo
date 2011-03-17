@@ -225,11 +225,12 @@ instance Pretty Version where
 -- TODO:
 --  • add flags
 --  • add patches to sources
+--  • translation of extraLibDepends-libs to Arch packages
 translate db pd = let
         ap = baseArchPkg
         (PackageName hkgName) = packageName pd
         pkgVer = packageVersion pd
-        pkgRel = maybe 1 pkgRelease $ lookupPkg db hkgName
+        pkgRel = maybe 1 pkgRelease (lookupPkg db hkgName)
         hasLib = maybe False (const True) (library pd)
         licFn = let l = licenseFile pd in if null l then Nothing else Just l
         archName = (if hasLib then "haskell-" else "") ++ (map toLower hkgName)
@@ -238,6 +239,7 @@ translate db pd = let
         lic = display (license pd)
         makeDepends = if hasLib then [] else ["ghc=7.0.2"] ++ calcExactDeps db pd
         depends = if hasLib then ["ghc=7.0.2"] ++ calcExactDeps db pd else []
+        extraLibDepends = maybe [] (extraLibs . libBuildInfo) (library pd)
         install = if hasLib then (apShInstall ap) else Nothing
     in ap
         { apPkgName = archName
@@ -251,7 +253,7 @@ translate db pd = let
         , apShUrl = shVarNewValue (apShUrl ap) (ShQuotedString url)
         , apShLicence = shVarNewValue (apShLicence ap) (ShArray [lic])
         , apShMakeDepends = shVarNewValue (apShMakeDepends ap) (ShArray makeDepends)
-        , apShDepends = shVarNewValue (apShDepends ap) (ShArray depends)
+        , apShDepends = shVarNewValue (apShDepends ap) (ShArray $ depends ++ extraLibDepends)
         , apShInstall = install
         }
 
