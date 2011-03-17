@@ -1,2 +1,1 @@
 :set -isrc:dist/build/autogen
-:set -hide-package monads-fd
