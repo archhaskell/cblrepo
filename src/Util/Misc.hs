@@ -52,7 +52,7 @@ data Cmds
     = AddBasePkg { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, pkgVers :: [(String, String)] }
     | AddPkg { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, dryRun :: Bool, cbls :: [FilePath] }
     | BuildPkgs { appDir :: FilePath, dbFile :: FilePath, pkgs :: [String] }
-    | BumpPkgs { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, pkgs :: [String] }
+    | BumpPkgs { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, inclusive :: Bool, pkgs :: [String] }
     | IdxSync { appDir :: FilePath }
     | IdxVersion { appDir :: FilePath, pkgs :: [String] }
     | ListPkgs { appDir :: FilePath, dbFile :: FilePath, incBase :: Bool }
@@ -64,7 +64,7 @@ data Cmds
 defAddBasePkg = AddBasePkg "" "" True []
 defAddPkg = AddPkg "" "" "" True []
 defBuildPkgs =  BuildPkgs "" "" []
-defBumpPkgs =  BumpPkgs "" "" False []
+defBumpPkgs =  BumpPkgs "" "" False False []
 defIdxSync =  IdxSync ""
 defIdxVersion =  IdxVersion "" []
 defListPkgs =  ListPkgs "" "" True

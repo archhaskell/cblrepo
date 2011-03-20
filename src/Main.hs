@@ -48,6 +48,7 @@ cmdAddPkg = record defAddPkg
 cmdBumpPkgs = record defBumpPkgs
     [ argAppDir, argDbFile
     , argDryRun
+    , inclusive := False += explicit += name "inclusive" += help "include listed packages"
     , pkgs := def += args += typ "PKG"
     ] += name "bump" += help "bump packages that need it after updating the named packages"
 

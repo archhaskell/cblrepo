@@ -15,10 +15,11 @@ bumpPkgs = do
     db <- liftIO $ readDb dbFn
     dR <- cfgGet dryRun
     pkgs <- cfgGet pkgs
-    let bpkgs = transDependants db pkgs
+    incl <- cfgGet inclusive
+    let bpkgs = transDependants db incl pkgs
     let newDb = foldl (\ db p -> bumpRelease db p) db bpkgs
     if dR
         then liftIO $ putStrLn "Would bump:" >> mapM_ putStrLn bpkgs
         else liftIO $ saveDb newDb dbFn
 
-transDependants db pkgs = filter (not . flip elem pkgs) $ transitiveDependants db pkgs
+transDependants db i pkgs = filter ((||) i . (not . flip elem pkgs)) $ transitiveDependants db pkgs
