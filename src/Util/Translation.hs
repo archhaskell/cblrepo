@@ -139,7 +139,7 @@ instance Pretty ArchPkg where
                 libBuildFunction = text "build() {" <>
                     nest 4 (empty <$>
                         text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
-                        nest 4 (text "runhaskell Setup configure -O --enable-split-objs --enable-shared \\" <$>
+                        nest 4 (text "runhaskell Setup configure -O -p --enable-split-objs --enable-shared \\" <$>
                             text "--prefix=/usr --docdir=/usr/share/doc/${pkgname} \\" <$>
                             text "--libsubdir=\\$compiler/site-local/\\$pkgid") <$>
                         text "runhaskell Setup build" <$>
@@ -152,7 +152,7 @@ instance Pretty ArchPkg where
 
                 exeBuildFunction = text "build() {" <>
                     nest 4 (empty <$> text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
-                        text "runhaskell Setup configure --prefix=/usr --docdir=/usr/share/doc/${pkgname} -O" <$>
+                        text "runhaskell Setup configure -O --prefix=/usr --docdir=/usr/share/doc/${pkgname}" <$>
                         text "runhaskell Setup build"
                         ) <$>
                     char '}'
@@ -204,6 +204,7 @@ instance Pretty ArchInstall where
             , empty, postUpgradeFunction
             , empty, preRemoveFunction
             , empty, postRemoveFunction
+            , empty
             ]
             where
                 postInstallFunction = text "post_install() {" <>
