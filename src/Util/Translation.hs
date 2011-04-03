@@ -55,6 +55,7 @@ instance Pretty a => Pretty (ShVar a) where
 -- TODO: license file, patches, flags
 data ArchPkg = ArchPkg
     { apPkgName :: String
+    , apHkgName :: String
     , apHasLibrary :: Bool
     , apLicenseFile :: Maybe FilePath
     -- shell bits
@@ -75,6 +76,7 @@ data ArchPkg = ArchPkg
 -- {{{2 baseArchPkg
 baseArchPkg = ArchPkg
     { apPkgName = ""
+    , apHkgName = ""
     , apHasLibrary = False
     , apLicenseFile = Nothing
     , apShHkgName = ShVar "_hkgname" ""
@@ -212,11 +214,18 @@ instance Pretty ArchInstall where
                         text "(cd usr/share/doc/ghc/html/libraries; ./gen_contents_index)") <$>
                     char '}'
                 preUpgradeFunction = text "pre_upgrade() {" <>
-                    nest 4 (empty <$> text "${HS_DIR}/register.sh") <$>
+                    nest 4 (empty <$> text "${HS_DIR}/unregister.sh") <$>
                     char '}'
-                postUpgradeFunction = postInstallFunction
-                preRemoveFunction = preUpgradeFunction
-                postRemoveFunction = postInstallFunction
+                postUpgradeFunction = text "post_upgrade() {" <>
+                    nest 4 (empty <$> text "${HS_DIR}/register.sh" <$>
+                        text "(cd usr/share/doc/ghc/html/libraries; ./gen_contents_index)") <$>
+                    char '}'
+                preRemoveFunction = text "pre_remove() {" <>
+                    nest 4 (empty <$> text "${HS_DIR}/unregister.sh") <$>
+                    char '}'
+                postRemoveFunction = text "post_remove() {" <>
+                    nest 4 (empty <$> text "(cd usr/share/doc/ghc/html/libraries; ./gen_contents_index)") <$>
+                    char '}'
 
 -- {{{1 extra instances
 instance Pretty Version where
@@ -244,6 +253,7 @@ translate db pd = let
         install = if hasLib then (apShInstall ap) else Nothing
     in ap
         { apPkgName = archName
+        , apHkgName = hkgName
         , apHasLibrary = hasLib
         , apLicenseFile = licFn
         , apShHkgName = shVarNewValue (apShHkgName ap) hkgName
@@ -282,6 +292,9 @@ addHashes ap tmpDir = let
         hashes = map (filter (`elem` "1234567890abcdef")) . lines . drop 11
     in do
         writeFile (tmpDir </> "PKGBUILD") (show $ pretty ap)
+        -- (pkgbldPatch, cblPatch, bldPatch) <- findPatches patchDir (
+        -- look for PKGBUILD patch, apply if it exists
+        -- look for .cabal & build patches, copy if they exist
         (ec, out, er) <- withWorkingDirectory tmpDir (readProcessWithExitCode "makepkg" ["-g"] "")
         case ec of
             ExitFailure _ -> do
