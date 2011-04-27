@@ -23,6 +23,8 @@ import System.Exit
 import System.IO
 import System.Process
 import Data.List
+import System.Directory
+import Control.Monad
 
 -- {{{1 ShQuotedString
 newtype ShQuotedString = ShQuotedString String
@@ -47,17 +49,20 @@ data ShVar a = ShVar String a
     deriving (Eq, Show)
 
 shVarNewValue (ShVar n _) v = ShVar n v
+shVarAppendValue (ShVar n v1) v2 = ShVar n (v1 `mappend` v2)
+shVarValue (ShVar _ v) = v
 
 instance Pretty a => Pretty (ShVar a) where
     pretty (ShVar n v) = text n <> char '=' <> pretty v
 
 -- {{{1 ArchPkg
--- TODO: license file, patches, flags
+-- TODO: patches, flags
 data ArchPkg = ArchPkg
     { apPkgName :: String
     , apHkgName :: String
     , apHasLibrary :: Bool
     , apLicenseFile :: Maybe FilePath
+    , apCabalPatch :: Maybe FilePath
     -- shell bits
     , apShHkgName :: ShVar String
     , apShPkgName :: ShVar String
@@ -79,6 +84,7 @@ baseArchPkg = ArchPkg
     , apHkgName = ""
     , apHasLibrary = False
     , apLicenseFile = Nothing
+    , apCabalPatch = Nothing
     , apShHkgName = ShVar "_hkgname" ""
     , apShPkgName = ShVar "pkgname" ""
     , apShPkgVer = ShVar "pkgver" (Version [] [])
@@ -101,6 +107,7 @@ instance Pretty ArchPkg where
     pretty (ArchPkg
         { apHasLibrary = hasLib
         , apLicenseFile = licenseFile
+        , apCabalPatch = cabalPatchFile
         , apShHkgName = hkgName
         , apShPkgName = pkgName
         , apShPkgVer = pkgVer
@@ -141,6 +148,9 @@ instance Pretty ArchPkg where
                 libBuildFunction = text "build() {" <>
                     nest 4 (empty <$>
                         text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
+                        maybe empty (\ _ ->
+                            text $ "patch " ++ shVarValue hkgName ++ ".cabal ${srcdir}/cabal.patch ")
+                            cabalPatchFile <$>
                         nest 4 (text "runhaskell Setup configure -O -p --enable-split-objs --enable-shared \\" <$>
                             text "--prefix=/usr --docdir=/usr/share/doc/${pkgname} \\" <$>
                             text "--libsubdir=\\$compiler/site-local/\\$pkgid") <$>
@@ -283,6 +293,28 @@ calcExactDeps db pd = let
 -- libraries included in GHC, but not marked as provided by the Arch package
 ghcPkgs = ["base", "bin-package-db", "ffi", "ghc", "ghc-binary", "ghc-prim", "haskell2010", "integer-gmp", "rts"]
 
+-- {{{1 stuff with patches
+-- {{{2 addPatches
+-- TODO:
+--  • add the other patches too
+addPatches patchDir ap = let
+        hkgName = apHkgName ap
+        sources = apShSource ap
+        fi tF fF v = if v then tF else fF
+        cabalPatchFn = patchDir </> "patch.cabal." ++ hkgName
+    in do
+        cabalPatch <- doesFileExist cabalPatchFn >>= fi (liftM Just $ canonicalizePath cabalPatchFn) (return Nothing)
+        let sources' = shVarAppendValue sources (ShArray $ maybe [] (const ["cabal.patch"]) cabalPatch)
+        return ap
+            { apCabalPatch = cabalPatch
+            , apShSource = sources'
+            }
+
+-- {{{2 copyPatches
+copyPatches destDir ap = let
+        cabalPatch = apCabalPatch ap
+    in maybe (return ()) (\ fn -> copyFile fn (destDir </> "cabal.patch")) cabalPatch
+
 -- {{{1 addHashes
 -- TODO:
 --  • add PKGBUILD patch support (applied before running makepkg -g)
@@ -291,10 +323,9 @@ ghcPkgs = ["base", "bin-package-db", "ffi", "ghc", "ghc-binary", "ghc-prim", "ha
 addHashes ap tmpDir = let
         hashes = map (filter (`elem` "1234567890abcdef")) . lines . drop 11
     in do
+        copyPatches tmpDir ap
         writeFile (tmpDir </> "PKGBUILD") (show $ pretty ap)
-        -- (pkgbldPatch, cblPatch, bldPatch) <- findPatches patchDir (
         -- look for PKGBUILD patch, apply if it exists
-        -- look for .cabal & build patches, copy if they exist
         (ec, out, er) <- withWorkingDirectory tmpDir (readProcessWithExitCode "makepkg" ["-g"] "")
         case ec of
             ExitFailure _ -> do
