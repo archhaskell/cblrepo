@@ -74,7 +74,7 @@ defPkgBuild =  PkgBuild "" "" "" []
 
 cfgGet f = liftM f ask
 
--- {{{1 URL and process stuff
+-- {{{1 getFromURL
 getFromURL url fn = do
     (ec, _, er) <- readProcessWithExitCode "curl" ["-f", "-o", fn, url] ""
     case ec of
@@ -83,6 +83,17 @@ getFromURL url fn = do
             hPutStrLn stderr ("Failed downloading " ++ url)
             hPutStrLn stderr er
             exitFailure
+
+-- {{{1 applyPatchIfExist
+applyPatch origFilename patchFilename = do
+    (ec, _, err) <- readProcessWithExitCode "patch" [origFilename, patchFilename] ""
+    case ec of
+        ExitSuccess -> return ()
+        ExitFailure _ ->
+            hPutStrLn stderr "Failed patching the .cabal file" >> exitFailure
+
+applyPatchIfExist origFilename patchFilename =
+    fileExist patchFilename >>= flip when (applyPatch origFilename patchFilename)
 
 -- {{{1 package descriptions
 -- {{{2 readCabal
@@ -137,13 +148,6 @@ readCabal patchDir loc tmpDir = let
                 packageName (PackageName s) = s
                 name = packageName . pkgName . package . packageDescription
 
-        applyPatch oFn pFn = do
-            (ec, _, err) <- readProcessWithExitCode "patch" [oFn, pFn] ""
-            case ec of
-                ExitSuccess -> return ()
-                ExitFailure _ ->
-                    hPutStrLn stderr "Failed patching the .cabal file" >> exitFailure
-
     in do
         cblFn <- case locType of
             File -> copyCabal tmpDir loc
@@ -152,7 +156,7 @@ readCabal patchDir loc tmpDir = let
         pn <- extractName cblFn
         let patchFn = patchDir </> ("patch.cabal." ++ pn)
         return patchFn
-        fileExist patchFn >>= flip when (applyPatch cblFn patchFn)
+        applyPatchIfExist cblFn patchFn
         readPackageDescription silent cblFn
 
 -- {{{2 finalising

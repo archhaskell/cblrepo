@@ -31,22 +31,17 @@ pkgBuild = let
             liftIO (mapM_ (printNotAPkg db) pkgs >> exitFailure)
         let cbls = map (appendPkgVer db) pkgs
         genPDs <- liftIO $ mapM (\ c -> withTemporaryDirectory "/tmp/cblrepo." (readCabal pD c)) cbls
-        liftIO $ print cbls -- tmp
-        liftIO $ print $ length genPDs -- tmp
         let pds = map (either failFinalize id . finalizePkg db) genPDs
         let aps = map (translate db . fst) pds
-        liftIO $ print aps -- tmp
-        -- modify source array with patches
         apsP <- liftIO $ mapM (addPatches pD) aps
         apsF <- liftIO $ mapM (\ a -> withTemporaryDirectory "/tmp/cblrepo." (addHashes a)) apsP
-        liftIO $ print apsF -- tmp
         liftIO $ mapM_ (\ a -> createDirectoryIfMissing False (apPkgName a)) apsF
         liftIO $ mapM_ (\ a -> withWorkingDirectory (apPkgName a) $ do
             copyPatches "." a
             hF <- openFile "PKGBUILD" WriteMode 
             hPutDoc hF $ pretty a
             hClose hF
-            -- todo: apply PKGBUILD patch
+            maybe (return ()) (\ pfn -> applyPatch "PKGBUILD" pfn) (apPkgbuildPatch a)
             when (apHasLibrary a) $ do
                 hFI <- openFile (apPkgName a ++ ".install") WriteMode
                 let ai = aiFromAP a

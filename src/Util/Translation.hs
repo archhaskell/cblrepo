@@ -63,6 +63,7 @@ data ArchPkg = ArchPkg
     , apHasLibrary :: Bool
     , apLicenseFile :: Maybe FilePath
     , apCabalPatch :: Maybe FilePath
+    , apPkgbuildPatch :: Maybe FilePath
     -- shell bits
     , apShHkgName :: ShVar String
     , apShPkgName :: ShVar String
@@ -85,6 +86,7 @@ baseArchPkg = ArchPkg
     , apHasLibrary = False
     , apLicenseFile = Nothing
     , apCabalPatch = Nothing
+    , apPkgbuildPatch = Nothing
     , apShHkgName = ShVar "_hkgname" ""
     , apShPkgName = ShVar "pkgname" ""
     , apShPkgVer = ShVar "pkgver" (Version [] [])
@@ -302,11 +304,14 @@ addPatches patchDir ap = let
         sources = apShSource ap
         fi tF fF v = if v then tF else fF
         cabalPatchFn = patchDir </> "patch.cabal." ++ hkgName
+        pkgbuildPatchFn = patchDir </> "patch.pkgbuild." ++ hkgName
     in do
         cabalPatch <- doesFileExist cabalPatchFn >>= fi (liftM Just $ canonicalizePath cabalPatchFn) (return Nothing)
+        pkgBuildPatch <- doesFileExist pkgbuildPatchFn >>= fi (liftM Just $ canonicalizePath pkgbuildPatchFn) (return Nothing)
         let sources' = shVarAppendValue sources (ShArray $ maybe [] (const ["cabal.patch"]) cabalPatch)
         return ap
             { apCabalPatch = cabalPatch
+            , apPkgbuildPatch = pkgBuildPatch
             , apShSource = sources'
             }
 
@@ -322,10 +327,12 @@ copyPatches destDir ap = let
 --  • deal with errors better
 addHashes ap tmpDir = let
         hashes = map (filter (`elem` "1234567890abcdef")) . lines . drop 11
+        pkgbuildFn = tmpDir </> "PKGBUILD"
+        pkgbuildPatch = apPkgbuildPatch ap
     in do
         copyPatches tmpDir ap
-        writeFile (tmpDir </> "PKGBUILD") (show $ pretty ap)
-        -- look for PKGBUILD patch, apply if it exists
+        writeFile pkgbuildFn (show $ pretty ap)
+        maybe (return ()) (\ pfn -> applyPatch pkgbuildFn pfn) pkgbuildPatch
         (ec, out, er) <- withWorkingDirectory tmpDir (readProcessWithExitCode "makepkg" ["-g"] "")
         case ec of
             ExitFailure _ -> do
