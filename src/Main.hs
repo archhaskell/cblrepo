@@ -79,7 +79,7 @@ cmdUrls = record defUrls
 
 cmdPkgBuild = record defPkgBuild
     [ argAppDir, argDbFile
-    , patchDir := "patches" += explicit += name "patchdir" += help "location of patches" += typDir
+    , patchDir := "patches" += explicit += name "patchdir" += help "location of patches (patches)" += typDir
     , pkgs := def += args += typ "PKG"
     ] += help "create a PKGBUILD, and other files necessary for an Arch package"
 

@@ -101,7 +101,7 @@ instance Pretty ArchPkg where
     pretty (ArchPkg
         { apHasLibrary = hasLib
         , apLicenseFile = licenseFile
-        , apShHkgName = hgkName
+        , apShHkgName = hkgName
         , apShPkgName = pkgName
         , apShPkgVer = pkgVer
         , apShPkgRel = pkgRel
@@ -115,7 +115,7 @@ instance Pretty ArchPkg where
         , apShSha256Sums = sha256sums
         }) = vsep
             [ text "# custom variables"
-            , pretty hgkName
+            , pretty hkgName
             , maybe empty (\ fn -> pretty $ ShVar "_licensefile" fn) licenseFile
             , empty, text "# PKGBUILD options/directives"
             , pretty pkgName
