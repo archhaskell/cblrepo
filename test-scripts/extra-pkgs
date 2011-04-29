@@ -17,7 +17,7 @@ OpenGL,2.2.3.0
 parallel,3.1.0.1
 parsec,3.1.1
 platform,2011.2.0.0
-quickcheck,2.4.0.1
+QuickCheck,2.4.0.1
 regex-base,0.93.2
 regex-compat,0.93.1
 regex-posix,0.94.4

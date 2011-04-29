@@ -5,13 +5,10 @@ habsdir=$1
 for d in ${habsdir}/habs/*; do
     . ${d}/PKGBUILD
     case $_hkgname in
-        (datetime|haskell-platform|yi)
+        (Agda|Agda-executable)
             ;;
         (*)
             echo ${_hkgname},${pkgver}
             ;;
     esac
 done
-
-# finally haskell-platform
-echo http://hackage.haskell.org/platform/2010.2.0.0/haskell-platform.cabal
