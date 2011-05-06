@@ -154,7 +154,7 @@ readCabal patchDir loc tmpDir = let
             Idx -> extractCabal tmpDir loc
             Url -> downloadCabal tmpDir loc
         pn <- extractName cblFn
-        let patchFn = patchDir </> ("patch.cabal." ++ pn)
+        let patchFn = patchDir </> pn <.> "cabal"
         return patchFn
         applyPatchIfExist cblFn patchFn
         readPackageDescription silent cblFn
@@ -176,9 +176,9 @@ checkAgainstDb db dep = let
 
 -- {{{1 allPatches
 allPatches pn patchDir = let
-        cblPatch = patchDir </> "patch.cabal." ++ pn
-        pkgPatch = patchDir </> "patch.pkgbuild." ++ pn
-        bldPatch = patchDir </> "patch.build." ++ pn
+        cblPatch = patchDir </> pn <.> "cabal"
+        pkgPatch = patchDir </> pn <.> "pkgbuild"
+        bldPatch = patchDir </> pn <.> "build"
     in do
         cE <- fileExist cblPatch
         pE <- fileExist pkgPatch

@@ -298,13 +298,13 @@ ghcPkgs = ["base", "bin-package-db", "ffi", "ghc", "ghc-binary", "ghc-prim", "ha
 -- {{{1 stuff with patches
 -- {{{2 addPatches
 -- TODO:
---  • add the other patches too
+--  • add build patch
 addPatches patchDir ap = let
         hkgName = apHkgName ap
         sources = apShSource ap
         fi tF fF v = if v then tF else fF
-        cabalPatchFn = patchDir </> "patch.cabal." ++ hkgName
-        pkgbuildPatchFn = patchDir </> "patch.pkgbuild." ++ hkgName
+        cabalPatchFn = patchDir </> hkgName <.> "cabal"
+        pkgbuildPatchFn = patchDir </> hkgName <.> "pkgbuild"
     in do
         cabalPatch <- doesFileExist cabalPatchFn >>= fi (liftM Just $ canonicalizePath cabalPatchFn) (return Nothing)
         pkgBuildPatch <- doesFileExist pkgbuildPatchFn >>= fi (liftM Just $ canonicalizePath pkgbuildPatchFn) (return Nothing)
@@ -316,14 +316,14 @@ addPatches patchDir ap = let
             }
 
 -- {{{2 copyPatches
+-- TODO:
+--  • add build patch
 copyPatches destDir ap = let
         cabalPatch = apCabalPatch ap
     in maybe (return ()) (\ fn -> copyFile fn (destDir </> "cabal.patch")) cabalPatch
 
 -- {{{1 addHashes
 -- TODO:
---  • add PKGBUILD patch support (applied before running makepkg -g)
---  • add patch support (copy the cabal and build patch into the dir)
 --  • deal with errors better
 addHashes ap tmpDir = let
         hashes = map (filter (`elem` "1234567890abcdef")) . lines . drop 11
