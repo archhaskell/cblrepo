@@ -18,6 +18,7 @@ module PkgDB where
 
 import Util.Misc
 
+import Control.Applicative
 import Control.Exception as CE
 import Data.List
 import Data.Maybe
@@ -124,22 +125,15 @@ saveDb db fp = writeFile fp s
 
 instance JSON V.Version where
     showJSON v = makeObj [ ("Version", showJSON $ display v) ]
-    readJSON (JSObject o) = let
-            jAssoc = fromJSObject o
-            resultToMaybe (Ok a) = Just a
-            resultToMaybe _ = Nothing
-            version = lookup "Version" jAssoc >>= resultToMaybe . readJSON >>= simpleParse
-        in
-            maybe (fail "Not a version object") return version
-    readJSON _ = fail "Not a version object"
+
+    readJSON object = do
+        obj <- readJSON object
+        version <- valFromObj "Version" obj
+        maybe (fail "Not a Version object") return (simpleParse version)
 
 instance JSON P.Dependency where
     showJSON d = makeObj [ ("Dependency", showJSON $ display d) ]
-    readJSON (JSObject o) = let
-            jAssoc = fromJSObject o
-            resultToMaybe (Ok a) = Just a
-            resultToMaybe _ = Nothing
-            dependency = lookup "Dependency" jAssoc >>= resultToMaybe . readJSON >>= simpleParse
-        in
-            maybe (fail "Not a dependency object") return dependency
-    readJSON _ = fail "Not a version object"
+    readJSON object = do
+        obj <- readJSON object
+        dep <- valFromObj "Dependency" obj
+        maybe (fail "Not a Dependency object") return (simpleParse dep)
