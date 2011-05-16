@@ -30,14 +30,14 @@ import Test.HUnit
 -- {{{1 transitiveDependants
 theDb :: CblDB
 theDb =
-    [ ("pkgA", (fromJust $ simpleParse "1.0", [])) -- nothing depends on this pkg
+    [ ("pkgA", (fromJust $ simpleParse "1.0", [], 1)) -- nothing depends on this pkg
     -- a chain of two
-    , ("pkgB", (fromJust $ simpleParse "1.0", []))
-    , ("pkgC", (fromJust $ simpleParse "1.0", map (fromJust . simpleParse) ["pkgB"]))
+    , ("pkgB", (fromJust $ simpleParse "1.0", [], 1))
+    , ("pkgC", (fromJust $ simpleParse "1.0", map (fromJust . simpleParse) ["pkgB"], 1))
     -- a chain of three
-    , ("pkgD", (fromJust $ simpleParse "1.0", []))
-    , ("pkgE", (fromJust $ simpleParse "1.0", map (fromJust . simpleParse) ["pkgD"]))
-    , ("pkgF", (fromJust $ simpleParse "1.0", map (fromJust . simpleParse) ["pkgE"]))
+    , ("pkgD", (fromJust $ simpleParse "1.0", [], 1))
+    , ("pkgE", (fromJust $ simpleParse "1.0", map (fromJust . simpleParse) ["pkgD"], 1))
+    , ("pkgF", (fromJust $ simpleParse "1.0", map (fromJust . simpleParse) ["pkgE"], 1))
     ]
 
 case_TD_one = do transitiveDependants theDb ["pkgA"] @=? ["pkgA"]
