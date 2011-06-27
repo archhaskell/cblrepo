@@ -1,5 +1,5 @@
 name: cblrepo
-version: 0.2.1
+version: 0.2.2
 cabal-version: >= 1.6
 license: OtherLicense
 license-file: LICENSE-2.0
