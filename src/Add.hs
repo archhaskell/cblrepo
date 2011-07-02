@@ -14,7 +14,7 @@
  - limitations under the License.
  -}
 
-module AddCabal where
+module Add where
 
 import PkgDB
 import Util.Misc
@@ -45,8 +45,8 @@ import System.Process
 import System.Exit
 import System.IO
 
-addCabal :: ReaderT Cmds IO ()
-addCabal = do
+add :: ReaderT Cmds IO ()
+add = do
     dbFn <- cfgGet dbFile
     db <- liftIO $ readDb dbFn
     pD <- cfgGet patchDir
@@ -55,11 +55,11 @@ addCabal = do
     genPkgs <- liftIO $ mapM (\ c -> withTemporaryDirectory "/tmp/cblrepo." (readCabal pD c)) cbls
     let pkgNames = map ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) genPkgs
     let tmpDb = filter (\ p -> not $ pkgName p `elem` pkgNames) db
-    case doAddCabal tmpDb genPkgs of
+    case doAdd tmpDb genPkgs of
         Left (unSats, brksOthrs) -> liftIO (mapM_ printUnSat unSats >> mapM_ printBrksOth brksOthrs)
         Right newDb -> liftIO $ unless dR $ saveDb newDb dbFn
 
-doAddCabal db pkgs = let
+doAdd db pkgs = let
         (succs, fails) = partition (canBeAdded db) pkgs
         newDb = foldl addPkg2 db (map (fromJust . finalizeToCblPkg db) succs)
         unSats = catMaybes $ map (finalizeToDeps db) fails
@@ -69,7 +69,7 @@ doAddCabal db pkgs = let
     in case (succs, fails) of
         (_, []) -> Right newDb
         ([], _) -> Left (unSats, brksOthrs)
-        (_, _) -> doAddCabal newDb fails
+        (_, _) -> doAdd newDb fails
 
 canBeAdded db p = let
         finable = either (const False) (const True) (finalizePkg db p)

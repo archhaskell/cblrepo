@@ -17,7 +17,7 @@
 module Util.Translation where
 
 --
-import AddCabal
+import Add
 import Distribution.PackageDescription.Parse
 import Distribution.Verbosity
 --

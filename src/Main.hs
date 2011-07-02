@@ -17,7 +17,7 @@
 module Main where
 
 import AddBase
-import AddCabal
+import Add
 import BuildPkgs
 import BumpPkgs
 import IdxSync
@@ -124,7 +124,7 @@ main = do
         createDirectoryIfMissing True (aD)
         case c' of
             AddBasePkg {} -> runReaderT addBase c'
-            AddPkg {} -> runReaderT addCabal c'
+            AddPkg {} -> runReaderT add c'
             BuildPkgs {} -> runReaderT buildPkgs c'
             BumpPkgs {} -> runReaderT bumpPkgs c'
             IdxSync {} -> runReaderT idxSync c'
