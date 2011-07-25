@@ -276,7 +276,7 @@ translate db pd = let
         url = if null (homepage pd) then "http://hackage.haskell.org/package/${_hkgname}" else (homepage pd)
         lic = display (license pd)
         makeDepends = if hasLib then [] else ["ghc=7.0.3-2"] ++ calcExactDeps db pd
-        depends = if hasLib then ["ghc=7.0.3-2", "sh"] ++ calcExactDeps db pd else []
+        depends = if hasLib then ["ghc=7.0.3-2"] ++ calcExactDeps db pd else []
         extraLibDepends = maybe [] (extraLibs . libBuildInfo) (library pd)
         install = if hasLib then (apShInstall ap) else Nothing
     in ap
