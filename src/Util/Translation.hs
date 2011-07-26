@@ -303,7 +303,8 @@ translate db pd = let
 --  • this is most likely too simplistic to create the Arch package names
 --  correctly for all possible dependencies
 calcExactDeps db pd = let
-        deps = filter (not . flip elem ghcPkgs) (map depName (buildDepends pd))
+        remPkgs = (map DB.pkgName (filter isGhcPkg db)) ++ ghcPkgs
+        deps = filter (not . flip elem remPkgs) (map depName (buildDepends pd))
         lookupPkgVer = display . DB.pkgVersion . fromJust . lookupPkg db
     in map (\ n -> "haskell-" ++ (map toLower n) ++ "=" ++ (lookupPkgVer n)) deps
 
