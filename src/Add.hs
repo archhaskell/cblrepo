@@ -45,18 +45,30 @@ import System.Process
 import System.Exit
 import System.IO
 
+add :: ReaderT Cmds IO ()
+add = do
+    b <- cfgGet isBase
+    if b
+        then addBase
+        else addNoneBase
+
 -- {{{1 Add base package
 addBase :: ReaderT Cmds IO ()
-addBase = do
-    pkgs <- cfgGet pkgVers
-    dR <- cfgGet dryRun
-    guard $ isJust $ (sequence $ map (simpleParse . snd) pkgs :: Maybe [Version])
-    let ps = map (\ (n, v) -> (n, fromJust $ simpleParse v)) pkgs
-    dbFn <- cfgGet dbFile
-    db <- liftIO $ readDb dbFn
-    case doAddBase db ps of
-        Left brkOthrs -> liftIO $ mapM_ printBrksOth brkOthrs
-        Right newDb -> liftIO $ unless dR $ saveDb newDb dbFn
+addBase = let
+        unpackPkgVer s = (p, v)
+            where
+                (p, _:v) = span (/= ',') s
+    in do
+        pkgs <- liftM (map unpackPkgVer) (cfgGet cbls)
+        dR <- cfgGet dryRun
+        liftIO $ print pkgs
+        guard $ isJust $ (sequence $ map (simpleParse . snd) pkgs :: Maybe [Version])
+        let ps = map (\ (n, v) -> (n, fromJust $ simpleParse v)) pkgs
+        dbFn <- cfgGet dbFile
+        db <- liftIO $ readDb dbFn
+        case doAddBase db ps of
+            Left brkOthrs -> liftIO $ mapM_ printBrksOth brkOthrs
+            Right newDb -> liftIO $ unless dR $ saveDb newDb dbFn
 
 doAddBase db pkgs = let
         canBeAdded db n v = null $ checkDependants db n v
@@ -68,8 +80,8 @@ doAddBase db pkgs = let
         else Left brkOthrs
 
 -- {{{1 Add non-base package
-add :: ReaderT Cmds IO ()
-add = do
+addNoneBase :: ReaderT Cmds IO ()
+addNoneBase = do
     dbFn <- cfgGet dbFile
     db <- liftIO $ readDb dbFn
     pD <- cfgGet patchDir

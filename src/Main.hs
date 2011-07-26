@@ -41,12 +41,6 @@ argAppDir = appDir := def += explicit += name "appdir" += help "application data
 argDbFile = dbFile := "cblrepo.db" += explicit += name "db" += help "package database" += typFile
 argDryRun = dryRun := False += explicit += name "n" += help "dry run"
 
-cmdAddBasePkg = record defAddBasePkg
-    [ argAppDir, argDbFile, argDryRun
-    , pkgVers := def += args += typ "STRING,STRING"
-    ] += name "addbasepkg" += help "add base packages" += details
-        [ "The format for a package is <name>,<version>." ]
-
 cmdAddPkg = record defCmdAdd
     [ argAppDir, argDbFile
     , patchDir := "patches" += explicit += name "patchdir" += help "location of patches" += typDir
@@ -100,8 +94,7 @@ cmdPkgBuild = record defPkgBuild
     ] += help "create a PKGBUILD, and other files necessary for an Arch package"
 
 cmds = cmdArgsMode_ $ modes_
-    [ cmdAddBasePkg
-    , cmdAddPkg
+    [ cmdAddPkg
     , cmdBuildPkgs
     , cmdBumpPkgs
     , cmdIdxSync
@@ -123,7 +116,6 @@ main = do
         let c' = c { appDir = aD }
         createDirectoryIfMissing True (aD)
         case c' of
-            AddBasePkg {} -> runReaderT addBase c'
             CmdAdd {} -> runReaderT add c'
             BuildPkgs {} -> runReaderT buildPkgs c'
             BumpPkgs {} -> runReaderT bumpPkgs c'

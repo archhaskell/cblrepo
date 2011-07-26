@@ -65,8 +65,7 @@ dbName = progName ++ ".db"
 
 -- {{{1 command line argument type
 data Cmds
-    = AddBasePkg { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, pkgVers :: [(String, String)] }
-    | CmdAdd { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, dryRun :: Bool, isBase :: Bool, cbls :: [FilePath] }
+    = CmdAdd { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, dryRun :: Bool, isBase :: Bool, cbls :: [FilePath] }
     | BuildPkgs { appDir :: FilePath, dbFile :: FilePath, pkgs :: [String] }
     | BumpPkgs { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, inclusive :: Bool, pkgs :: [String] }
     | IdxSync { appDir :: FilePath }
@@ -77,7 +76,6 @@ data Cmds
     | PkgBuild { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, pkgs :: [String] }
     deriving (Show, Data, Typeable)
 
-defAddBasePkg = AddBasePkg "" "" True []
 defCmdAdd = CmdAdd "" "" "" True False []
 defBuildPkgs =  BuildPkgs "" "" []
 defBumpPkgs =  BumpPkgs "" "" False False []
