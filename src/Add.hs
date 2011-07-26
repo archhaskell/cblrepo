@@ -16,9 +16,12 @@
 
 module Add where
 
+-- {{{1 imports
+-- {{{2 local
 import PkgDB
 import Util.Misc
 
+-- {{{2 system
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip
 import Control.Monad
@@ -45,6 +48,7 @@ import System.Process
 import System.Exit
 import System.IO
 
+-- {{{1 add
 add :: ReaderT Cmds IO ()
 add = do
     b <- cfgGet isBase
@@ -52,7 +56,7 @@ add = do
         then addBase
         else addNoneBase
 
--- {{{1 Add base package
+-- {{{2 Add base package
 addBase :: ReaderT Cmds IO ()
 addBase = let
         unpackPkgVer s = (p, v)
@@ -79,7 +83,7 @@ doAddBase db pkgs = let
         then Right newDb
         else Left brkOthrs
 
--- {{{1 Add non-base package
+-- {{{2 Add non-base package
 addNoneBase :: ReaderT Cmds IO ()
 addNoneBase = do
     dbFn <- cfgGet dbFile
