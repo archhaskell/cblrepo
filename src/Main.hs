@@ -48,10 +48,11 @@ cmdAddBasePkg = record defAddBasePkg
     ] += name "addbasepkg" += help "add base packages" += details
         [ "The format for a package is <name>,<version>." ]
 
-cmdAddPkg = record defAddPkg
+cmdAddPkg = record defCmdAdd
     [ argAppDir, argDbFile
     , patchDir := "patches" += explicit += name "patchdir" += help "location of patches" += typDir
     , argDryRun
+    , isBase := False += explicit += name "b" += name "base" += help "add a base package"
     , cbls := def += args += typ "CABAL"
     ] += name "add" += help "add a package from a Cabal file" += details
         [ "There are three ways to specify the location of the Cabal file:"
@@ -124,7 +125,7 @@ main = do
         createDirectoryIfMissing True (aD)
         case c' of
             AddBasePkg {} -> runReaderT addBase c'
-            AddPkg {} -> runReaderT add c'
+            CmdAdd {} -> runReaderT add c'
             BuildPkgs {} -> runReaderT buildPkgs c'
             BumpPkgs {} -> runReaderT bumpPkgs c'
             IdxSync {} -> runReaderT idxSync c'
