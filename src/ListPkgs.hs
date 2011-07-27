@@ -17,7 +17,7 @@
 module ListPkgs where
 
 import Util.Misc
-import PkgDB
+import OldPkgDB
 
 import Control.Monad
 import Control.Monad.Reader

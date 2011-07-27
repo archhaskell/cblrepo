@@ -1,4 +1,4 @@
-module PkgDB where
+module OldPkgDB where
 
 import qualified Distribution.Package as P
 import qualified Distribution.Version as V

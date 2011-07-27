@@ -16,7 +16,7 @@
 
 module BuildPkgs where
 
-import PkgDB
+import OldPkgDB
 import Util.Misc
 
 import Control.Monad

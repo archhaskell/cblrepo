@@ -26,7 +26,7 @@ flag BuildTests
 executable cblrepo
     hs-source-dirs: src
     main-is: Main.hs
-    other-modules: Util.Misc PkgDB Add BumpPkgs BuildPkgs IdxSync
+    other-modules: Util.Misc OldPkgDB Add BumpPkgs BuildPkgs IdxSync
         IdxVersion Updates ListPkgs Urls PkgBuild Util.Translation
     build-depends: base ==4.3.*, cmdargs ==0.7.*, filepath ==1.2.*,
         directory ==1.1.*, Cabal ==1.10.*, json ==0.4.*,
@@ -37,7 +37,7 @@ executable cblrepo
 executable tests
     hs-source-dirs: tst src
     main-is: tst.hs
-    other-modules: TestSystem TestPkgDB
+    other-modules: TestSystem TestOldPkgDB
     if flag(BuildTests)
         build-depends: base ==4.3.*, test-framework-th ==0.2.*, HUnit ==1.2.*,
             test-framework-hunit ==0.2.*, test-framework ==0.4.*

@@ -16,7 +16,7 @@
 
 module Updates where
 
-import PkgDB
+import OldPkgDB
 import Util.Misc
 
 import Codec.Archive.Tar as Tar

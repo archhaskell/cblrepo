@@ -22,7 +22,7 @@ import Distribution.PackageDescription.Parse
 import Distribution.Verbosity
 --
 
-import PkgDB as DB
+import OldPkgDB as DB
 import Util.Misc
 
 import Data.Monoid

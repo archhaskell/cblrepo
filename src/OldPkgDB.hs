@@ -14,7 +14,7 @@
  - limitations under the License.
  -}
 
-module PkgDB where
+module OldPkgDB where
 
 import Util.Misc
 

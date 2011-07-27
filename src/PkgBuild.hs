@@ -16,7 +16,7 @@
 
 module PkgBuild where
 
-import PkgDB
+import OldPkgDB
 import Util.Misc
 import Util.Translation
 

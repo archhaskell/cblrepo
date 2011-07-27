@@ -17,7 +17,7 @@
 
 module Util.Misc where
 
-import {-# SOURCE #-} PkgDB
+import {-# SOURCE #-} OldPkgDB
 
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip

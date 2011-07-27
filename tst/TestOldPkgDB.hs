@@ -15,11 +15,11 @@
  - limitations under the License.
  -}
 
-module TestPkgDB
+module TestOldPkgDB
     ( testGroup
     ) where
 
-import PkgDB
+import OldPkgDB
 
 import Data.Maybe
 import Distribution.Text
