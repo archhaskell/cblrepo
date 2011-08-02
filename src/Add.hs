@@ -20,7 +20,7 @@ import Debug.Trace
 
 -- {{{1 imports
 -- {{{2 local
-import OldPkgDB
+import PkgDB
 import Util.Misc
 
 -- {{{2 system
@@ -68,7 +68,7 @@ addBase = let
         pkgs <- liftM (map unpackPkgVer) (cfgGet cbls)
         dR <- cfgGet dryRun
         guard $ isJust $ (sequence $ map (simpleParse . snd) pkgs :: Maybe [Version])
-        let ps = map (\ (n, v) -> (n, fromJust $ simpleParse v)) pkgs
+        let ps = map (\ (n, v) -> (n, fromJust $ (simpleParse v :: Maybe Version))) pkgs
         dbFn <- cfgGet dbFile
         db <- liftIO $ readDb dbFn
         case doAddBase db ps of

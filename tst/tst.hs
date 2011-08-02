@@ -16,13 +16,13 @@
 
 module Main where
 
-import qualified TestOldPkgDB
+import qualified TestPkgDB
 import qualified TestSystem
 
 import Test.Framework
 
 main = defaultMain
-    [ TestOldPkgDB.testGroup
+    [ TestPkgDB.testGroup
     , TestSystem.testGroup
     ]
 

@@ -17,7 +17,7 @@
 
 module Util.Misc where
 
-import {-# SOURCE #-} OldPkgDB
+import qualified PkgDB as DB
 
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip
@@ -184,9 +184,9 @@ finalizePkg db = finalizePackageDescription
 checkAgainstDb db dep = let
         dN = depName dep
         dVR = depVersionRange dep
-    in case lookupPkg db dN of
+    in case DB.lookupPkg db dN of
         Nothing -> False
-        Just (_, (v, _, _)) -> withinRange v dVR
+        Just (_, p) -> withinRange (DB.version p) dVR
 
 -- {{{1 allPatches
 allPatches pn patchDir = let

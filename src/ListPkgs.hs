@@ -17,7 +17,7 @@
 module ListPkgs where
 
 import Util.Misc
-import OldPkgDB
+import PkgDB
 
 import Control.Monad
 import Control.Monad.Reader
@@ -34,5 +34,6 @@ listPkgs = do
             else db
     liftIO $ mapM_ printCblPkgShort pkgs
 
-printCblPkgShort (p, (v, _, r)) =
-    putStrLn $ p ++ " ==" ++ (display v) ++ " (" ++ (show r) ++")"
+-- printCblPkgShort (p, (v, _, r)) =
+printCblPkgShort p =
+    putStrLn $ pkgName p ++ "  " ++ (display $ pkgVersion p) ++ "-" ++ pkgRelease p

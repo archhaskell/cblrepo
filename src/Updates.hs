@@ -16,7 +16,7 @@
 
 module Updates where
 
-import OldPkgDB
+import PkgDB
 import Util.Misc
 
 import Codec.Archive.Tar as Tar
@@ -35,8 +35,8 @@ updates = do
     aD <- cfgGet appDir
     entries <- liftIO $ liftM (Tar.read . GZip.decompress)
         (BS.readFile $ aD </> "00-index.tar.gz")
-    let nonBasePkgs = filter (\ (_, (_, ds, _)) -> not $ null ds) db
-    let pkgsNVers = map (\ (p, (v, _, _)) -> (p, v)) nonBasePkgs
+    let nonBasePkgs = filter (not . isBasePkg) db
+    let pkgsNVers = map (\ p -> (pkgName p, pkgVersion p)) nonBasePkgs
     let availPkgs = catMaybes $ eMap extractPkgVer entries
     let outdated = filter
             (\ (p, v) -> maybe False (> v) (latestVer p availPkgs))

@@ -15,11 +15,11 @@
  - limitations under the License.
  -}
 
-module TestOldPkgDB
+module TestPkgDB
     ( testGroup
     ) where
 
-import OldPkgDB
+import PkgDB
 
 import Data.Maybe
 import Distribution.Text
@@ -33,14 +33,17 @@ import qualified Distribution.Version as V
 -- {{{1 transitiveDependants
 theDb :: CblDB
 theDb =
-    [ ("pkgA", (fromJust $ simpleParse "1.0", [], 1)) -- nothing depends on this pkg
+    [ createRepoPkg "pkgA" (fromJust $ simpleParse "1.0") [] "1" -- nothing depends on this pkg
     -- a chain of two
-    , ("pkgB", (fromJust $ simpleParse "1.0", [], 1))
-    , ("pkgC", (fromJust $ simpleParse "1.0", map (fromJust . simpleParse) ["pkgB"], 1))
+    , createRepoPkg "pkgB" (fromJust $ simpleParse "1.0") [] "1"
+    , createRepoPkg "pkgC" (fromJust $ simpleParse "1.0")
+        (map (fromJust . simpleParse) ["pkgB"]) "1"
     -- a chain of three
-    , ("pkgD", (fromJust $ simpleParse "1.0", [], 1))
-    , ("pkgE", (fromJust $ simpleParse "1.0", map (fromJust . simpleParse) ["pkgD"], 1))
-    , ("pkgF", (fromJust $ simpleParse "1.0", map (fromJust . simpleParse) ["pkgE"], 1))
+    , createRepoPkg "pkgD" (fromJust $ simpleParse "1.0") [] "1"
+    , createRepoPkg "pkgE" (fromJust $ simpleParse "1.0")
+        (map (fromJust . simpleParse) ["pkgD"]) "1"
+    , createRepoPkg "pkgF" (fromJust $ simpleParse "1.0")
+        (map (fromJust . simpleParse) ["pkgE"]) "1"
     ]
 
 case_TD_one = do transitiveDependants theDb ["pkgA"] @=? ["pkgA"]

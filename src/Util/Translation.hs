@@ -22,7 +22,7 @@ import Distribution.PackageDescription.Parse
 import Distribution.Verbosity
 --
 
-import OldPkgDB as DB
+import PkgDB as DB
 import Util.Misc
 
 import Data.Monoid
@@ -84,7 +84,7 @@ data ArchPkg = ArchPkg
     , apShHkgName :: ShVar String
     , apShPkgName :: ShVar String
     , apShPkgVer :: ShVar Version
-    , apShPkgRel :: ShVar Int
+    , apShPkgRel :: ShVar String
     , apShPkgDesc :: ShVar ShQuotedString
     , apShUrl :: ShVar ShQuotedString
     , apShLicence :: ShVar ShArray
@@ -106,7 +106,7 @@ baseArchPkg = ArchPkg
     , apShHkgName = ShVar "_hkgname" ""
     , apShPkgName = ShVar "pkgname" ""
     , apShPkgVer = ShVar "pkgver" (Version [] [])
-    , apShPkgRel = ShVar "pkgrel" 0
+    , apShPkgRel = ShVar "pkgrel" "0"
     , apShPkgDesc = ShVar "pkgdesc" (ShQuotedString "")
     , apShUrl = ShVar "url" (ShQuotedString "http://hackage.haskell.org/package/${_hkgname}")
     , apShLicence = ShVar "license" (ShArray [])
@@ -268,7 +268,7 @@ translate db pd = let
         ap = baseArchPkg
         (PackageName hkgName) = packageName pd
         pkgVer = packageVersion pd
-        pkgRel = maybe 1 pkgRelease (lookupPkg db hkgName)
+        pkgRel = maybe "1" pkgRelease (lookupPkg db hkgName)
         hasLib = maybe False (const True) (library pd)
         licFn = let l = licenseFile pd in if null l then Nothing else Just l
         archName = (if hasLib then "haskell-" else "") ++ (map toLower hkgName)
