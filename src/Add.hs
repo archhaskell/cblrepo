@@ -65,7 +65,6 @@ addBase = let
     in do
         pkgs <- liftM (map unpackPkgVer) (cfgGet cbls)
         dR <- cfgGet dryRun
-        liftIO $ print pkgs
         guard $ isJust $ (sequence $ map (simpleParse . snd) pkgs :: Maybe [Version])
         let ps = map (\ (n, v) -> (n, fromJust $ simpleParse v)) pkgs
         dbFn <- cfgGet dbFile
