@@ -26,6 +26,7 @@ import Updates
 import Util.Misc
 import Urls
 import PkgBuild
+import ConvertDB
 
 import Paths_cblrepo
 
@@ -97,6 +98,12 @@ cmdPkgBuild = record defPkgBuild
     , pkgs := def += args += typ "PKG"
     ] += help "create a PKGBUILD, and other files necessary for an Arch package"
 
+cmdConvertDb = record defConvertDb
+    [ argAppDir
+    , inDbFile := "cblrepo.db" += explicit += name "i" += name "indb" += typFile += help "old database"
+    , outDbFile := "new-cblrepo.db" += explicit += name "o" += name "outdb" += typFile += help "new database"
+    ] += help "convert an old database to the new format"
+
 cmds = cmdArgsMode_ $ modes_
     [ cmdAddPkg
     , cmdBuildPkgs
@@ -107,6 +114,7 @@ cmds = cmdArgsMode_ $ modes_
     , cmdUpdates
     , cmdUrls
     , cmdPkgBuild
+    , cmdConvertDb
     ]
     += program progName
     += summary (progName ++ " v" ++ (display version))
@@ -129,3 +137,4 @@ main = do
             Updates {} -> runReaderT updates c'
             Urls {} -> runReaderT urls c'
             PkgBuild {} -> runReaderT pkgBuild c'
+            ConvertDb {} -> runReaderT convertDb c'

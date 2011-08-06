@@ -123,18 +123,3 @@ saveDb :: CblDB -> FilePath -> IO ()
 saveDb db fp = writeFile fp s
     where
         s = unlines $ map (encode . showJSON) db
-
-instance JSON V.Version where
-    showJSON v = makeObj [ ("Version", showJSON $ display v) ]
-
-    readJSON object = do
-        obj <- readJSON object
-        version <- valFromObj "Version" obj
-        maybe (fail "Not a Version object") return (simpleParse version)
-
-instance JSON P.Dependency where
-    showJSON d = makeObj [ ("Dependency", showJSON $ display d) ]
-    readJSON object = do
-        obj <- readJSON object
-        dep <- valFromObj "Dependency" obj
-        maybe (fail "Not a Dependency object") return (simpleParse dep)
