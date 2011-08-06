@@ -64,8 +64,11 @@ progName = "cblrepo"
 dbName = progName ++ ".db"
 
 -- {{{1 command line argument type
+data PkgType = GhcPkgT | DistroPkgT | RepoPkgT
+    deriving (Show, Data, Typeable)
+
 data Cmds
-    = CmdAdd { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, dryRun :: Bool, isBase :: Bool, cbls :: [FilePath] }
+    = CmdAdd { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, dryRun :: Bool, pkgType :: PkgType, cbls :: [FilePath] }
     | BuildPkgs { appDir :: FilePath, dbFile :: FilePath, pkgs :: [String] }
     | BumpPkgs { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, inclusive :: Bool, pkgs :: [String] }
     | IdxSync { appDir :: FilePath }
@@ -76,7 +79,7 @@ data Cmds
     | PkgBuild { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, pkgs :: [String] }
     deriving (Show, Data, Typeable)
 
-defCmdAdd = CmdAdd "" "" "" True False []
+defCmdAdd = CmdAdd "" "" "" True RepoPkgT []
 defBuildPkgs =  BuildPkgs "" "" []
 defBumpPkgs =  BumpPkgs "" "" False False []
 defIdxSync =  IdxSync ""

@@ -99,8 +99,11 @@ addPkg db n p = nubBy cmp newdb
 addPkg2 :: CblDB -> CblPkg -> CblDB
 addPkg2 db (n, p) = addPkg db n p
 
-addBasePkg :: CblDB -> String -> V.Version -> CblDB
-addBasePkg db n v = addPkg2 db (createGhcPkg n v)
+addGhcPkg :: CblDB -> String -> V.Version -> CblDB
+addGhcPkg db n v = addPkg2 db (createGhcPkg n v)
+
+addDistroPkg :: CblDB -> String -> V.Version -> String -> CblDB
+addDistroPkg db n v r = addPkg2 db (createDistroPkg n v r)
 
 delPkg :: CblDB -> String -> CblDB
 delPkg db n = filter (\ p -> n /= pkgName p) db

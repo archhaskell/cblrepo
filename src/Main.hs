@@ -45,14 +45,18 @@ cmdAddPkg = record defCmdAdd
     [ argAppDir, argDbFile
     , patchDir := "patches" += explicit += name "patchdir" += help "location of patches" += typDir
     , argDryRun
-    , isBase := False += explicit += name "b" += name "base" += help "add a base package"
-    , cbls := def += args += typ "CABAL"
+    , pkgType := RepoPkgT += explicit += name "t" += name "type" += typ "TYPE" += help "type of package ((g)hcpkg, (d)istropkg, or (r)epopkg, default: r)"
+    --, isBase := False += explicit += name "b" += name "base" += help "add a base package"
+    , cbls := def += args += typ "PKGVERSPEC"
     ] += name "add" += help "add a package from a Cabal file" += details
-        [ "There are three ways to specify the location of the Cabal file:"
-        , " 1. The filename of the Cabal file."
-        , " 2. A URL where the Cabal can be found (for file:// URLs the full absolute path is required)."
-        , " 3. A pair, <name>,<version>, will load the Cabal file out of an index file (see idxupdate)"
-        , "All three format may be mixed on the command line."
+        [ "The package version depends on the type of the package that's added:"
+        , " 1. For a ghc package specify the name and version, e.g. 'base,4.3'"
+        , " 2. For a distro package specify the name, version, and release, e.g. 'HUnit,1.2.2.3,2.1"
+        , " 3. For a repo package provide a Cabal file by either"
+        , "    - provide the filename of the  Cabal file"
+        , "    - specify the URL where the Cabal file can be found (for file:// URLs the full absolute path is required"
+        , "    - specify the name and version to load the Cabal file out of an index file (see idxupdate)"
+        , "    All three format may be mixed on the command line."
         ]
 
 cmdBumpPkgs = record defBumpPkgs

@@ -53,14 +53,15 @@ import System.IO
 -- {{{1 add
 add :: ReaderT Cmds IO ()
 add = do
-    b <- cfgGet isBase
-    if b
-        then addBase
-        else addNoneBase
+    t <- cfgGet pkgType
+    case t of
+        GhcPkgT -> addGhc
+        DistroPkgT -> addDistro
+        RepoPkgT -> addRepo
 
--- {{{2 Add base package
-addBase :: ReaderT Cmds IO ()
-addBase = let
+-- {{{2 Add ghc package
+addGhc :: ReaderT Cmds IO ()
+addGhc = let
         unpackPkgVer s = (p, v)
             where
                 (p, _:v) = span (/= ',') s
@@ -71,22 +72,50 @@ addBase = let
         let ps = map (\ (n, v) -> (n, fromJust $ (simpleParse v :: Maybe Version))) pkgs
         dbFn <- cfgGet dbFile
         db <- liftIO $ readDb dbFn
-        case doAddBase db ps of
+        case doAddGhc db ps of
             Left brkOthrs -> liftIO $ mapM_ printBrksOth brkOthrs
             Right newDb -> liftIO $ unless dR $ saveDb newDb dbFn
 
-doAddBase db pkgs = let
+doAddGhc db pkgs = let
         canBeAdded db n v = null $ checkDependants db n v
         (_, fails) = partition (\ (n, v) -> canBeAdded db n v) pkgs
-        newDb = foldl (\ d (n, v) -> addBasePkg d n v) db pkgs
+        newDb = foldl (\ d (n, v) -> addGhcPkg d n v) db pkgs
         brkOthrs = map (\ (n, v) -> ((n, v), checkDependants db n v)) fails
     in if null fails
         then Right newDb
         else Left brkOthrs
 
--- {{{2 Add non-base package
-addNoneBase :: ReaderT Cmds IO ()
-addNoneBase = do
+-- {{{2 Add distro package
+addDistro :: ReaderT Cmds IO ()
+addDistro = let
+        unpackPkgVer s = (p, v, r)
+            where
+                (p, _:s2) = span (/= ',') s
+                (v, _:r) = span (/= ',') s2
+        getVersion (_, v, _) = simpleParse v :: Maybe Version
+    in do
+        pkgs <- liftM (map unpackPkgVer) (cfgGet cbls)
+        dR <- cfgGet dryRun
+        guard $ isJust $ sequence $ map getVersion pkgs
+        let ps = map (\ p@(n, v, r) -> (n, fromJust $ getVersion p, r)) pkgs
+        dbFn <- cfgGet dbFile
+        db <- liftIO $ readDb dbFn
+        case doAddDistro db ps of
+            Left brkOthrs -> liftIO $ mapM_ printBrksOth brkOthrs
+            Right newDb -> liftIO $ unless dR $ saveDb newDb dbFn
+
+doAddDistro db pkgs = let
+        canBeAdded db n v = null $ checkDependants db n v
+        (_, fails) = partition (\ (n, v, _) -> canBeAdded db n v) pkgs
+        newDb = foldl (\ d (n, v, r) -> addDistroPkg d n v r) db pkgs
+        brkOthrs = map (\ (n, v, _) -> ((n, v), checkDependants db n v)) fails
+    in if null fails
+        then Right newDb
+        else Left brkOthrs
+
+-- {{{2 Add repo package
+addRepo :: ReaderT Cmds IO ()
+addRepo = do
     dbFn <- cfgGet dbFile
     db <- liftIO $ readDb dbFn
     pD <- cfgGet patchDir
@@ -96,11 +125,11 @@ addNoneBase = do
     let pkgNames = map ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) genPkgs
     liftIO $ when (or . catMaybes $ map (liftM isBasePkg . lookupPkg db) pkgNames) (putStrLn "Trying to add a base pkg!!" >> exitFailure)
     let tmpDb = filter (\ p -> not $ pkgName p `elem` pkgNames) db
-    case doAdd tmpDb genPkgs of
+    case doAddRepo tmpDb genPkgs of
         Left (unSats, brksOthrs) -> liftIO (mapM_ printUnSat unSats >> mapM_ printBrksOth brksOthrs)
         Right newDb -> liftIO $ unless dR $ saveDb newDb dbFn
 
-doAdd db pkgs = let
+doAddRepo db pkgs = let
         (succs, fails) = partition (canBeAdded db) pkgs
         newDb = foldl addPkg2 db (map (fromJust . finalizeToCblPkg db) succs)
         unSats = catMaybes $ map (finalizeToDeps db) fails
@@ -110,7 +139,7 @@ doAdd db pkgs = let
     in case (succs, fails) of
         (_, []) -> Right newDb
         ([], _) -> Left (unSats, brksOthrs)
-        (_, _) -> doAdd newDb fails
+        (_, _) -> doAddRepo newDb fails
 
 canBeAdded db p = let
         finable = either (const False) (const True) (finalizePkg db p)
