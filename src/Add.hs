@@ -16,6 +16,8 @@
 
 module Add where
 
+import Debug.Trace
+
 -- {{{1 imports
 -- {{{2 local
 import PkgDB
@@ -92,6 +94,7 @@ addNoneBase = do
     dR <- cfgGet dryRun
     genPkgs <- liftIO $ mapM (\ c -> withTemporaryDirectory "/tmp/cblrepo." (readCabal pD c)) cbls
     let pkgNames = map ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) genPkgs
+    liftIO $ when (or . catMaybes $ map (liftM isBasePkg . lookupPkg db) pkgNames) (putStrLn "Trying to add a base pkg!!" >> exitFailure)
     let tmpDb = filter (\ p -> not $ pkgName p `elem` pkgNames) db
     case doAdd tmpDb genPkgs of
         Left (unSats, brksOthrs) -> liftIO (mapM_ printUnSat unSats >> mapM_ printBrksOth brksOthrs)
