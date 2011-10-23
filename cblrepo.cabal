@@ -1,5 +1,5 @@
 name: cblrepo
-version: 0.2.2
+version: 0.2.3
 cabal-version: >= 1.6
 license: OtherLicense
 license-file: LICENSE-2.0
@@ -31,7 +31,7 @@ executable cblrepo
     build-depends: base ==4.3.*, cmdargs ==0.7.*, filepath ==1.2.*,
         directory ==1.1.*, Cabal ==1.10.*, json ==0.4.*,
         bytestring ==0.9.*, tar ==0.3.*, zlib ==0.5.*, mtl ==2.0.*,
-        process ==1.0.*, Unixutils ==1.36.*, unix ==2.4.*,
+        process ==1.0.*, Unixutils ==1.46.*, unix ==2.4.*,
         ansi-wl-pprint ==0.6.*
 
 executable tests
