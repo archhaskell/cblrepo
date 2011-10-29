@@ -306,7 +306,13 @@ calcExactDeps db pd = let
         remPkgs = (map DB.pkgName (filter isGhcPkg db)) ++ ghcPkgs
         deps = filter (not . flip elem remPkgs) (map depName (buildDepends pd))
         lookupPkgVer = display . DB.pkgVersion . fromJust . lookupPkg db
-    in map (\ n -> "haskell-" ++ (map toLower n) ++ "=" ++ (lookupPkgVer n)) deps
+        depString n = let
+                pkg = fromJust $ lookupPkg db n
+                name = map toLower $ DB.pkgName pkg
+                ver = display $ DB.pkgVersion pkg
+                rel = pkgRelease pkg
+            in "haskell-" ++ name ++ "=" ++ ver ++ "-" ++ rel
+    in map depString deps
 
 -- {{{2 ghcPkgs
 -- libraries included in GHC, but not marked as provided by the Arch package
