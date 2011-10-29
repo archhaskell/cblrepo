@@ -182,6 +182,9 @@ instance Pretty ArchPkg where
 
                 exeBuildFunction = text "build() {" <>
                     nest 4 (empty <$> text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
+                        maybe empty (\ _ ->
+                            text $ "patch " ++ shVarValue hkgName ++ ".cabal ${srcdir}/cabal.patch ")
+                            cabalPatchFile <$>
                         text "runhaskell Setup configure -O --prefix=/usr --docdir=/usr/share/doc/${pkgname}" <$>
                         text "runhaskell Setup build"
                         ) <$>
