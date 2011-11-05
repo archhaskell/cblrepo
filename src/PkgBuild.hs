@@ -20,55 +20,46 @@ import PkgDB
 import Util.Misc
 import Util.Translation
 
+import Control.Monad.Error
 import Control.Monad.Reader
 import Data.Maybe
 import Distribution.Text
-import System.Exit
-import System.Unix.Directory
 import System.Directory
-import System.IO(openFile)
+import System.Exit
 import System.IO
+import System.Unix.Directory
 import Text.PrettyPrint.ANSI.Leijen
+
+pkgBuild :: ReaderT Cmds IO ()
+pkgBuild = do
+    db <- cfgGet dbFile >>= liftIO . readDb
+    pD <- cfgGet patchDir
+    pkgs <- cfgGet pkgs
+    r <- liftIO $ mapM (runErrorT . generatePkgBuild db pD) pkgs
+    liftIO $ mapM_ (either putStrLn (const $ return ())) r
 
 -- TODO:
 --  - patches:
---      .cabal patch - put into sources array, copied into package dir
---      PKGBUILD patch - applied
 --      build patch - put into source array, copied into package dir
 --  - flags
-pkgBuild :: ReaderT Cmds IO ()
-pkgBuild = let
-        failFinalize _ = error "pkgBuild: unexpected failure to finalize a package"
+-- generatePkgBuild :: CblDB -> String -> String -> ErrorT String IO ()
+generatePkgBuild db patchDir pkg = let
+        appendPkgVer = pkg ++ "," ++ (display $ pkgVersion $ fromJust $ lookupPkg db pkg)
     in do
-        db <- cfgGet dbFile >>= liftIO . readDb
-        pD <- cfgGet patchDir
-        pkgs <- cfgGet pkgs
-        unless (all isJust (map (lookupPkg db) pkgs)) $
-            liftIO (mapM_ (printNotAPkg db) pkgs >> exitFailure)
-        let cbls = map (appendPkgVer db) pkgs
-        genPDs <- liftIO $ mapM (\ c -> withTemporaryDirectory "/tmp/cblrepo." (readCabal pD c)) cbls
-        let pds = map (either failFinalize id . finalizePkg db) genPDs
-        let aps = map (translate db . fst) pds
-        apsP <- liftIO $ mapM (addPatches pD) aps
-        apsF <- liftIO $ mapM (\ a -> withTemporaryDirectory "/tmp/cblrepo." (addHashes a)) apsP
-        liftIO $ mapM_ (\ a -> createDirectoryIfMissing False (apPkgName a)) apsF
-        liftIO $ mapM_ (\ a -> withWorkingDirectory (apPkgName a) $ do
-            copyPatches "." a
-            hF <- openFile "PKGBUILD" WriteMode 
-            hPutDoc hF $ pretty a
-            hClose hF
-            maybe (return ()) (\ pfn -> applyPatch "PKGBUILD" pfn) (apPkgbuildPatch a)
-            when (apHasLibrary a) $ do
-                hFI <- openFile (apPkgName a ++ ".install") WriteMode
-                let ai = aiFromAP a
-                hPutDoc hFI $ pretty ai
-                hClose hFI
-            ) apsF
-
-printNotAPkg db pkg = maybe doPrint (const $ return ()) (lookupPkg db pkg)
-    where
-        doPrint = putStrLn $ "Unknown package: " ++ pkg
-
-appendPkgVer db pkg = let
-        displayVer = display . pkgVersion . fromJust . lookupPkg db
-    in pkg ++ "," ++ (displayVer pkg)
+        maybe (throwError $ "Unknown package: " ++ pkg) (const $ return ()) (lookupPkg db pkg)
+        genericPkgDesc <- liftIO $ withTemporaryDirectory "/tmp/cblrepo." (readCabal patchDir appendPkgVer)
+        pkgDesc <- either (const $ throwError ("Failed to finalize package: " ++ pkg)) (return . fst) (finalizePkg db genericPkgDesc)
+        let archPkg = translate db pkgDesc
+        archPkgWHash <- liftIO $ withTemporaryDirectory "/tmp/cblrepo." (addHashes archPkg)
+        liftIO $ createDirectoryIfMissing False (apPkgName archPkgWHash)
+        liftIO $ withWorkingDirectory (apPkgName archPkgWHash) $ do
+            copyPatches "." archPkgWHash
+            hPKGBUILD <- openFile "PKGBUILD" WriteMode
+            hPutDoc hPKGBUILD $ pretty archPkgWHash
+            hClose hPKGBUILD
+            maybe (return ()) (\ pfn -> applyPatch "PKGBUILD" pfn) (apPkgbuildPatch archPkgWHash)
+            when (apHasLibrary archPkgWHash) $ do
+                hInstall <- openFile (apPkgName archPkgWHash ++ ".install") WriteMode
+                let archInstall = aiFromAP archPkgWHash
+                hPutDoc hInstall $ pretty archInstall
+                hClose hInstall
