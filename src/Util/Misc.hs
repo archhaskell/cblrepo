@@ -104,6 +104,7 @@ getFromURL url fn = do
             exitFailure
 
 -- {{{1 applyPatchIfExist
+-- Todo: make it use 'ErrorT' instead of exiting
 applyPatch origFilename patchFilename = do
     (ec, _, err) <- readProcessWithExitCode "patch" [origFilename, patchFilename] ""
     case ec of
@@ -119,6 +120,7 @@ applyPatchIfExist origFilename patchFilename =
 data LocType = Url | Idx | File
 
 -- | Read in a Cabal file.
+-- Todo: make it use 'ErrorT' instead of 'error'
 readCabal patchDir loc tmpDir = let
         locType
             | isInfixOf "://" loc = Url
