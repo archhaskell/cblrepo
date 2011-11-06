@@ -350,22 +350,19 @@ copyPatches destDir ap = let
     in maybe (return ()) (\ fn -> copyFile fn (destDir </> "cabal.patch")) cabalPatch
 
 -- {{{1 addHashes
--- TODO:
---  • deal with errors better
 addHashes ap tmpDir = let
         hashes = map (filter (`elem` "1234567890abcdef")) . lines . drop 11
         pkgbuildFn = tmpDir </> "PKGBUILD"
         pkgbuildPatch = apPkgbuildPatch ap
     in do
-        copyPatches tmpDir ap
-        writeFile pkgbuildFn (show $ pretty ap)
-        maybe (return ()) (\ pfn -> (runErrorT $ applyPatch pkgbuildFn pfn) >> return ()) pkgbuildPatch
-        (ec, out, er) <- withWorkingDirectory tmpDir (readProcessWithExitCode "makepkg" ["-g"] "")
+        liftIO $ copyPatches tmpDir ap
+        liftIO $ writeFile pkgbuildFn (show $ pretty ap)
+        maybe (return ()) (\ pfn -> (applyPatch pkgbuildFn pfn) >> return ()) pkgbuildPatch
+        (ec, out, er) <- liftIO $ withWorkingDirectory tmpDir (readProcessWithExitCode "makepkg" ["-g"] "")
         case ec of
             ExitFailure _ -> do
-                hPutStrLn stderr er
-                hPutStrLn stderr "makepkg: error while calculating the source hashes"
-                return ap
+                -- hPutStrLn stderr er
+                throwError $ "makepkg: error while calculating the source hashes for " ++ (apHkgName ap)
             ExitSuccess -> do
                 if "sha256sums=(" `isPrefixOf` out
                     then return ap { apShSha256Sums = shVarNewValue (apShSha256Sums ap) (ShArray $ hashes out) }

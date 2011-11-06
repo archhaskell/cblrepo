@@ -50,7 +50,7 @@ generatePkgBuild db patchDir pkg = let
         genericPkgDesc <- withTempDirErrT "/tmp/cblrepo." (readCabal patchDir appendPkgVer)
         pkgDesc <- either (const $ throwError ("Failed to finalize package: " ++ pkg)) (return . fst) (finalizePkg db genericPkgDesc)
         let archPkg = translate db pkgDesc
-        archPkgWHash <- liftIO $ withTemporaryDirectory "/tmp/cblrepo." (addHashes archPkg)
+        archPkgWHash <- withTempDirErrT "/tmp/cblrepo." (addHashes archPkg)
         liftIO $ createDirectoryIfMissing False (apPkgName archPkgWHash)
         liftIO $ withWorkingDirectory (apPkgName archPkgWHash) $ do
             copyPatches "." archPkgWHash
