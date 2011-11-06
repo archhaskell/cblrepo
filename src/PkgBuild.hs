@@ -36,8 +36,7 @@ pkgBuild = do
     db <- cfgGet dbFile >>= liftIO . readDb
     pD <- cfgGet patchDir
     pkgs <- cfgGet pkgs
-    r <- liftIO $ mapM (runErrorT . generatePkgBuild db pD) pkgs
-    liftIO $ mapM_ (either putStrLn (const $ return ())) r
+    mapM (runErrorT . generatePkgBuild db pD) pkgs >>= exitOnErrors >> return ()
 
 -- TODO:
 --  - patches:
@@ -48,7 +47,7 @@ generatePkgBuild db patchDir pkg = let
         appendPkgVer = pkg ++ "," ++ (display $ pkgVersion $ fromJust $ lookupPkg db pkg)
     in do
         maybe (throwError $ "Unknown package: " ++ pkg) (const $ return ()) (lookupPkg db pkg)
-        (Right genericPkgDesc) <- liftIO $ withTemporaryDirectory "/tmp/cblrepo." (\ d -> runErrorT $ readCabal patchDir appendPkgVer d)
+        genericPkgDesc <- withTempDirErrT "/tmp/cblrepo." (readCabal patchDir appendPkgVer)
         pkgDesc <- either (const $ throwError ("Failed to finalize package: " ++ pkg)) (return . fst) (finalizePkg db genericPkgDesc)
         let archPkg = translate db pkgDesc
         archPkgWHash <- liftIO $ withTemporaryDirectory "/tmp/cblrepo." (addHashes archPkg)

@@ -26,6 +26,7 @@ import Control.Monad
 import Control.Monad.Error
 import Control.Monad.Reader
 import Data.Data
+import Data.Either
 import Data.List
 import Data.Typeable
 import Distribution.Compiler
@@ -43,6 +44,7 @@ import System.FilePath
 import System.IO
 import System.Posix.Files
 import System.Process
+import System.Unix.Directory
 import qualified Control.Exception as CE
 import qualified Data.ByteString.Lazy.Char8 as BS
 
@@ -206,3 +208,18 @@ allPatches pn patchDir = let
         return (if cE then Just cblPatch else Nothing,
             if pE then Just pkgPatch else Nothing,
             if bE then Just bldPatch else Nothing)
+
+-- {{{1 ErrorT
+reWrapErrT (Left e) = throwError e
+reWrapErrT (Right v) = return v
+
+withTempDirErrT fp func = do
+    r <- liftIO $ withTemporaryDirectory fp (\ p -> runErrorT $ func p)
+    reWrapErrT r
+
+exitOnErrors vs = let
+        es = lefts vs
+    in
+        if (not $ null $ lefts vs)
+            then liftIO $ mapM_ (hPutStrLn stderr) es >> exitFailure
+            else return (rights vs)
