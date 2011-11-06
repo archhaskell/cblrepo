@@ -104,16 +104,15 @@ getFromURL url fn = do
             exitFailure
 
 -- {{{1 applyPatchIfExist
--- Todo: make it use 'ErrorT' instead of exiting
 applyPatch origFilename patchFilename = do
-    (ec, _, err) <- readProcessWithExitCode "patch" [origFilename, patchFilename] ""
+    (ec, _, err) <- liftIO $ readProcessWithExitCode "patch" [origFilename, patchFilename] ""
     case ec of
         ExitSuccess -> return ()
         ExitFailure _ ->
-            hPutStrLn stderr ("Failed patching " ++ origFilename ++ " with " ++ patchFilename) >> exitFailure
+            throwError ("Failed patching " ++ origFilename ++ " with " ++ patchFilename)
 
 applyPatchIfExist origFilename patchFilename =
-    fileExist patchFilename >>= flip when (applyPatch origFilename patchFilename)
+    (liftIO $ fileExist patchFilename) >>= flip when (applyPatch origFilename patchFilename)
 
 -- {{{1 package descriptions
 -- {{{2 readCabal
@@ -121,6 +120,7 @@ data LocType = Url | Idx | File
 
 -- | Read in a Cabal file.
 -- Todo: make it use 'ErrorT' instead of 'error'
+readCabal :: FilePath -> String -> FilePath -> ErrorT String IO GenericPackageDescription
 readCabal patchDir loc tmpDir = let
         locType
             | isInfixOf "://" loc = Url
@@ -171,14 +171,13 @@ readCabal patchDir loc tmpDir = let
 
     in do
         cblFn <- case locType of
-            File -> copyCabal tmpDir loc
-            Idx -> extractCabal tmpDir loc
-            Url -> downloadCabal tmpDir loc
-        pn <- extractName cblFn
+            File -> liftIO $ copyCabal tmpDir loc
+            Idx -> liftIO $ extractCabal tmpDir loc
+            Url -> liftIO $ downloadCabal tmpDir loc
+        pn <- liftIO $ extractName cblFn
         let patchFn = patchDir </> pn <.> "cabal"
-        return patchFn
         applyPatchIfExist cblFn patchFn
-        readPackageDescription silent cblFn
+        liftIO $ readPackageDescription silent cblFn
 
 -- {{{2 finalising
 finalizePkg db = finalizePackageDescription

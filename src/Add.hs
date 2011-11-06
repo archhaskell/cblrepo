@@ -29,6 +29,7 @@ import Codec.Compression.GZip as GZip
 import Control.Monad
 import Control.Monad.Error
 import Control.Monad.Reader
+import Data.Either
 import Data.List
 import Data.Maybe
 import Data.Version
@@ -121,7 +122,8 @@ addRepo = do
     pD <- cfgGet patchDir
     cbls <- cfgGet cbls
     dR <- cfgGet dryRun
-    genPkgs <- liftIO $ mapM (\ c -> withTemporaryDirectory "/tmp/cblrepo." (readCabal pD c)) cbls
+    _a <- liftIO $ mapM (\ c -> withTemporaryDirectory "/tmp/cblrepo." (\ d -> runErrorT $ readCabal pD c d)) cbls
+    let genPkgs = rights _a
     let pkgNames = map ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) genPkgs
     -- Todo: don't exit on first failure, collect all failures, report and then exit ('ErrorT')
     liftIO $ when (or . catMaybes $ map (liftM isBasePkg . lookupPkg db) pkgNames) (putStrLn "Trying to add a base pkg!!" >> exitFailure)

@@ -22,6 +22,7 @@ import Util.Translation
 
 import Control.Monad.Error
 import Control.Monad.Reader
+import Data.Either
 import Data.Maybe
 import Distribution.Text
 import System.Directory
@@ -47,7 +48,7 @@ generatePkgBuild db patchDir pkg = let
         appendPkgVer = pkg ++ "," ++ (display $ pkgVersion $ fromJust $ lookupPkg db pkg)
     in do
         maybe (throwError $ "Unknown package: " ++ pkg) (const $ return ()) (lookupPkg db pkg)
-        genericPkgDesc <- liftIO $ withTemporaryDirectory "/tmp/cblrepo." (readCabal patchDir appendPkgVer)
+        (Right genericPkgDesc) <- liftIO $ withTemporaryDirectory "/tmp/cblrepo." (\ d -> runErrorT $ readCabal patchDir appendPkgVer d)
         pkgDesc <- either (const $ throwError ("Failed to finalize package: " ++ pkg)) (return . fst) (finalizePkg db genericPkgDesc)
         let archPkg = translate db pkgDesc
         archPkgWHash <- liftIO $ withTemporaryDirectory "/tmp/cblrepo." (addHashes archPkg)
@@ -57,7 +58,7 @@ generatePkgBuild db patchDir pkg = let
             hPKGBUILD <- openFile "PKGBUILD" WriteMode
             hPutDoc hPKGBUILD $ pretty archPkgWHash
             hClose hPKGBUILD
-            maybe (return ()) (\ pfn -> applyPatch "PKGBUILD" pfn) (apPkgbuildPatch archPkgWHash)
+            maybe (return ()) (\ pfn -> (runErrorT $ applyPatch "PKGBUILD" pfn) >> return ()) (apPkgbuildPatch archPkgWHash)
             when (apHasLibrary archPkgWHash) $ do
                 hInstall <- openFile (apPkgName archPkgWHash ++ ".install") WriteMode
                 let archInstall = aiFromAP archPkgWHash

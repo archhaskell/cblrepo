@@ -25,22 +25,23 @@ import Distribution.Verbosity
 import PkgDB as DB
 import Util.Misc
 
-import Data.Monoid
-import Text.PrettyPrint.ANSI.Leijen hiding((</>))
-import Data.Version
-import Distribution.Text
-import Distribution.Package as P
+import Control.Monad
+import Control.Monad.Error
 import Data.Char
-import Distribution.PackageDescription
+import Data.List
 import Data.Maybe
-import System.FilePath
-import System.Unix.Directory
+import Data.Monoid
+import Data.Version
+import Distribution.Package as P
+import Distribution.PackageDescription
+import Distribution.Text
+import System.Directory
 import System.Exit
+import System.FilePath
 import System.IO
 import System.Process
-import Data.List
-import System.Directory
-import Control.Monad
+import System.Unix.Directory
+import Text.PrettyPrint.ANSI.Leijen hiding((</>))
 
 -- {{{1 ShQuotedString
 newtype ShQuotedString = ShQuotedString String
@@ -358,7 +359,7 @@ addHashes ap tmpDir = let
     in do
         copyPatches tmpDir ap
         writeFile pkgbuildFn (show $ pretty ap)
-        maybe (return ()) (\ pfn -> applyPatch pkgbuildFn pfn) pkgbuildPatch
+        maybe (return ()) (\ pfn -> (runErrorT $ applyPatch pkgbuildFn pfn) >> return ()) pkgbuildPatch
         (ec, out, er) <- withWorkingDirectory tmpDir (readProcessWithExitCode "makepkg" ["-g"] "")
         case ec of
             ExitFailure _ -> do
