@@ -80,6 +80,7 @@ data Cmds
     | Urls { appDir :: FilePath, pkgVers :: [(String, String)] }
     | PkgBuild { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, pkgs :: [String] }
     | ConvertDb { appDir :: FilePath, inDbFile :: FilePath, outDbFile :: FilePath }
+    | RemovePkg { appDir :: FilePath, dbFile :: FilePath, pkgs :: [String] }
     deriving (Show, Data, Typeable)
 
 defCmdAdd = CmdAdd "" "" "" True RepoPkgT []
@@ -92,6 +93,7 @@ defUpdates =  Updates "" ""
 defUrls =  Urls "" []
 defPkgBuild =  PkgBuild "" "" "" []
 defConvertDb = ConvertDb "" "" ""
+defRemovePkg = RemovePkg "" "" []
 
 cfgGet f = liftM f ask
 

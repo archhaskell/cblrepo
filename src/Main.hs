@@ -104,6 +104,11 @@ cmdConvertDb = record defConvertDb
     , outDbFile := "new-cblrepo.db" += explicit += name "o" += name "outdb" += typFile += help "new database"
     ] += help "convert an old database to the new format"
 
+cmdRemovePkg = record defRemovePkg
+    [ argAppDir, argDbFile
+    , pkgs := def += args += typ "PKG"
+    ] += name "rm" += help "remove packages"
+
 cmds = cmdArgsMode_ $ modes_
     [ cmdAddPkg
     , cmdBuildPkgs
@@ -115,6 +120,7 @@ cmds = cmdArgsMode_ $ modes_
     , cmdUrls
     , cmdPkgBuild
     , cmdConvertDb
+    , cmdRemovePkg
     ]
     += program progName
     += summary (progName ++ " v" ++ (display version))
@@ -138,3 +144,4 @@ main = do
             Urls {} -> runReaderT urls c'
             PkgBuild {} -> runReaderT pkgBuild c'
             ConvertDb {} -> runReaderT convertDb c'
+            RemovePkg {} -> error "Not implemented yet!"
