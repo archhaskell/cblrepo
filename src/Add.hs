@@ -124,8 +124,7 @@ addRepo = do
     dR <- cfgGet dryRun
     genPkgs <- mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabal pD c d)) cbls >>= exitOnErrors
     let pkgNames = map ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) genPkgs
-    -- Todo: don't exit on first failure, collect all failures, report and then exit
-    liftIO $ when (or . catMaybes $ map (liftM isBasePkg . lookupPkg db) pkgNames) (putStrLn "Trying to add a base pkg!!" >> exitFailure)
+    exitOnErrors $ map (Left . (++) "Trying to add base package: ") (filter (maybe False isBasePkg . lookupPkg db) pkgNames)
     let tmpDb = filter (\ p -> not $ pkgName p `elem` pkgNames) db
     case doAddRepo tmpDb genPkgs of
         Left (unSats, brksOthrs) -> liftIO (mapM_ printUnSat unSats >> mapM_ printBrksOth brksOthrs)
