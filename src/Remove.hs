@@ -40,7 +40,8 @@ remove = do
 
 removeOne :: CblDB -> String -> Either String CblDB
 removeOne db pkg = let
-        deps = lookupDependants db pkg
+        deps = tail $ transitiveDependants db [pkg]
+        depsString = foldr (\ s t -> "  " ++ s ++ "\n" ++ t) "" deps
     in if null deps
         then return (delPkg db pkg)
-        else throwError ("Can't delete package " ++ pkg ++ " (" ++ (show $ length deps) ++ " dependants)")
+        else throwError ("Can't delete package " ++ pkg ++ ", dependants:\n" ++ depsString)
