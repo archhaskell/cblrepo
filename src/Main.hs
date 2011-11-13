@@ -27,6 +27,7 @@ import Util.Misc
 import Urls
 import PkgBuild
 import ConvertDB
+import Remove
 
 import Paths_cblrepo
 
@@ -144,4 +145,4 @@ main = do
             Urls {} -> runReaderT urls c'
             PkgBuild {} -> runReaderT pkgBuild c'
             ConvertDb {} -> runReaderT convertDb c'
-            RemovePkg {} -> error "Not implemented yet!"
+            RemovePkg {} -> runReaderT remove c'
