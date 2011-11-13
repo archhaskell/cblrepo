@@ -18,11 +18,29 @@ module Remove where
 
 -- {{{1 imports
 -- {{{1 local
+import PkgDB
 import Util.Misc
 
 -- {{{1 system
+import Control.Monad.Error
 import Control.Monad.Reader
+import System.Exit
 
 -- {{{1 remove
 remove :: ReaderT Cmds IO ()
-remove = error "TBD: remove"
+remove = do
+    dbFn <- cfgGet dbFile
+    db <- liftIO $ readDb dbFn
+    pkgs <- cfgGet pkgs
+    dR <- cfgGet dryRun
+    liftIO $ either
+        (\ s -> putStrLn s >> exitFailure)
+        (\ newDb -> unless dR $ saveDb newDb dbFn)
+        (foldM removeOne db pkgs)
+
+removeOne :: CblDB -> String -> Either String CblDB
+removeOne db pkg = let
+        deps = lookupDependants db pkg
+    in if null deps
+        then return (delPkg db pkg)
+        else throwError ("Can't delete package " ++ pkg ++ " (" ++ (show $ length deps) ++ " dependants)")

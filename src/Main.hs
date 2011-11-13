@@ -106,7 +106,7 @@ cmdConvertDb = record defConvertDb
     ] += help "convert an old database to the new format"
 
 cmdRemovePkg = record defRemovePkg
-    [ argAppDir, argDbFile
+    [ argAppDir, argDbFile, argDryRun
     , pkgs := def += args += typ "PKG"
     ] += name "rm" += help "remove packages"
 
