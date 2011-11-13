@@ -121,7 +121,6 @@ applyPatchIfExist origFilename patchFilename =
 data LocType = Url | Idx | File
 
 -- | Read in a Cabal file.
--- Todo: make it use 'ErrorT' instead of 'error'
 readCabal :: FilePath -> String -> FilePath -> ErrorT String IO GenericPackageDescription
 readCabal patchDir loc tmpDir = let
         locType
@@ -154,16 +153,16 @@ readCabal patchDir loc tmpDir = let
                         _ -> Nothing
 
             in do
-                fp <- getAppUserDataDirectory "cblrepo"
+                fp <- liftIO $ getAppUserDataDirectory "cblrepo"
                 es <- liftM (Tar.read . GZip.decompress)
-                    (BS.readFile $ fp </> "00-index.tar.gz")
-                e <- maybe (error $ "No entry for " ++ pkgStr)
+                    (liftIO $ BS.readFile $ fp </> "00-index.tar.gz")
+                e <- maybe (throwError $ "No entry for " ++ pkgStr)
                     return
                     (esFindEntry path es)
-                cbl <- maybe (error $ "Failed to extract contents for " ++ pkgStr)
+                cbl <- maybe (throwError $ "Failed to extract contents for " ++ pkgStr)
                     return
                     (eGetContent e)
-                writeFile fn cbl
+                liftIO $ writeFile fn cbl
                 return fn
 
         extractName fn = liftM name $ readPackageDescription silent fn
@@ -174,7 +173,7 @@ readCabal patchDir loc tmpDir = let
     in do
         cblFn <- case locType of
             File -> liftIO $ copyCabal tmpDir loc
-            Idx -> liftIO $ extractCabal tmpDir loc
+            Idx -> extractCabal tmpDir loc
             Url -> liftIO $ downloadCabal tmpDir loc
         pn <- liftIO $ extractName cblFn
         let patchFn = patchDir </> pn <.> "cabal"
