@@ -73,12 +73,12 @@ cmdBuildPkgs = record defBuildPkgs
     , pkgs := def += args += typ "PKG"
     ] += name "build" += help "list packages that need rebuilding, in order"
 
-cmdIdxSync = record defIdxSync [ argAppDir ] += help "update the index"
+cmdIdxSync = record defIdxSync [ argAppDir ] += name "sync" += help "update the index"
 
 cmdIdxVersion = record defIdxVersion
     [ argAppDir
     , pkgs := def += args += typ "PKG"
-    ] += help "list available versions"
+    ] += name "versions" += help "list available versions"
 
 cmdUpdates = record defUpdates [ argAppDir , argDbFile ] += name "updates" += help "check for availabale updates"
 
