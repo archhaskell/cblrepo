@@ -19,8 +19,8 @@ module Main where
 import Add
 import BuildPkgs
 import BumpPkgs
-import IdxSync
-import IdxVersion
+import Sync
+import Versions
 import ListPkgs
 import Updates
 import Util.Misc
@@ -73,9 +73,9 @@ cmdBuildPkgs = record defBuildPkgs
     , pkgs := def += args += typ "PKG"
     ] += name "build" += help "list packages that need rebuilding, in order"
 
-cmdIdxSync = record defIdxSync [ argAppDir ] += name "sync" += help "update the index"
+cmdSync = record defSync [ argAppDir ] += name "sync" += help "update the index"
 
-cmdIdxVersion = record defIdxVersion
+cmdVersions = record defVersions
     [ argAppDir
     , pkgs := def += args += typ "PKG"
     ] += name "versions" += help "list available versions"
@@ -114,8 +114,8 @@ cmds = cmdArgsMode_ $ modes_
     [ cmdAddPkg
     , cmdBuildPkgs
     , cmdBumpPkgs
-    , cmdIdxSync
-    , cmdIdxVersion
+    , cmdSync
+    , cmdVersions
     , cmdListPkgs
     , cmdUpdates
     , cmdUrls
@@ -138,8 +138,8 @@ main = do
             CmdAdd {} -> runReaderT add c'
             BuildPkgs {} -> runReaderT buildPkgs c'
             BumpPkgs {} -> runReaderT bumpPkgs c'
-            IdxSync {} -> runReaderT idxSync c'
-            IdxVersion {} -> runReaderT idxVersion c'
+            Sync {} -> runReaderT sync c'
+            Versions {} -> runReaderT versions c'
             ListPkgs {} -> runReaderT listPkgs c'
             Updates {} -> runReaderT updates c'
             Urls {} -> runReaderT urls c'

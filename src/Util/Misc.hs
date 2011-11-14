@@ -73,8 +73,8 @@ data Cmds
     = CmdAdd { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, dryRun :: Bool, pkgType :: PkgType, cbls :: [FilePath] }
     | BuildPkgs { appDir :: FilePath, dbFile :: FilePath, pkgs :: [String] }
     | BumpPkgs { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, inclusive :: Bool, pkgs :: [String] }
-    | IdxSync { appDir :: FilePath }
-    | IdxVersion { appDir :: FilePath, pkgs :: [String] }
+    | Sync { appDir :: FilePath }
+    | Versions { appDir :: FilePath, pkgs :: [String] }
     | ListPkgs { appDir :: FilePath, dbFile :: FilePath, incBase :: Bool }
     | Updates { appDir :: FilePath, dbFile :: FilePath }
     | Urls { appDir :: FilePath, pkgVers :: [(String, String)] }
@@ -86,8 +86,8 @@ data Cmds
 defCmdAdd = CmdAdd "" "" "" True RepoPkgT []
 defBuildPkgs =  BuildPkgs "" "" []
 defBumpPkgs =  BumpPkgs "" "" False False []
-defIdxSync =  IdxSync ""
-defIdxVersion =  IdxVersion "" []
+defSync =  Sync ""
+defVersions =  Versions "" []
 defListPkgs =  ListPkgs "" "" True
 defUpdates =  Updates "" ""
 defUrls =  Urls "" []

@@ -14,7 +14,7 @@
  - limitations under the License.
  -}
 
-module IdxSync where
+module Sync where
 
 import Util.Misc
 
@@ -22,7 +22,7 @@ import Control.Monad.Reader
 import System.FilePath
 import Control.Monad.Error
 
-idxSync :: ReaderT Cmds IO ()
-idxSync = do
+sync :: ReaderT Cmds IO ()
+sync = do
     aD <- cfgGet appDir
     liftIO $ getFromURL "http://hackage.haskell.org/packages/archive/00-index.tar.gz" (aD </> "00-index.tar.gz")

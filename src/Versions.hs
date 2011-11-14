@@ -14,7 +14,7 @@
  - limitations under the License.
  -}
 
-module IdxVersion where
+module Versions where
 
 import Util.Misc
 
@@ -29,8 +29,8 @@ import Distribution.Version
 import System.FilePath
 import qualified Data.ByteString.Lazy.Char8 as BS
 
-idxVersion :: ReaderT Cmds IO ()
-idxVersion = do
+versions :: ReaderT Cmds IO ()
+versions = do
     aD <- cfgGet appDir
     pkgs <- cfgGet pkgs
     liftIO $ do
