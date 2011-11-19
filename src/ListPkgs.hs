@@ -27,9 +27,9 @@ import System.FilePath
 
 listPkgs :: ReaderT Cmds IO ()
 listPkgs = do
-    iB <- cfgGet incBase
+    lA <- cfgGet listAll
     db <- cfgGet dbFile >>= liftIO . readDb
-    let pkgs = if not iB
+    let pkgs = if not lA
             then filter (not . isBasePkg) db
             else db
     liftIO $ mapM_ printCblPkgShort pkgs
