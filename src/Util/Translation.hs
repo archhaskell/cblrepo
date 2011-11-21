@@ -73,7 +73,7 @@ instance Pretty a => Pretty (ShVar a) where
     pretty (ShVar n v) = text n <> char '=' <> pretty v
 
 -- {{{1 ArchPkg
--- TODO: patches, flags
+-- TODO: flags
 data ArchPkg = ArchPkg
     { apPkgName :: String
     , apHkgName :: String
@@ -81,6 +81,7 @@ data ArchPkg = ArchPkg
     , apLicenseFile :: Maybe FilePath
     , apCabalPatch :: Maybe FilePath
     , apPkgbuildPatch :: Maybe FilePath
+    , apBuildPatch :: Maybe FilePath
     -- shell bits
     , apShHkgName :: ShVar String
     , apShPkgName :: ShVar String
@@ -104,6 +105,7 @@ baseArchPkg = ArchPkg
     , apLicenseFile = Nothing
     , apCabalPatch = Nothing
     , apPkgbuildPatch = Nothing
+    , apBuildPatch = Nothing
     , apShHkgName = ShVar "_hkgname" ""
     , apShPkgName = ShVar "pkgname" ""
     , apShPkgVer = ShVar "pkgver" (Version [] [])
@@ -127,6 +129,7 @@ instance Pretty ArchPkg where
         { apHasLibrary = hasLib
         , apLicenseFile = licenseFile
         , apCabalPatch = cabalPatchFile
+        , apBuildPatch = buildPatchFile
         , apShHkgName = hkgName
         , apShPkgName = pkgName
         , apShPkgVer = pkgVer
@@ -170,6 +173,9 @@ instance Pretty ArchPkg where
                         maybe empty (\ _ ->
                             text $ "patch " ++ shVarValue hkgName ++ ".cabal ${srcdir}/cabal.patch ")
                             cabalPatchFile <$>
+                        maybe empty (\ _ ->
+                            text $ "patch -p4 < ${srcdir}/source.patch")
+                            buildPatchFile <$>
                         nest 4 (text "runhaskell Setup configure -O -p --enable-split-objs --enable-shared \\" <$>
                             text "--prefix=/usr --docdir=/usr/share/doc/${pkgname} \\" <$>
                             text "--libsubdir=\\$compiler/site-local/\\$pkgid") <$>
@@ -186,6 +192,9 @@ instance Pretty ArchPkg where
                         maybe empty (\ _ ->
                             text $ "patch " ++ shVarValue hkgName ++ ".cabal ${srcdir}/cabal.patch ")
                             cabalPatchFile <$>
+                        maybe empty (\ _ ->
+                            text $ "patch -p4 < ${srcdir}/source.patch")
+                            buildPatchFile <$>
                         text "runhaskell Setup configure -O --prefix=/usr --docdir=/usr/share/doc/${pkgname}" <$>
                         text "runhaskell Setup build"
                         ) <$>
@@ -266,7 +275,6 @@ instance Pretty Version where
 -- {{{1 translate
 -- TODO:
 --  • add flags
---  • add patches to sources
 --  • translation of extraLibDepends-libs to Arch packages
 translate db pd = let
         ap = baseArchPkg
@@ -324,30 +332,33 @@ ghcPkgs = ["base", "bin-package-db", "ffi", "ghc", "ghc-binary", "ghc-prim", "ha
 
 -- {{{1 stuff with patches
 -- {{{2 addPatches
--- TODO:
---  • add build patch
 addPatches patchDir ap = let
         hkgName = apHkgName ap
         sources = apShSource ap
         fi tF fF v = if v then tF else fF
         cabalPatchFn = patchDir </> hkgName <.> "cabal"
         pkgbuildPatchFn = patchDir </> hkgName <.> "pkgbuild"
+        buildPatchFn = patchDir </> hkgName <.> "source"
     in do
         cabalPatch <- doesFileExist cabalPatchFn >>= fi (liftM Just $ canonicalizePath cabalPatchFn) (return Nothing)
         pkgBuildPatch <- doesFileExist pkgbuildPatchFn >>= fi (liftM Just $ canonicalizePath pkgbuildPatchFn) (return Nothing)
-        let sources' = shVarAppendValue sources (ShArray $ maybe [] (const ["cabal.patch"]) cabalPatch)
+        buildPatch <- doesFileExist buildPatchFn >>= fi (liftM Just $ canonicalizePath buildPatchFn) (return Nothing)
+        let sources' = shVarAppendValue sources
+                (ShArray $ catMaybes [maybe Nothing (const $ Just "cabal.patch") cabalPatch, maybe Nothing (const $ Just "source.patch") buildPatch])
         return ap
             { apCabalPatch = cabalPatch
             , apPkgbuildPatch = pkgBuildPatch
+            , apBuildPatch = buildPatch
             , apShSource = sources'
             }
 
 -- {{{2 copyPatches
--- TODO:
---  • add build patch
 copyPatches destDir ap = let
         cabalPatch = apCabalPatch ap
-    in maybe (return ()) (\ fn -> copyFile fn (destDir </> "cabal.patch")) cabalPatch
+        buildPatch = apBuildPatch ap
+    in do
+        maybe (return ()) (\ fn -> copyFile fn (destDir </> "cabal.patch")) cabalPatch
+        maybe (return ()) (\ fn -> copyFile fn (destDir </> "source.patch")) buildPatch
 
 -- {{{1 addHashes
 addHashes ap tmpDir = let

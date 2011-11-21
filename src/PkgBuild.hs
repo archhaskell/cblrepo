@@ -39,8 +39,6 @@ pkgBuild = do
     mapM (runErrorT . generatePkgBuild db pD) pkgs >>= exitOnErrors >> return ()
 
 -- TODO:
---  - patches:
---      build patch - put into source array, copied into package dir
 --  - flags
 -- generatePkgBuild :: CblDB -> String -> String -> ErrorT String IO ()
 generatePkgBuild db patchDir pkg = let
