@@ -53,29 +53,20 @@ import System.IO
 
 -- {{{1 add
 add :: Command ()
-add = do
-    t <- cfgGet pkgType
-    case t of
-        GhcPkgT -> addGhc
-        DistroPkgT -> addDistro
-        RepoPkgT -> addRepo
+add = addGhc >> addDistro >> addRepo
 
 -- {{{2 Add ghc package
 addGhc :: ReaderT Cmds IO ()
-addGhc = let
-        unpackPkgVer s = (p, v)
-            where
-                (p, _:v) = span (/= ',') s
-    in do
-        pkgs <- liftM (map unpackPkgVer) (cfgGet cbls)
-        dR <- cfgGet dryRun
-        guard $ isJust $ (sequence $ map (simpleParse . snd) pkgs :: Maybe [Version])
-        let ps = map (\ (n, v) -> (n, fromJust $ (simpleParse v :: Maybe Version))) pkgs
-        dbFn <- cfgGet dbFile
-        db <- liftIO $ readDb dbFn
-        case doAddGhc db ps of
-            Left brkOthrs -> liftIO $ mapM_ printBrksOth brkOthrs
-            Right newDb -> liftIO $ unless dR $ saveDb newDb dbFn
+addGhc = do
+    pkgs <- cfgGet cmdAddGhcPkgs
+    dR <- cfgGet dryRun
+    guard $ isJust $ (sequence $ map (simpleParse . snd) pkgs :: Maybe [Version])
+    let ps = map (\ (n, v) -> (n, fromJust $ (simpleParse v :: Maybe Version))) pkgs
+    dbFn <- cfgGet dbFile
+    db <- liftIO $ readDb dbFn
+    case doAddGhc db ps of
+        Left brkOthrs -> liftIO $ mapM_ printBrksOth brkOthrs
+        Right newDb -> liftIO $ unless dR $ saveDb newDb dbFn
 
 doAddGhc db pkgs = let
         canBeAdded db n v = null $ checkDependants db n v
@@ -89,13 +80,9 @@ doAddGhc db pkgs = let
 -- {{{2 Add distro package
 addDistro :: ReaderT Cmds IO ()
 addDistro = let
-        unpackPkgVer s = (p, v, r)
-            where
-                (p, _:s2) = span (/= ',') s
-                (v, _:r) = span (/= ',') s2
         getVersion (_, v, _) = simpleParse v :: Maybe Version
     in do
-        pkgs <- liftM (map unpackPkgVer) (cfgGet cbls)
+        pkgs <- cfgGet cmdAddDistroPkgs
         dR <- cfgGet dryRun
         guard $ isJust $ sequence $ map getVersion pkgs
         let ps = map (\ p@(n, v, r) -> (n, fromJust $ getVersion p, r)) pkgs
@@ -120,9 +107,14 @@ addRepo = do
     dbFn <- cfgGet dbFile
     db <- liftIO $ readDb dbFn
     pD <- cfgGet patchDir
-    cbls <- cfgGet cbls
     dR <- cfgGet dryRun
-    genPkgs <- mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabal pD c d)) cbls >>= exitOnErrors
+    urlCbls <- cfgGet cmdAddUrlCbls
+    fileCbls <- cfgGet cmdAddFileCbls
+    idxCbls <- cfgGet cmdAddCbls
+    genUrlPkgs <- mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromUrl pD c d)) urlCbls >>= exitOnErrors
+    genFilePkgs <- mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromFile pD c d)) fileCbls >>= exitOnErrors
+    genIdxPkgs <- mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromIdx pD c d)) idxCbls >>= exitOnErrors
+    let genPkgs = genUrlPkgs ++ genFilePkgs ++ genIdxPkgs
     let pkgNames = map ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) genPkgs
     exitOnErrors $ map (Left . (++) "Trying to add base package: ") (filter (maybe False isBasePkg . lookupPkg db) pkgNames)
     let tmpDb = filter (\ p -> not $ pkgName p `elem` pkgNames) db

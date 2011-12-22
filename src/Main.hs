@@ -47,19 +47,12 @@ cmdAddPkg = record defCmdAdd
     [ argAppDir, argDbFile
     , patchDir := "patches" += explicit += name "patchdir" += help "location of patches" += typDir
     , argDryRun
-    , pkgType := RepoPkgT += explicit += name "t" += name "type" += typ "TYPE" += help "type of package ((g)hcpkg, (d)istropkg, or (r)epopkg, default: r)"
-    --, isBase := False += explicit += name "b" += name "base" += help "add a base package"
-    , cbls := def += args += typ "PKGVERSPEC"
-    ] += name "add" += help "add a package from a Cabal file" += details
-        [ "The package version depends on the type of the package that's added:"
-        , " 1. For a ghc package specify the name and version, e.g. 'base,4.3'"
-        , " 2. For a distro package specify the name, version, and release, e.g. 'HUnit,1.2.2.3,2.1"
-        , " 3. For a repo package provide a Cabal file by either"
-        , "    - provide the filename of the  Cabal file"
-        , "    - specify the URL where the Cabal file can be found (for file:// URLs the full absolute path is required"
-        , "    - specify the name and version to load the Cabal file out of an index file (see idxupdate)"
-        , "    All three format may be mixed on the command line."
-        ]
+    , cmdAddGhcPkgs := def += explicit += name "g" += name "ghc-pkg" += typ "PKG,VER" += help "GHC base package (multiple)"
+    , cmdAddDistroPkgs := def += explicit += name "d" += name "distro-pkg" += typ "PKG,VER,REL" += help "distro package (multiple)"
+    , cmdAddUrlCbls := def += explicit += name "u" += name "cbl-url" += typ "URL" += help "url of Cabal file (multiple)"
+    , cmdAddFileCbls := def += explicit += name "f" += name "cbl-file" += typFile += help "Cabal file (multiple)"
+    , cmdAddCbls := def += args += typ "PKG,VER"
+    ] += name "add" += help "add a package to the database"
 
 cmdBumpPkgs = record defBumpPkgs
     [ argAppDir, argDbFile

@@ -66,11 +66,12 @@ progName = "cblrepo"
 dbName = progName ++ ".db"
 
 -- {{{1 command line argument type
-data PkgType = GhcPkgT | DistroPkgT | RepoPkgT
-    deriving (Show, Data, Typeable)
 
 data Cmds
-    = CmdAdd { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, dryRun :: Bool, pkgType :: PkgType, cbls :: [FilePath] }
+    = CmdAdd
+        { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, dryRun :: Bool
+        , cmdAddGhcPkgs :: [(String,String)], cmdAddDistroPkgs :: [(String, String, String)]
+        , cmdAddUrlCbls :: [String], cmdAddFileCbls :: [FilePath], cmdAddCbls :: [(String, String)] }
     | BuildPkgs { appDir :: FilePath, dbFile :: FilePath, pkgs :: [String] }
     | BumpPkgs { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, inclusive :: Bool, pkgs :: [String] }
     | Sync { appDir :: FilePath }
@@ -83,7 +84,7 @@ data Cmds
     | RemovePkg { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, pkgs :: [String] }
     deriving (Show, Data, Typeable)
 
-defCmdAdd = CmdAdd "" "" "" True RepoPkgT []
+defCmdAdd = CmdAdd "" "" "" True [] [] [] [] []
 defBuildPkgs =  BuildPkgs "" "" []
 defBumpPkgs =  BumpPkgs "" "" False False []
 defSync =  Sync ""
@@ -123,6 +124,10 @@ applyPatchIfExist origFilename patchFilename =
 data LocType = Url | Idx | File
 
 -- | Read in a Cabal file.
+readCabalFromUrl = readCabal
+readCabalFromFile = readCabal
+readCabalFromIdx pd (p, v) td = readCabal pd (p ++ "," ++ v) td
+
 readCabal :: FilePath -> String -> FilePath -> ErrorT String IO GenericPackageDescription
 readCabal patchDir loc tmpDir = let
         locType
