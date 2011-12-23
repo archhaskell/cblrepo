@@ -51,100 +51,95 @@ import System.Process
 import System.Exit
 import System.IO
 
+-- {{{1 types
+data PkgType
+    = GhcType String Version
+    | DistroType String Version String
+    | RepoType GenericPackageDescription
+    deriving (Eq, Show)
+
 -- {{{1 add
 add :: Command ()
-add = addGhc >> addDistro >> addRepo
-
--- {{{2 Add ghc package
-addGhc :: ReaderT Cmds IO ()
-addGhc = do
-    pkgs <- cfgGet cmdAddGhcPkgs
-    dR <- cfgGet dryRun
-    guard $ isJust $ (sequence $ map (simpleParse . snd) pkgs :: Maybe [Version])
-    let ps = map (\ (n, v) -> (n, fromJust $ (simpleParse v :: Maybe Version))) pkgs
+add = do
     dbFn <- cfgGet dbFile
     db <- liftIO $ readDb dbFn
-    case doAddGhc db ps of
-        Left brkOthrs -> liftIO $ mapM_ printBrksOth brkOthrs
-        Right newDb -> liftIO $ unless dR $ saveDb newDb dbFn
+    pd <- cfgGet patchDir
+    dr <- cfgGet dryRun
+    --
+    ghcPkgs <- cfgGet cmdAddGhcPkgs
+    distroPkgs <- cfgGet cmdAddDistroPkgs
+    genUrlPkgs <- cfgGet cmdAddUrlCbls >>= mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromUrl pd c d))
+    genFilePkgs <- cfgGet cmdAddFileCbls >>= mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromFile pd c d))
+    genIdxPkgs <- cfgGet cmdAddCbls >>= mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromIdx pd c d))
+    pkgs <- exitOnErrors $ argsToPkgType ghcPkgs distroPkgs (genUrlPkgs ++ genFilePkgs ++ genIdxPkgs)
+    --
+    let pkgNames = map getName pkgs
+    let tmpDb = foldl delPkg db pkgNames
+    case addPkgs tmpDb pkgs of
+        Left (unsatisfiables, breaksOthers) -> liftIO (mapM_ printUnSat unsatisfiables >> mapM_ printBrksOth breaksOthers)
+        Right newDb -> liftIO $ unless dr $ saveDb newDb dbFn
 
-doAddGhc db pkgs = let
-        canBeAdded db n v = null $ checkDependants db n v
-        (_, fails) = partition (\ (n, v) -> canBeAdded db n v) pkgs
-        newDb = foldl (\ d (n, v) -> addGhcPkg d n v) db pkgs
-        brkOthrs = map (\ (n, v) -> ((n, v), checkDependants db n v)) fails
-    in if null fails
-        then Right newDb
-        else Left brkOthrs
+argsToPkgType ghcPkgs distroPkgs repoPkgs = let
+        toGhcType (n, v) = maybe
+            (Left $ "Not a valid version given for " ++ n ++ " (" ++ v ++ ")")
+            (Right . GhcType n)
+            (simpleParse v :: Maybe Version)
+        toDistroType (n, v, r) = maybe
+            (Left $ "Not a valid version given for " ++ n ++ " (" ++ v ++ ")")
+            (\ v' -> Right $ DistroType n v' r)
+            (simpleParse v :: Maybe Version)
+        toRepoType = either Left (Right . RepoType)
+    in map toGhcType ghcPkgs ++ map toDistroType distroPkgs ++ map toRepoType repoPkgs
 
--- {{{2 Add distro package
-addDistro :: ReaderT Cmds IO ()
-addDistro = let
-        getVersion (_, v, _) = simpleParse v :: Maybe Version
-    in do
-        pkgs <- cfgGet cmdAddDistroPkgs
-        dR <- cfgGet dryRun
-        guard $ isJust $ sequence $ map getVersion pkgs
-        let ps = map (\ p@(n, v, r) -> (n, fromJust $ getVersion p, r)) pkgs
-        dbFn <- cfgGet dbFile
-        db <- liftIO $ readDb dbFn
-        case doAddDistro db ps of
-            Left brkOthrs -> liftIO $ mapM_ printBrksOth brkOthrs
-            Right newDb -> liftIO $ unless dR $ saveDb newDb dbFn
+getName (GhcType n _) = n
+getName (DistroType n _ _) = n
+getName (RepoType gpd) = (\ (P.PackageName n) -> n) $ P.pkgName $ package $ packageDescription gpd
 
-doAddDistro db pkgs = let
-        canBeAdded db n v = null $ checkDependants db n v
-        (_, fails) = partition (\ (n, v, _) -> canBeAdded db n v) pkgs
-        newDb = foldl (\ d (n, v, r) -> addDistroPkg d n v r) db pkgs
-        brkOthrs = map (\ (n, v, _) -> ((n, v), checkDependants db n v)) fails
-    in if null fails
-        then Right newDb
-        else Left brkOthrs
-
--- {{{2 Add repo package
-addRepo :: ReaderT Cmds IO ()
-addRepo = do
-    dbFn <- cfgGet dbFile
-    db <- liftIO $ readDb dbFn
-    pD <- cfgGet patchDir
-    dR <- cfgGet dryRun
-    urlCbls <- cfgGet cmdAddUrlCbls
-    fileCbls <- cfgGet cmdAddFileCbls
-    idxCbls <- cfgGet cmdAddCbls
-    genUrlPkgs <- mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromUrl pD c d)) urlCbls >>= exitOnErrors
-    genFilePkgs <- mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromFile pD c d)) fileCbls >>= exitOnErrors
-    genIdxPkgs <- mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromIdx pD c d)) idxCbls >>= exitOnErrors
-    let genPkgs = genUrlPkgs ++ genFilePkgs ++ genIdxPkgs
-    let pkgNames = map ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) genPkgs
-    exitOnErrors $ map (Left . (++) "Trying to add base package: ") (filter (maybe False isBasePkg . lookupPkg db) pkgNames)
-    let tmpDb = filter (\ p -> not $ pkgName p `elem` pkgNames) db
-    case doAddRepo tmpDb genPkgs of
-        Left (unSats, brksOthrs) -> liftIO (mapM_ printUnSat unSats >> mapM_ printBrksOth brksOthrs)
-        Right newDb -> liftIO $ unless dR $ saveDb newDb dbFn
-
-doAddRepo db pkgs = let
+-- {{{1 addPkgs
+addPkgs db pkgs = let
         (succs, fails) = partition (canBeAdded db) pkgs
-        newDb = foldl addPkg2 db (map (fromJust . finalizeToCblPkg db) succs)
-        unSats = catMaybes $ map (finalizeToDeps db) fails
-        genPkgName = ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription)
-        genPkgVer = P.pkgVersion . package . packageDescription
-        brksOthrs = filter (not . null . snd) $ map (\ p -> ((genPkgName p, genPkgVer p), checkDependants db (genPkgName p) (genPkgVer p))) fails
+        newDb = foldl addPkg2 db (map (pkgTypeToCblPkg db) succs)
+        unsatisfieds = mapMaybe (finalizeToUnsatisfiableDeps db) fails
+        breaksOthers = mapMaybe (findBreaking db) fails
     in case (succs, fails) of
         (_, []) -> Right newDb
-        ([], _) -> Left (unSats, brksOthrs)
-        (_, _) -> doAddRepo newDb fails
+        ([], _) -> Left (unsatisfieds, breaksOthers)
+        (_, _) -> addPkgs newDb fails
 
-canBeAdded db p = let
-        finable = either (const False) (const True) (finalizePkg db p)
-        n = ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) p
-        v = P.pkgVersion $ package $ packageDescription p
+canBeAdded db (GhcType n v) = null $ checkDependants db n v
+canBeAdded db (DistroType n v _) = null $ checkDependants db n v
+canBeAdded db (RepoType gpd) = let
+        finable = either (const False) (const True) (finalizePkg db gpd)
+        n = ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) gpd
+        v = P.pkgVersion $ package $ packageDescription gpd
         depsOK = null $ checkDependants db n v
     in finable && depsOK
 
-finalizeToCblPkg db p = case finalizePkg db p of
+pkgTypeToCblPkg _ (GhcType n v) = createGhcPkg n v
+pkgTypeToCblPkg _ (DistroType n v r) = createDistroPkg n v r
+pkgTypeToCblPkg db (RepoType gpd) = fromJust $ case finalizePkg db gpd of
     Right (pd, _) -> Just $ createCblPkg pd
-    _ -> Nothing
+    Left _ -> Nothing
 
-finalizeToDeps db p = case finalizePkg db p of
-    Left ds -> Just $ (((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) p, ds)
+finalizeToUnsatisfiableDeps db (RepoType gpd) = case finalizePkg db gpd of
+    Left ds -> Just $ (((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) gpd, ds)
     _ -> Nothing
+finalizeToUnsatisfiableDeps _ _ = Nothing
+
+findBreaking db (GhcType n v) = let
+        d = checkDependants db n v
+    in if null d
+        then Nothing
+        else Just ((n, v), d)
+findBreaking db (DistroType n v _) = let
+        d = checkDependants db n v
+    in if null d
+        then Nothing
+        else Just ((n, v), d)
+findBreaking db (RepoType gpd) = let
+        n = (\ (P.PackageName n) -> n) $ P.pkgName $ package $ packageDescription gpd
+        v = P.pkgVersion $ package $ packageDescription gpd
+        d = checkDependants db n v
+    in if null d
+        then Nothing
+        else Just ((n, v), d)
