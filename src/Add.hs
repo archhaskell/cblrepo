@@ -24,32 +24,15 @@ import PkgDB
 import Util.Misc
 
 -- {{{2 system
-import Codec.Archive.Tar as Tar
-import Codec.Compression.GZip as GZip
-import Control.Monad
 import Control.Monad.Error
 import Control.Monad.Reader
 import Data.Either
 import Data.List
 import Data.Maybe
-import Data.Version
-import Distribution.Compiler
 import Distribution.PackageDescription
-import Distribution.PackageDescription.Configuration
-import Distribution.PackageDescription.Parse
-import Distribution.System
 import Distribution.Text
-import Distribution.Verbosity
 import Distribution.Version
-import System.Directory
-import System.FilePath
-import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Distribution.Package as P
-import System.Posix.Files
-import System.Unix.Directory
-import System.Process
-import System.Exit
-import System.IO
 
 -- {{{1 types
 data PkgType
