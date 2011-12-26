@@ -216,12 +216,12 @@ type Command a = ReaderT Cmds IO a
 runCommand cmds func = runReaderT func cmds
 
 -- {{{1 ErrorT
-reWrapErrT (Left e) = throwError e
-reWrapErrT (Right v) = return v
-
-withTempDirErrT fp func = do
-    r <- liftIO $ withTemporaryDirectory fp (\ p -> runErrorT $ func p)
-    reWrapErrT r
+withTempDirErrT fp func = let
+        reWrapErrT (Left e) = throwError e
+        reWrapErrT (Right v) = return v
+    in do
+        r <- liftIO $ withTemporaryDirectory fp (\ p -> runErrorT $ func p)
+        reWrapErrT r
 
 exitOnErrors vs = let
         es = lefts vs
