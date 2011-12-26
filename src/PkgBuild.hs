@@ -31,7 +31,7 @@ import System.IO
 import System.Unix.Directory
 import Text.PrettyPrint.ANSI.Leijen
 
-pkgBuild :: ReaderT Cmds IO ()
+pkgBuild :: Command ()
 pkgBuild = do
     db <- cfgGet dbFile >>= liftIO . readDb
     pD <- cfgGet patchDir

@@ -29,7 +29,7 @@ import Distribution.Version
 import System.FilePath
 import qualified Data.ByteString.Lazy.Char8 as BS
 
-versions :: ReaderT Cmds IO ()
+versions :: Command ()
 versions = do
     aD <- cfgGet appDir
     pkgs <- cfgGet pkgs

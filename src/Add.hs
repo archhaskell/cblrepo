@@ -52,7 +52,7 @@ import System.Exit
 import System.IO
 
 -- {{{1 add
-add :: ReaderT Cmds IO ()
+add :: Command ()
 add = do
     t <- cfgGet pkgType
     case t of

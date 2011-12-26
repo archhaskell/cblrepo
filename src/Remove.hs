@@ -27,7 +27,7 @@ import Control.Monad.Reader
 import System.Exit
 
 -- {{{1 remove
-remove :: ReaderT Cmds IO ()
+remove :: Command ()
 remove = do
     dbFn <- cfgGet dbFile
     db <- liftIO $ readDb dbFn

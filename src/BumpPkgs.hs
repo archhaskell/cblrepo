@@ -25,7 +25,7 @@ import Data.List
 import Data.Maybe
 import System.FilePath
 
-bumpPkgs :: ReaderT Cmds IO ()
+bumpPkgs :: Command ()
 bumpPkgs = do
     dbFn <- cfgGet dbFile
     db <- liftIO $ readDb dbFn

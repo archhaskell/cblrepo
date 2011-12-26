@@ -29,7 +29,7 @@ import Distribution.Version
 import System.FilePath
 import qualified Data.ByteString.Lazy.Char8 as BS
 
-updates :: ReaderT Cmds IO ()
+updates :: Command ()
 updates = do
     db <- cfgGet dbFile >>= liftIO . readDb
     aD <- cfgGet appDir

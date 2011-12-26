@@ -27,7 +27,7 @@ import Control.Monad.Reader
 import Data.Version
 import System.IO
 
-convertDb :: ReaderT Cmds IO ()
+convertDb :: Command ()
 convertDb = do
     inDb <- cfgGet inDbFile >>= \ fn -> liftIO $ ODB.readDb fn
     outDbFn <- cfgGet outDbFile

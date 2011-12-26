@@ -210,6 +210,11 @@ allPatches pn patchDir = let
             if pE then Just pkgPatch else Nothing,
             if bE then Just bldPatch else Nothing)
 
+-- {{{1 Command type
+type Command a = ReaderT Cmds IO a
+
+runCommand cmds func = runReaderT func cmds
+
 -- {{{1 ErrorT
 reWrapErrT (Left e) = throwError e
 reWrapErrT (Right v) = return v

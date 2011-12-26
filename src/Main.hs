@@ -135,14 +135,14 @@ main = do
         let c' = c { appDir = aD }
         createDirectoryIfMissing True (aD)
         case c' of
-            CmdAdd {} -> runReaderT add c'
-            BuildPkgs {} -> runReaderT buildPkgs c'
-            BumpPkgs {} -> runReaderT bumpPkgs c'
-            Sync {} -> runReaderT sync c'
-            Versions {} -> runReaderT versions c'
-            ListPkgs {} -> runReaderT listPkgs c'
-            Updates {} -> runReaderT updates c'
-            Urls {} -> runReaderT urls c'
-            PkgBuild {} -> runReaderT pkgBuild c'
-            ConvertDb {} -> runReaderT convertDb c'
-            RemovePkg {} -> runReaderT remove c'
+            CmdAdd {} -> runCommand c' add
+            BuildPkgs {} -> runCommand c' buildPkgs
+            BumpPkgs {} -> runCommand c' bumpPkgs
+            Sync {} -> runCommand c' sync
+            Versions {} -> runCommand c' versions
+            ListPkgs {} -> runCommand c' listPkgs
+            Updates {} -> runCommand c' updates
+            Urls {} -> runCommand c' urls
+            PkgBuild {} -> runCommand c' pkgBuild
+            ConvertDb {} -> runCommand c' convertDb
+            RemovePkg {} -> runCommand c' remove

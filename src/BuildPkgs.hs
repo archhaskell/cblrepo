@@ -25,7 +25,7 @@ import Data.List
 import Data.Maybe
 import System.FilePath
 
-buildPkgs :: ReaderT Cmds IO ()
+buildPkgs :: Command ()
 buildPkgs = do
     db <- cfgGet dbFile >>= liftIO . readDb
     pkgs <- cfgGet pkgs

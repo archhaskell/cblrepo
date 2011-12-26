@@ -20,7 +20,7 @@ import Util.Misc
 
 import Control.Monad.Reader
 
-urls :: ReaderT Cmds IO ()
+urls :: Command ()
 urls = do
     pkgs <- cfgGet pkgVers
     liftIO $ mapM_ (putStrLn . createUrl) pkgs
