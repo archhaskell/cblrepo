@@ -77,7 +77,9 @@ cmdUpdates = record defUpdates [ argAppDir , argDbFile ] += name "updates" += he
 
 cmdListPkgs = record defCmdListPkgs
     [ argAppDir, argDbFile
-    , listAll := False += name "a" += explicit += help "list all packages"
+    , listGhc := False += explicit += name "g" += name "ghc" += help "list ghc packages"
+    , listDistro := False += explicit += name "d" += name "distro" += help "list distro packages"
+    , noListRepo := False += explicit += name "no-repo" += help "do not list repo packages"
     ] += name "list" += help "list packages in repo"
 
 cmdUrls = record defUrls

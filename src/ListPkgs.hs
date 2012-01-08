@@ -27,13 +27,14 @@ import System.FilePath
 
 listPkgs :: Command ()
 listPkgs = do
-    lA <- cfgGet listAll
+    lG <- cfgGet listGhc
+    lD <- cfgGet listDistro
+    lR <- cfgGet noListRepo
     db <- cfgGet dbFile >>= liftIO . readDb
-    let pkgs = if not lA
-            then filter (not . isBasePkg) db
-            else db
+    let pkgs = filter (pkgFilter lG lD lR) db
     liftIO $ mapM_ printCblPkgShort pkgs
 
--- printCblPkgShort (p, (v, _, r)) =
+pkgFilter g d r p = (g && isGhcPkg p) || (d && isDistroPkg p) || (not r && isRepoPkg p)
+
 printCblPkgShort p =
     putStrLn $ pkgName p ++ "  " ++ (display $ pkgVersion p) ++ "-" ++ pkgRelease p
