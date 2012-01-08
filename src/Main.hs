@@ -75,7 +75,7 @@ cmdVersions = record defVersions
 
 cmdUpdates = record defUpdates [ argAppDir , argDbFile ] += name "updates" += help "check for available updates"
 
-cmdListPkgs = record defListPkgs
+cmdListPkgs = record defCmdListPkgs
     [ argAppDir, argDbFile
     , listAll := False += name "a" += explicit += help "list all packages"
     ] += name "list" += help "list packages in repo"
@@ -133,7 +133,7 @@ main = do
             BumpPkgs {} -> runCommand c' bumpPkgs
             Sync {} -> runCommand c' sync
             Versions {} -> runCommand c' versions
-            ListPkgs {} -> runCommand c' listPkgs
+            CmdListPkgs {} -> runCommand c' listPkgs
             Updates {} -> runCommand c' updates
             Urls {} -> runCommand c' urls
             PkgBuild {} -> runCommand c' pkgBuild
