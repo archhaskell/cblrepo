@@ -202,19 +202,6 @@ checkAgainstDb db dep = let
         Nothing -> False
         Just (_, p) -> withinRange (DB.version p) dVR
 
--- {{{1 allPatches
-allPatches pn patchDir = let
-        cblPatch = patchDir </> pn <.> "cabal"
-        pkgPatch = patchDir </> pn <.> "pkgbuild"
-        bldPatch = patchDir </> pn <.> "build"
-    in do
-        cE <- fileExist cblPatch
-        pE <- fileExist pkgPatch
-        bE <- fileExist bldPatch
-        return (if cE then Just cblPatch else Nothing,
-            if pE then Just pkgPatch else Nothing,
-            if bE then Just bldPatch else Nothing)
-
 -- {{{1 Command type
 type Command a = ReaderT Cmds IO a
 
