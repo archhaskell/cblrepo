@@ -60,15 +60,113 @@ If there are any unsatisfiable dependencies they will be reported by `cblrepo` a
 
 The *add* command is used to update packages as well.
 
-## Adding patches for packages
-
-TBD
-
 ## Generating PKGBUILDs for packages
 
 Use the *pkgbuild* command to generate the source ArchLinux package.
 
     $ cblrepo pkgbuild yesod
+
+## Adding patches for packages
+
+In some, hopefully rare, cases the packages found on Hackage require patching in order to work properly.  There are three types of patches used by `cblrepo` at the moment:
+
+*Cabal patches* -- A patch `<patch dir>/<pkg name>.cabal` is applied to the CABAL file before it's use.  It's also included in the ArchLinux source package created with the `pkgbuild` command.
+
+*Pkgbuild patches* -- A patch `<patch dir>/<pkg name>.pkgbuild` is applied to the generated PKGBUILD when executing the `pkgbuild` command.
+
+*Source patches* -- A patch `<patch dir>/<pkg name>.source` is included in the ArchLinux source package created with the `pkgbuild` command.
+
+The default location for patches is the dir `./patches`, but `cblrepo` can be told to look elsewhere by using the `--patchdir=` flag.
+
+### Details of patches
+
+`cblrepo` uses the external tool `patch` to apply patches.  There are a few technical details worth knowing to make sure that `cblrepo`, and the files it generates, can work with your patches.
+
+Patches for CABAL files and PKGBUILD files are applied using the pattern
+
+    patch <original file > <patch file>
+
+which means that the path depth in the patch is of no importance at all.  It is however important that these patches contain diffs for a single file only.
+
+Patches for the source is only ever used in generated PKGBUILD files, and then it's applied using the pattern
+
+    patch -p4 < <patch file>
+
+from within the package source (i.e. `${srcdir}/<pkg dir>`).  The reason for this particular patch depth should be obvious after reading the following section.
+
+### Example of working with patches
+
+Knowledge of the tool [`quilt`](http://savannah.nongnu.org/projects/quilt) is extremely useful when working with patches.  In the following example we add the package DBus (version 0.4) and as you'll see it requires all three kind of patches.
+
+*patches/DBus.cabal*
+
+Download the Cabal file for DBus:
+
+    $ wget $(cblrepo urls DBus,0.4)
+
+then create a new patch and add the Cabal file:
+
+    $ quilt new DBus.cabal
+    $ quilt add DBus.cabal
+
+Now go ahead and make the changes to the file and then record them in the patch:
+
+    $ quilt refresh
+
+Once the changes have been recorded it's safe to remove the Cabal file, and if you want you can also remove all the `quilt` files:
+
+    $ rm DBus.cabal
+    $ rm -fr .pc patches/series
+
+It's now possible to add the package:
+
+    $ cblrepo add DBus,0.4
+
+*patches/DBus.pkgbuild*
+
+DBus also requires some changes to the generated PKGBUILD, so generate the source package and then use `quilt` to record the necessary changes to it:
+
+    $ cblrepo pkgbuild DBus
+    $ quilt new DBus.pkgbuild
+    $ quilt edit haskell-dbus/PKGBUILD
+    <make edits>
+    $ quilt refresh
+
+(Here we use the `quilt` command `edit` to add the file and open an editor in a single command.)  To verify that the patch we remove some files and re-generate the source package:
+
+    $ rm -fr haskell-dbus .pc patches/series
+    $ cblrepo pkgbuild DBus
+
+If we now inspect the generated PKGBUILD file it should contain the desired changes.
+
+*patches/DBus.source*
+
+Finally DBus requires some minor changes to its source.  We start with moving into the directory containing the source package, download and extract all files, and create the source patch:
+
+    $ cd haskell-dbus
+    $ makepkg -o
+    $ quilt new DBus.source
+
+Now we can move into the extracted source and `quilt edit` files to our hearts' content.  Finally record the changes and clean up:
+
+    $ quilt refresh
+    $ cd <top-dir>
+    $ rm -fr haskell-dbus .pc patches/series
+
+When we now re-generate the source package all our patches will be used:
+
+    $ cblrepo pkgbuild DBus
+    $ tree haskell
+    haskell-dbus/
+    ├── cabal.patch
+    ├── haskell-dbus.install
+    ├── PKGBUILD
+    ├── PKGBUILD.orig
+    └── source.patch
+
+### Modifying patches
+
+The command `quilt import` makes it easy to work with existing patches.  Also remember that the `--patchdir=` flag for `cblrepo` can be used to *prevent* use of patches by e.g. pointing it to `/tmp`.
 
 # Contact
 
