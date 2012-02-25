@@ -1,0 +1,70 @@
+# a few tests to verify the add and list commands, run with shelltestrunner
+
+./dist/build/cblrepo/cblrepo list
+>>>
+>>>= 0
+
+./dist/build/cblrepo/cblrepo add -g foo,1.1
+>>>= 0
+
+ls cblrepo.db
+>>>
+cblrepo.db
+>>>= 0
+
+# ghc packages aren't listed by default
+./dist/build/cblrepo/cblrepo list
+>>>
+>>>= 0
+
+./dist/build/cblrepo/cblrepo list -g
+>>>
+foo  1.1-xx
+>>>= 0
+
+./dist/build/cblrepo/cblrepo add -d bar,1.2,1
+>>>
+>>>= 0
+
+# distro packages aren't listed by default
+./dist/build/cblrepo/cblrepo list
+>>>
+>>>= 0
+
+./dist/build/cblrepo/cblrepo list -d
+>>>
+bar  1.2-1
+>>>= 0
+
+# add a non-existing package from hackage
+./dist/build/cblrepo/cblrepo add dataenc,0.13.1
+>>>
+>>>2
+No entry for dataenc 0.13.1
+>>>= 1
+
+# add a package from hackage (without its deps)
+# **** this really should be fixed!!!!
+./dist/build/cblrepo/cblrepo add dataenc,0.14.0.3
+>>>
+Failed to satisfy the following dependencies for dataenc:
+  array >=0.1.0 && <0.5
+  base >=3.0.0 && <4.6
+  containers >=0.1.0 && <0.5
+>>>2
+>>>= 0
+
+# add a package from hackage (with its deps)
+./dist/build/cblrepo/cblrepo add -g array,0.3 -g base,4.0, -g containers,0.4 dataenc,0.14.0.3
+>>>
+>>>2
+>>>= 0
+
+./dist/build/cblrepo/cblrepo list
+>>>
+dataenc  0.14.0.3-1
+>>>= 0
+
+# a bit of cleanup at the end
+rm cblrepo.db
+>>>= 0
