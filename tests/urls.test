@@ -1,12 +1,12 @@
 # a few tests to verify the urls command, run with shelltestrunner
 
-./dist/build/cblrepo/cblrepo urls dataenc,0.14.0.3
+cblrepo urls dataenc,0.14.0.3
 >>>
 http://hackage.haskell.org/packages/archive/dataenc/0.14.0.3/dataenc.cabal
 >>>= 0
 
 # howcome one can ask for the URL of a non-existing package???
-./dist/build/cblrepo/cblrepo urls dataenc,0.13.1
+cblrepo urls dataenc,0.13.1
 >>>
 http://hackage.haskell.org/packages/archive/dataenc/0.13.1/dataenc.cabal
 >>>= 0
