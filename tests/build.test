@@ -1,5 +1,9 @@
 # a few tests to verify the build command, run with shelltestrunner
 
+# ensure things are clean
+  rm -f cblrepo.db
+>>>= 0
+
 cblrepo add -f tests/data/foo.cabal -f tests/data/bar.cabal -f tests/data/baz.cabal
 >>>= 0
 

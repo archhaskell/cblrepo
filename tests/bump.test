@@ -1,0 +1,65 @@
+# a few tests to verify the bump command, run with shelltestrunner
+
+# {{{1 set up
+  rm -f cblrepo.db
+>>>= 0
+
+cblrepo add -f tests/data/foo.cabal -f tests/data/bar.cabal -f tests/data/baz.cabal
+>>>= 0
+
+cblrepo list
+>>>
+baz  1-1
+bar  0-1
+foo  1.2.3-1
+>>>= 0
+
+# {{{1 bump single
+cblrepo bump baz
+>>>
+>>>= 0
+
+cblrepo list
+>>>
+baz  1-1
+bar  0-1
+foo  1.2.3-1
+>>>= 0
+
+cblrepo bump --inclusive baz
+>>>
+>>>= 0
+
+cblrepo list
+>>>
+baz  1-2
+bar  0-1
+foo  1.2.3-1
+>>>= 0
+
+# {{{1 bump multiple
+cblrepo bump foo
+>>>
+>>>= 0
+
+cblrepo list
+>>>
+baz  1-3
+bar  0-2
+foo  1.2.3-1
+>>>= 0
+
+cblrepo bump --inclusive foo
+>>>
+>>>= 0
+
+cblrepo list
+>>>
+baz  1-4
+bar  0-3
+foo  1.2.3-2
+>>>= 0
+
+# {{{1 clean up
+  rm -f cblrepo.db
+>>>= 0
