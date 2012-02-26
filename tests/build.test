@@ -1,0 +1,26 @@
+# a few tests to verify the build command, run with shelltestrunner
+
+cblrepo add -f tests/data/foo.cabal -f tests/data/bar.cabal -f tests/data/baz.cabal
+>>>= 0
+
+cblrepo build baz
+>>>
+baz
+>>>= 0
+
+cblrepo build bar
+>>>
+bar
+baz
+>>>= 0
+
+cblrepo build foo
+>>>
+foo
+bar
+baz
+>>>= 0
+
+# clean up
+  rm cblrepo.db
+>>>= 0

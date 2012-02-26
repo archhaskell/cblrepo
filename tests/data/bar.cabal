@@ -1,0 +1,5 @@
+name: bar
+version: 0
+
+library
+    build-depends: foo
