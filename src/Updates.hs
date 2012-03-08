@@ -33,6 +33,7 @@ updates :: Command ()
 updates = do
     db <- cfgGet dbFile >>= liftIO . readDb
     aD <- cfgGet appDir
+    aCS <- cfgGet idxStyle
     entries <- liftIO $ liftM (Tar.read . GZip.decompress)
         (BS.readFile $ aD </> "00-index.tar.gz")
     let nonBasePkgs = filter (not . isBasePkg) db
@@ -41,7 +42,10 @@ updates = do
     let outdated = filter
             (\ (p, v) -> maybe False (> v) (latestVer p availPkgs))
             pkgsNVers
-    liftIO $ mapM_ (flip printOutdated availPkgs) outdated
+    let printer = if aCS
+            then printOutdatedIdx
+            else printOutdated
+    liftIO $ mapM_ (flip printer availPkgs) outdated
 
 type PkgVer = (String, Version)
 
@@ -68,3 +72,8 @@ printOutdated (p, v) avail = let
         l = fromJust $ latestVer p avail
     in
         putStrLn $ p ++ ": " ++ (display v) ++ " (" ++ (display l) ++ ")"
+
+printOutdatedIdx (p, v) avail = let
+        l = fromJust $ latestVer p avail
+    in
+        putStrLn $ p ++ "," ++ (display l)

@@ -73,7 +73,10 @@ cmdVersions = record defVersions
     , pkgs := def += args += typ "PKG"
     ] += name "versions" += help "list available versions"
 
-cmdUpdates = record defUpdates [ argAppDir , argDbFile ] += name "updates" += help "check for available updates"
+cmdUpdates = record defUpdates
+    [ argAppDir, argDbFile
+    , idxStyle := False += explicit += name "s" += help "a shorter output suitable for scripting"
+    ] += name "updates" += help "check for available updates"
 
 cmdListPkgs = record defCmdListPkgs
     [ argAppDir, argDbFile

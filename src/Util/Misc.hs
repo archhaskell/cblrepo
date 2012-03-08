@@ -77,7 +77,7 @@ data Cmds
     | Sync { appDir :: FilePath }
     | Versions { appDir :: FilePath, pkgs :: [String] }
     | CmdListPkgs { appDir :: FilePath, dbFile :: FilePath, listGhc :: Bool, listDistro :: Bool, noListRepo :: Bool }
-    | Updates { appDir :: FilePath, dbFile :: FilePath }
+    | Updates { appDir :: FilePath, dbFile :: FilePath, idxStyle :: Bool }
     | Urls { appDir :: FilePath, pkgVers :: [(String, String)] }
     | PkgBuild { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, pkgs :: [String] }
     | ConvertDb { appDir :: FilePath, inDbFile :: FilePath, outDbFile :: FilePath }
@@ -90,7 +90,7 @@ defBumpPkgs =  BumpPkgs "" "" False False []
 defSync =  Sync ""
 defVersions =  Versions "" []
 defCmdListPkgs =  CmdListPkgs "" "" False False False
-defUpdates =  Updates "" ""
+defUpdates =  Updates "" "" False
 defUrls =  Urls "" []
 defPkgBuild =  PkgBuild "" "" "" []
 defConvertDb = ConvertDb "" "" ""
