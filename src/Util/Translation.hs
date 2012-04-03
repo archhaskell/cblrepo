@@ -33,7 +33,7 @@ import Data.Maybe
 import Data.Monoid hiding ((<>))
 import Data.Version
 import Distribution.Package as P
-import Distribution.PackageDescription
+import Distribution.PackageDescription as PD
 import Distribution.Text
 import System.Directory
 import System.Exit
@@ -287,8 +287,8 @@ translate db pd = let
         pkgDesc = synopsis pd
         url = if null (homepage pd) then "http://hackage.haskell.org/package/${_hkgname}" else (homepage pd)
         lic = display (license pd)
-        makeDepends = if hasLib then ["haddock"] else ["ghc=7.4.1-1", "haddock"] ++ calcExactDeps db pd
-        depends = if hasLib then ["ghc=7.4.1-1"] ++ calcExactDeps db pd else []
+        makeDepends = if hasLib then ["haddock"] else [ghcVersionDep, "haddock"] ++ calcExactDeps db pd
+        depends = if hasLib then [ghcVersionDep] ++ calcExactDeps db pd else []
         extraLibDepends = maybe [] (extraLibs . libBuildInfo) (library pd)
         install = if hasLib then (apShInstall ap) else Nothing
     in ap
@@ -315,7 +315,8 @@ translate db pd = let
 --  • this is most likely too simplistic to create the Arch package names
 --  correctly for all possible dependencies
 calcExactDeps db pd = let
-        remPkgs = (map DB.pkgName (filter isGhcPkg db)) ++ ghcPkgs
+        n = (\ (P.PackageName n) -> n ) (P.packageName pd)
+        remPkgs = (map DB.pkgName (filter isGhcPkg db)) ++ ghcPkgs ++ [n]
         deps = filter (not . flip elem remPkgs) (map depName (buildDepends pd))
         lookupPkgVer = display . DB.pkgVersion . fromJust . lookupPkg db
         depString n = let

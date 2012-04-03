@@ -1,0 +1,7 @@
+name: foo-self
+version: 0
+
+library
+
+executable foo-self-exe
+    build-depends: foo-self

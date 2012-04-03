@@ -1,0 +1,30 @@
+# a few tests around self-referencing CABAL files
+
+# {{{1 set-up
+  rm -f cblrepo.db
+>>>= 0
+
+cblrepo list
+>>>
+>>>= 0
+
+# {{{1 adding
+cblrepo add -f tests/data/foo-self.cabal
+>>>
+>>>= 0
+
+# {{{1 build
+cblrepo build foo-self
+>>>
+foo-self
+>>>= 0
+
+# todo: pkgbuild
+
+# {{{1 rm
+cblrepo rm foo-self
+>>>= 0
+
+# {{{1 clean-up
+  rm -f cblrepo.db
+>>>= 0

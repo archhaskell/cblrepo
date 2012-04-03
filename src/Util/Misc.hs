@@ -30,7 +30,7 @@ import Data.Either
 import Data.List
 import Data.Typeable
 import Distribution.Compiler
-import Distribution.Package
+import Distribution.Package as P
 import Distribution.PackageDescription
 import Distribution.PackageDescription.Configuration
 import Distribution.PackageDescription.Parse
@@ -64,6 +64,9 @@ printBrksOth  ((n, v), brks) = do
 -- {{{1 program variables
 progName = "cblrepo"
 dbName = progName ++ ".db"
+
+ghcVersion = (Version [7,4,1] [])
+ghcVersionDep = "ghc=" ++ display ghcVersion ++ "-1"
 
 -- {{{1 command line argument type
 
@@ -188,19 +191,24 @@ readCabal patchDir loc tmpDir = let
         liftIO $ readPackageDescription silent cblFn
 
 -- {{{2 finalising
-finalizePkg db = finalizePackageDescription
-    [] -- no flags
-    (checkAgainstDb db)
-    (Platform X86_64 buildOS) -- platform
-    (CompilerId GHC (Version [7,0,2] []))  -- compiler version
-    [] -- no additional constraints
+finalizePkg db gpd = let
+        n = ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) gpd
+    in finalizePackageDescription
+        [] -- no flags
+        (checkAgainstDb db n)
+        (Platform X86_64 buildOS) -- platform
+        (CompilerId GHC ghcVersion)  -- compiler version
+        [] -- no additional constraints
+        gpd
 
-checkAgainstDb db dep = let
+checkAgainstDb db name dep = let
         dN = depName dep
         dVR = depVersionRange dep
-    in case DB.lookupPkg db dN of
-        Nothing -> False
-        Just (_, p) -> withinRange (DB.version p) dVR
+    in if dN == name
+        then True
+        else case DB.lookupPkg db dN of
+            Nothing -> False
+            Just (_, p) -> withinRange (DB.version p) dVR
 
 -- {{{1 Command type
 type Command a = ReaderT Cmds IO a

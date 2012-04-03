@@ -119,7 +119,7 @@ bumpRelease db n = let
 lookupPkg :: CblDB -> String -> Maybe CblPkg
 lookupPkg db n = maybe Nothing (\ p -> Just (n, p)) (lookup n db)
 
-lookupDependants db n = map pkgName $ filter (\ p -> doesDependOn p n) db
+lookupDependants db n = filter (/= n) $ map pkgName $ filter (\ p -> doesDependOn p n) db
     where
         doesDependOn p n = n `elem` (map _depName $ pkgDeps p)
 
