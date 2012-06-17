@@ -38,7 +38,6 @@ import Distribution.Text
 import System.Directory
 import System.Exit
 import System.FilePath
-import System.IO
 import System.Process
 import System.Unix.Directory
 import Text.PrettyPrint.ANSI.Leijen hiding((</>))
@@ -81,6 +80,7 @@ data ArchPkg = ArchPkg
     , apLicenseFile :: Maybe FilePath
     , apCabalPatch :: Maybe FilePath
     , apPkgbuildPatch :: Maybe FilePath
+    , apInstallPatch :: Maybe FilePath
     , apBuildPatch :: Maybe FilePath
     -- shell bits
     , apShHkgName :: ShVar String
@@ -105,6 +105,7 @@ baseArchPkg = ArchPkg
     , apLicenseFile = Nothing
     , apCabalPatch = Nothing
     , apPkgbuildPatch = Nothing
+    , apInstallPatch = Nothing
     , apBuildPatch = Nothing
     , apShHkgName = ShVar "_hkgname" ""
     , apShPkgName = ShVar "pkgname" ""
@@ -339,16 +340,19 @@ addPatches patchDir ap = let
         fi tF fF v = if v then tF else fF
         cabalPatchFn = patchDir </> hkgName <.> "cabal"
         pkgbuildPatchFn = patchDir </> hkgName <.> "pkgbuild"
+        installPatchFn = patchDir </> hkgName <.> "install"
         buildPatchFn = patchDir </> hkgName <.> "source"
     in do
         cabalPatch <- doesFileExist cabalPatchFn >>= fi (liftM Just $ canonicalizePath cabalPatchFn) (return Nothing)
         pkgBuildPatch <- doesFileExist pkgbuildPatchFn >>= fi (liftM Just $ canonicalizePath pkgbuildPatchFn) (return Nothing)
+        installPatch <- doesFileExist installPatchFn >>= fi (liftM Just $ canonicalizePath installPatchFn) (return Nothing)
         buildPatch <- doesFileExist buildPatchFn >>= fi (liftM Just $ canonicalizePath buildPatchFn) (return Nothing)
         let sources' = shVarAppendValue sources
                 (ShArray $ catMaybes [maybe Nothing (const $ Just "cabal.patch") cabalPatch, maybe Nothing (const $ Just "source.patch") buildPatch])
         return ap
             { apCabalPatch = cabalPatch
             , apPkgbuildPatch = pkgBuildPatch
+            , apInstallPatch = installPatch
             , apBuildPatch = buildPatch
             , apShSource = sources'
             }

@@ -26,6 +26,7 @@ import Data.Either
 import Data.Maybe
 import Distribution.Text
 import System.Directory
+import System.FilePath
 import System.Exit
 import System.IO
 import System.Unix.Directory
@@ -58,7 +59,8 @@ generatePkgBuild db patchDir pkg = let
             hClose hPKGBUILD
             maybe (return ()) (\ pfn -> (runErrorT $ applyPatch "PKGBUILD" pfn) >> return ()) (apPkgbuildPatch archPkgWHash)
             when (apHasLibrary archPkgWHash) $ do
-                hInstall <- openFile (apPkgName archPkgWHash ++ ".install") WriteMode
+                hInstall <- openFile (apPkgName archPkgWHash <.> "install") WriteMode
                 let archInstall = aiFromAP archPkgWHash
                 hPutDoc hInstall $ pretty archInstall
                 hClose hInstall
+                maybe (return ()) (\ pfn -> (runErrorT $ applyPatch (apPkgName archPkgWHash <.> "install") pfn)>> return ()) (apInstallPatch archPkgWHash)
