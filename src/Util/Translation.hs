@@ -189,8 +189,8 @@ instance Pretty ArchPkg where
 
                 exeBuildFunction = text "build() {" <>
                     nest 4 (empty <$> text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
-                        maybe empty (\ _ ->
-                            text $ "patch " ++ shVarValue hkgName ++ ".cabal ${srcdir}/cabal.patch ")
+                        maybe empty
+                            (\ _ -> text $ "patch " ++ shVarValue hkgName ++ ".cabal ${srcdir}/cabal.patch ")
                             cabalPatchFile <$>
                         maybe empty (\ _ ->
                             text $ "patch -p4 < ${srcdir}/source.patch")
@@ -287,7 +287,7 @@ translate db pd = let
         pkgDesc = synopsis pd
         url = if null (homepage pd) then "http://hackage.haskell.org/package/${_hkgname}" else (homepage pd)
         lic = display (license pd)
-        makeDepends = if hasLib then ["haddock"] else [ghcVersionDep, "haddock"] ++ calcExactDeps db pd
+        makeDepends = if hasLib then [] else [ghcVersionDep] ++ calcExactDeps db pd
         depends = if hasLib then [ghcVersionDep] ++ calcExactDeps db pd else []
         extraLibDepends = maybe [] (extraLibs . libBuildInfo) (library pd)
         install = if hasLib then (apShInstall ap) else Nothing
