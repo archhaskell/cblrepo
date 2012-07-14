@@ -46,8 +46,25 @@ data CblPkg = CP String Pkg
 
 type CblDB = [CblPkg]
 
--- instance Ord CblPkg where
---    compare = undefined
+instance Ord CblPkg where
+    compare
+        (CP n1 GhcPkg { version = v1 })
+        (CP n2 GhcPkg { version = v2 }) =
+            compare (n1, v1) (n2, v2)
+    compare (CP _ GhcPkg {}) _ = LT
+    compare _ (CP _ GhcPkg {}) = GT
+
+    compare
+        (CP n1 DistroPkg { version = v1, release = r1 })
+        (CP n2 DistroPkg { version = v2, release = r2 }) =
+            compare (n1, v1, r1) (n2, v2, r2)
+    compare (CP _ DistroPkg {}) _ = LT
+    compare _ (CP _ DistroPkg {}) = GT
+
+    compare
+        (CP n1 RepoPkg { version = v1, release = r1 })
+        (CP n2 RepoPkg { version = v2, release = r2 }) =
+            compare (n1, v1, r1) (n2, v2, r2)
 
 -- {{{1 packages
 pkgName :: CblPkg -> String
@@ -162,7 +179,7 @@ readDb fp = (flip CE.catch)
 saveDb :: CblDB -> FilePath -> IO ()
 saveDb db fp = writeFile fp s
     where
-        s = unlines $ map encode db
+        s = unlines $ map encode $ sort db
 
 -- {{{1 JSON instances
 instance JSON CblPkg where
