@@ -41,28 +41,36 @@ data Pkg
     | RepoPkg { version :: V.Version, deps :: [P.Dependency], release :: String }
     deriving (Eq, Show)
 
-type CblPkg = (String, Pkg)
+data CblPkg = CP String Pkg
+    deriving (Eq, Show)
+
 type CblDB = [CblPkg]
+
+-- instance Ord CblPkg where
+--    compare = undefined
 
 -- {{{1 packages
 pkgName :: CblPkg -> String
-pkgName (n, _) = n
+pkgName (CP n _) = n
+
+pkgPkg :: CblPkg -> Pkg
+pkgPkg (CP _ p) = p
 
 pkgVersion :: CblPkg -> V.Version
-pkgVersion (_, p) = version p
+pkgVersion (CP _ p) = version p
 
 pkgDeps :: CblPkg -> [P.Dependency]
-pkgDeps (_, RepoPkg { deps = d}) = d
+pkgDeps (CP _ RepoPkg { deps = d}) = d
 pkgDeps _ = []
 
 pkgRelease :: CblPkg -> String
-pkgRelease (_, GhcPkg {}) = "xx"
-pkgRelease (_, DistroPkg { release = r }) = r
-pkgRelease (_, RepoPkg { release = r }) = r
+pkgRelease (CP _ GhcPkg {}) = "xx"
+pkgRelease (CP _ DistroPkg { release = r }) = r
+pkgRelease (CP _ RepoPkg { release = r }) = r
 
-createGhcPkg n v = (n, GhcPkg v)
-createDistroPkg n v r = (n, DistroPkg v r)
-createRepoPkg n v d r = (n, RepoPkg v d r)
+createGhcPkg n v = CP n (GhcPkg v)
+createDistroPkg n v r = CP n (DistroPkg v r)
+createRepoPkg n v d r = CP n (RepoPkg v d r)
 
 createCblPkg :: PackageDescription -> CblPkg
 createCblPkg pd = createRepoPkg name version deps "1"
@@ -74,13 +82,13 @@ createCblPkg pd = createRepoPkg name version deps "1"
 getDependencyOn :: String -> CblPkg -> Maybe P.Dependency
 getDependencyOn n p = find (\ d -> _depName d == n) (pkgDeps p)
 
-isGhcPkg (_, GhcPkg {}) = True
+isGhcPkg (CP _ GhcPkg {}) = True
 isGhcPkg _ = False
 
-isDistroPkg (_, DistroPkg {}) = True
+isDistroPkg (CP _ DistroPkg {}) = True
 isDistroPkg _ = False
 
-isRepoPkg (_, RepoPkg {}) = True
+isRepoPkg (CP _ RepoPkg {}) = True
 isRepoPkg _ = False
 
 isBasePkg :: CblPkg -> Bool
@@ -93,11 +101,11 @@ emptyPkgDB = []
 addPkg :: CblDB -> String -> Pkg -> CblDB
 addPkg db n p = nubBy cmp newdb
     where
-        cmp (n1, _) (n2, _) = n1 == n2
-        newdb = (n, p):db
+        cmp (CP n1 _) (CP n2 _) = n1 == n2
+        newdb = (CP n p):db
 
 addPkg2 :: CblDB -> CblPkg -> CblDB
-addPkg2 db (n, p) = addPkg db n p
+addPkg2 db (CP n p) = addPkg db n p
 
 addGhcPkg :: CblDB -> String -> V.Version -> CblDB
 addGhcPkg db n v = addPkg2 db (createGhcPkg n v)
@@ -110,14 +118,17 @@ delPkg db n = filter (\ p -> n /= pkgName p) db
 
 bumpRelease :: CblDB -> String -> CblDB
 bumpRelease db n = let
-        doBump (n', p@RepoPkg { release = r }) = (n', p { release = nr })
+        doBump (CP n' p@RepoPkg { release = r }) = CP n' (p { release = nr })
             where
                 nr = show $ (read r) + 1
         doBump p = p
     in maybe db (addPkg2 db . doBump) (lookupPkg db n)
 
 lookupPkg :: CblDB -> String -> Maybe CblPkg
-lookupPkg db n = maybe Nothing (\ p -> Just (n, p)) (lookup n db)
+lookupPkg [] _ = Nothing
+lookupPkg (p:db) n
+    | n == pkgName p = Just p
+    | otherwise = lookupPkg db n
 
 lookupDependants db n = filter (/= n) $ map pkgName $ filter (\ p -> doesDependOn p n) db
     where
@@ -154,6 +165,13 @@ saveDb db fp = writeFile fp s
         s = unlines $ map encode db
 
 -- {{{1 JSON instances
+instance JSON CblPkg where
+    showJSON (CP n p) = showJSON (n, p)
+
+    readJSON object = do
+        (n,p) <- readJSON object
+        return (CP n p)
+
 instance JSON V.Version where
     showJSON v = makeObj [ ("Version", showJSON $ display v) ]
 

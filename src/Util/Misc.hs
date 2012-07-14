@@ -208,7 +208,7 @@ checkAgainstDb db name dep = let
         then True
         else case DB.lookupPkg db dN of
             Nothing -> False
-            Just (_, p) -> withinRange (DB.version p) dVR
+            Just (DB.CP _ p) -> withinRange (DB.version p) dVR
 
 -- {{{1 Command type
 type Command a = ReaderT Cmds IO a
