@@ -79,8 +79,19 @@ cblrepo add -f tests/data/foo.cabal
 
 cblrepo list
 >>>
-foo  1.2.3-1
 dataenc  0.14.0.3-1
+foo  1.2.3-1
+>>>= 0
+
+# {{{1 check ordering of db
+cblrepo list -gd
+>>>
+array  0.3-xx
+base  4.0-xx
+containers  0.4-xx
+bar  1.2-1
+dataenc  0.14.0.3-1
+foo  1.2.3-1
 >>>= 0
 
 # {{{1 clean-up

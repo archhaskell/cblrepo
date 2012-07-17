@@ -9,8 +9,8 @@ cblrepo add -f tests/data/foo.cabal -f tests/data/bar.cabal -f tests/data/baz.ca
 
 cblrepo list
 >>>
-baz  1-1
 bar  0-1
+baz  1-1
 foo  1.2.3-1
 >>>= 0
 
@@ -21,8 +21,8 @@ cblrepo bump baz
 
 cblrepo list
 >>>
-baz  1-1
 bar  0-1
+baz  1-1
 foo  1.2.3-1
 >>>= 0
 
@@ -32,8 +32,8 @@ cblrepo bump --inclusive baz
 
 cblrepo list
 >>>
-baz  1-2
 bar  0-1
+baz  1-2
 foo  1.2.3-1
 >>>= 0
 
@@ -44,8 +44,8 @@ cblrepo bump foo
 
 cblrepo list
 >>>
-baz  1-3
 bar  0-2
+baz  1-3
 foo  1.2.3-1
 >>>= 0
 
@@ -55,8 +55,8 @@ cblrepo bump --inclusive foo
 
 cblrepo list
 >>>
-baz  1-4
 bar  0-3
+baz  1-4
 foo  1.2.3-2
 >>>= 0
 
