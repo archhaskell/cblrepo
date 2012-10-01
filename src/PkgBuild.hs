@@ -40,7 +40,6 @@ pkgBuild = do
     mapM (runErrorT . generatePkgBuild db pD) pkgs >>= exitOnErrors >> return ()
 
 -- TODO:
---  - flags
 -- generatePkgBuild :: CblDB -> String -> String -> ErrorT String IO ()
 generatePkgBuild db patchDir pkg = let
         appendPkgVer = pkg ++ "," ++ (display $ pkgVersion $ fromJust $ lookupPkg db pkg)

@@ -73,7 +73,6 @@ instance Pretty a => Pretty (ShVar a) where
     pretty (ShVar n v) = text n <> char '=' <> pretty v
 
 -- {{{1 ArchPkg
--- TODO: flags
 data ArchPkg = ArchPkg
     { apPkgName :: String
     , apHkgName :: String
@@ -288,7 +287,6 @@ instance Pretty (FlagName, Bool) where
 
 -- {{{1 translate
 -- TODO:
---  • add flags
 --  • translation of extraLibDepends-libs to Arch packages
 translate db fa pd = let
         ap = baseArchPkg
