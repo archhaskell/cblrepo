@@ -55,4 +55,4 @@ doConvert opkg@(n, (v, d, r))
         in do
             putStr n
             withNoStdBuffering $ getValidChar >>= createPkg
-    | otherwise = return $ NDB.createRepoPkg n v d (show r)
+    | otherwise = return $ NDB.createRepoPkg n v d [] (show r)

@@ -38,7 +38,7 @@ _depVersionRange (P.Dependency _ vr) = vr
 data Pkg
     = GhcPkg { version :: V.Version }
     | DistroPkg { version :: V.Version, release :: String }
-    | RepoPkg { version :: V.Version, deps :: [P.Dependency], release :: String }
+    | RepoPkg { version :: V.Version, deps :: [P.Dependency], flags :: FlagAssignment, release :: String }
     deriving (Eq, Show)
 
 data CblPkg = CP String Pkg
@@ -80,6 +80,10 @@ pkgDeps :: CblPkg -> [P.Dependency]
 pkgDeps (CP _ RepoPkg { deps = d}) = d
 pkgDeps _ = []
 
+pkgFlags :: CblPkg -> FlagAssignment
+pkgFlags (CP _ RepoPkg { flags = fa}) = fa
+pkgFlags _ = []
+
 pkgRelease :: CblPkg -> String
 pkgRelease (CP _ GhcPkg {}) = "xx"
 pkgRelease (CP _ DistroPkg { release = r }) = r
@@ -87,10 +91,10 @@ pkgRelease (CP _ RepoPkg { release = r }) = r
 
 createGhcPkg n v = CP n (GhcPkg v)
 createDistroPkg n v r = CP n (DistroPkg v r)
-createRepoPkg n v d r = CP n (RepoPkg v d r)
+createRepoPkg n v d fa r = CP n (RepoPkg v d fa r)
 
-createCblPkg :: PackageDescription -> CblPkg
-createCblPkg pd = createRepoPkg name version deps "1"
+createCblPkg :: PackageDescription -> FlagAssignment -> CblPkg
+createCblPkg pd fa = createRepoPkg name version deps fa "1"
     where
         name = (\ (P.PackageName n) -> n) (P.pkgName $ package pd)
         version = P.pkgVersion $ package pd
@@ -205,12 +209,20 @@ instance JSON P.Dependency where
         dep <- valFromObj "Dependency" obj
         maybe (fail "Not a Dependency object") return (simpleParse dep)
 
+instance JSON FlagName where
+    showJSON (FlagName n) = makeObj [ ("FlagName", showJSON n) ]
+
+    readJSON object = do
+        obj <- readJSON object
+        n <- valFromObj "FlagName" obj
+        return $ FlagName n
+
 instance JSON Pkg where
     showJSON p@(GhcPkg { version = v}) = makeObj [("GhcPkg", showJSON v)]
     showJSON p@(DistroPkg { version = v, release = r}) =
         makeObj [("DistroPkg", showJSON (v, r))]
-    showJSON p@(RepoPkg { version = v, deps = d, release = r }) =
-        makeObj [("RepoPkg", showJSON (v, d, r))]
+    showJSON p@(RepoPkg { version = v, deps = d, flags = fa, release = r }) =
+        makeObj [("RepoPkg", showJSON (v, d, fa, r))]
 
     readJSON object = let
             readGhc = do
@@ -225,7 +237,7 @@ instance JSON Pkg where
 
             readRepo = do
                 obj <- readJSON object
-                (v, d, r) <- valFromObj "RepoPkg" obj >>= readJSON
-                return $ RepoPkg v d r
+                (v, d, fa, r) <- valFromObj "RepoPkg" obj >>= readJSON
+                return $ RepoPkg v d fa r
 
         in readGhc `mplus` readDistro `mplus` readRepo `mplus` fail "Not a Pkg object"
