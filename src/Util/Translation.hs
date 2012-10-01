@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances, OverlappingInstances #-}
 {-
  - Copyright 2011 Per Magnus Therning
  -
@@ -145,6 +146,7 @@ instance Pretty ArchPkg where
         , apShSource = source
         , apShInstall = install
         , apShSha256Sums = sha256sums
+        , apFlags = flags
         }) = vsep
             [ text "# custom variables"
             , pretty hkgName
@@ -181,7 +183,7 @@ instance Pretty ArchPkg where
                             buildPatchFile <$>
                         nest 4 (text "runhaskell Setup configure -O -p --enable-split-objs --enable-shared \\" <$>
                             text "--prefix=/usr --docdir=/usr/share/doc/${pkgname} \\" <$>
-                            text "--libsubdir=\\$compiler/site-local/\\$pkgid") <$>
+                            text "--libsubdir=\\$compiler/site-local/\\$pkgid" <> addFlags) <$>
                         text "runhaskell Setup build" <$>
                         text "runhaskell Setup haddock" <$>
                         text "runhaskell Setup register --gen-script" <$>
@@ -198,11 +200,14 @@ instance Pretty ArchPkg where
                         maybe empty (\ _ ->
                             text $ "patch -p4 < ${srcdir}/source.patch")
                             buildPatchFile <$>
-                        text "runhaskell Setup configure -O --prefix=/usr --docdir=/usr/share/doc/${pkgname}" <$>
+                        text "runhaskell Setup configure -O --prefix=/usr --docdir=/usr/share/doc/${pkgname}" <> addFlags <$>
                         text "runhaskell Setup build"
                         ) <$>
                     char '}'
 
+                addFlags = if null flags
+                              then text ""
+                              else text " \\" <$> foldl1 (\memo f -> memo <> text " " <> f) (map (\f -> text "-f" <> pretty f) flags)
                 libPackageFunction = text "package() {" <>
                     nest 4 (empty <$>
                         text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
@@ -274,6 +279,10 @@ instance Pretty ArchInstall where
 -- {{{1 extra instances
 instance Pretty Version where
     pretty (Version b _) = encloseSep empty empty (char '.') (map pretty b)
+
+instance Pretty (FlagName, Bool) where
+    pretty (FlagName n, True) = text n
+    pretty (FlagName n, False) = text $ '-' : n
 
 -- {{{1 translate
 -- TODO:
