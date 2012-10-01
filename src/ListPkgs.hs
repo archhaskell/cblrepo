@@ -1,3 +1,4 @@
+{-# LANGUAGE PatternGuards #-}
 {-
  - Copyright 2011 Per Magnus Therning
  -
@@ -21,9 +22,11 @@ import PkgDB
 
 import Control.Monad
 import Control.Monad.Reader
+import Data.List
 import Data.Maybe
 import Distribution.Text
 import System.FilePath
+import Distribution.PackageDescription
 
 listPkgs :: Command ()
 listPkgs = do
@@ -42,7 +45,13 @@ pkgFilter g d r p = (g && isGhcPkg p) || (d && isDistroPkg p) || (not r && isRep
 
 printCblPkgShort :: CblPkg -> IO ()
 printCblPkgShort p =
-    putStrLn $ pkgName p ++ "  " ++ (display $ pkgVersion p) ++ "-" ++ pkgRelease p
+    putStrLn $ pkgName p ++ "  " ++ (display $ pkgVersion p) ++ "-" ++ pkgRelease p ++ showFlagsIfPresent p
+        where
+            showFlagsIfPresent p
+                | [] <- pkgFlags p = ""
+                | fa <- pkgFlags p = " (" ++ (intercalate " " $ map showSingleFlag fa) ++ ")"
+            showSingleFlag (FlagName n, True) = n
+            showSingleFlag (FlagName n, False) = '-' : n
 
 printCblPkgHackage :: CblPkg -> IO ()
 printCblPkgHackage p =
