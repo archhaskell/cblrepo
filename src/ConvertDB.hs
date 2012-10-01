@@ -24,35 +24,15 @@ import qualified PkgDB as NDB
 
 -- {{{2 system
 import Control.Monad.Reader
-import Data.Version
-import System.IO
 
 convertDb :: Command ()
 convertDb = do
-    inDb <- cfgGet inDbFile >>= \ fn -> liftIO $ ODB.readDb fn
+    inDbFn <- cfgGet inDbFile
     outDbFn <- cfgGet outDbFile
-    newDb <- liftIO $ mapM doConvert inDb
+    newDb <- liftIO $ liftM (map doConvert) (ODB.readDb inDbFn)
     liftIO $ NDB.saveDb newDb outDbFn
 
-doConvert :: ODB.CblPkg -> IO NDB.CblPkg
-doConvert opkg@(n, (v, d, r))
-    | ODB.isBasePkg opkg = let
-            withNoStdBuffering f = do
-                old <- hGetBuffering stdin
-                hSetBuffering stdin NoBuffering
-                result <- f
-                hSetBuffering stdin old
-                return result
-            getValidChar = do
-                putStr " (g)hc or (d)istro? " >> hFlush stdout
-                getChar >>= (\ c -> putStrLn "" >> return c) >>= (\ c -> if c `elem` "gd" then return c else getValidChar)
-            createPkg c
-                | c == 'g' = return $ NDB.createGhcPkg n v
-                | c == 'd' = do
-                    putStr " release? " >> hFlush stdout
-                    rel <- getLine
-                    return $ NDB.createDistroPkg n v rel
-        in do
-            putStr n
-            withNoStdBuffering $ getValidChar >>= createPkg
-    | otherwise = return $ NDB.createRepoPkg n v d [] (show r)
+doConvert :: ODB.CblPkg -> NDB.CblPkg
+doConvert (ODB.CP n (ODB.GhcPkg v)) = NDB.CP n (NDB.GhcPkg v)
+doConvert (ODB.CP n (ODB.DistroPkg v r)) = NDB.CP n (NDB.DistroPkg v r)
+doConvert (ODB.CP n (ODB.RepoPkg v d r)) = NDB.CP n (NDB.RepoPkg v d [] r)
