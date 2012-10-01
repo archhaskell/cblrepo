@@ -95,6 +95,7 @@ data ArchPkg = ArchPkg
     , apShSource :: ShVar ShArray
     , apShInstall :: Maybe (ShVar ShQuotedString)
     , apShSha256Sums :: ShVar ShArray
+    , apFlags :: FlagAssignment
     } deriving (Eq, Show)
 
 -- {{{2 baseArchPkg
@@ -122,6 +123,7 @@ baseArchPkg = ArchPkg
     -- checking in makepkg.conf isn't used, as long as this array contains
     -- something non-empty it will overrule
     , apShSha256Sums = ShVar "sha256sums" (ShArray ["0"])
+    , apFlags = []
     }
 
 -- {{{2 Pretty instance
@@ -277,7 +279,7 @@ instance Pretty Version where
 -- TODO:
 --  • add flags
 --  • translation of extraLibDepends-libs to Arch packages
-translate db pd = let
+translate db fa pd = let
         ap = baseArchPkg
         (PackageName hkgName) = packageName pd
         pkgVer = packageVersion pd
@@ -307,6 +309,7 @@ translate db pd = let
         , apShMakeDepends = shVarNewValue (apShMakeDepends ap) (ShArray makeDepends)
         , apShDepends = shVarNewValue (apShDepends ap) (ShArray $ depends ++ extraLibDepends)
         , apShInstall = install
+        , apFlags = fa
         }
 
 -- Calculate exact dependencies based on the package in a CblDB.  We assume the
