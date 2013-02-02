@@ -65,7 +65,7 @@ printBrksOth  ((n, v), brks) = do
 progName = "cblrepo"
 dbName = progName ++ ".db"
 
-ghcVersion = (Version [7,6,1] [])
+ghcVersion = (Version [7, 6, 2] [])
 ghcVersionDep = "ghc=" ++ display ghcVersion ++ "-1"
 
 -- {{{1 command line argument type
