@@ -30,11 +30,20 @@ listPkgs = do
     lG <- cfgGet listGhc
     lD <- cfgGet listDistro
     lR <- cfgGet noListRepo
+    lH <- cfgGet hackageFmt
     db <- cfgGet dbFile >>= liftIO . readDb
     let pkgs = filter (pkgFilter lG lD lR) db
-    liftIO $ mapM_ printCblPkgShort pkgs
+    let printer = if lH
+            then printCblPkgHackage
+            else printCblPkgShort
+    liftIO $ mapM_ printer pkgs
 
 pkgFilter g d r p = (g && isGhcPkg p) || (d && isDistroPkg p) || (not r && isRepoPkg p)
 
+printCblPkgShort :: CblPkg -> IO ()
 printCblPkgShort p =
     putStrLn $ pkgName p ++ "  " ++ (display $ pkgVersion p) ++ "-" ++ pkgRelease p
+
+printCblPkgHackage :: CblPkg -> IO ()
+printCblPkgHackage p =
+    print (pkgName p, (display $ pkgVersion p), Nothing :: Maybe String)

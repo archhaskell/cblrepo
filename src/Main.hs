@@ -83,6 +83,7 @@ cmdListPkgs = record defCmdListPkgs
     , listGhc := False += explicit += name "g" += name "ghc" += help "list ghc packages"
     , listDistro := False += explicit += name "d" += name "distro" += help "list distro packages"
     , noListRepo := False += explicit += name "no-repo" += help "do not list repo packages"
+    , hackageFmt := False += explicit += name "hackage" += help "list in hackage format"
     ] += name "list" += help "list packages in repo"
 
 cmdUrls = record defUrls
