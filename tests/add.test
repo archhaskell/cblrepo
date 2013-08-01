@@ -68,7 +68,7 @@ cblrepo add -g array,0.3 -g base,4.0, -g containers,0.4 dataenc,0.14.0.3
 
 cblrepo list
 >>>
-dataenc  0.14.0.3-1
+dataenc  0.14.0.3-1 (-buildtests)
 >>>= 0
 
 # {{{1 add from file
@@ -79,7 +79,7 @@ cblrepo add -f tests/data/foo.cabal
 
 cblrepo list
 >>>
-dataenc  0.14.0.3-1
+dataenc  0.14.0.3-1 (-buildtests)
 foo  1.2.3-1
 >>>= 0
 
@@ -90,7 +90,7 @@ array  0.3-xx
 base  4.0-xx
 containers  0.4-xx
 bar  1.2-1
-dataenc  0.14.0.3-1
+dataenc  0.14.0.3-1 (-buildtests)
 foo  1.2.3-1
 >>>= 0
 
