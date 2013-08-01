@@ -183,7 +183,7 @@ instance Pretty ArchPkg where
                             buildPatchFile <$>
                         nest 4 (text "runhaskell Setup configure -O -p --enable-split-objs --enable-shared \\" <$>
                             text "--prefix=/usr --docdir=/usr/share/doc/${pkgname} \\" <$>
-                            text "--libsubdir=\\$compiler/site-local/\\$pkgid" <> addFlags) <$>
+                            text "--libsubdir=\\$compiler/site-local/\\$pkgid" <> confFlags) <$>
                         text "runhaskell Setup build" <$>
                         text "runhaskell Setup haddock" <$>
                         text "runhaskell Setup register --gen-script" <$>
@@ -200,14 +200,16 @@ instance Pretty ArchPkg where
                         maybe empty (\ _ ->
                             text $ "patch -p4 < ${srcdir}/source.patch")
                             buildPatchFile <$>
-                        text "runhaskell Setup configure -O --prefix=/usr --docdir=/usr/share/doc/${pkgname}" <> addFlags <$>
+                        text "runhaskell Setup configure -O --prefix=/usr --docdir=/usr/share/doc/${pkgname}" <> confFlags <$>
                         text "runhaskell Setup build"
                         ) <$>
                     char '}'
 
-                addFlags = if null flags
-                              then text ""
-                              else text " \\" <$> foldl1 (\memo f -> memo <> text " " <> f) (map (\f -> text "-f" <> pretty f) flags)
+                confFlags = if null flags
+                    then empty
+                    else text " \\" <>
+                        nest 4 (empty <$> (hsep . map (uncurry (<>)) $ zip (repeat $ text "-f") (map pretty flags)))
+
                 libPackageFunction = text "package() {" <>
                     nest 4 (empty <$>
                         text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
