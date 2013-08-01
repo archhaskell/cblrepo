@@ -101,7 +101,7 @@ canBeAdded db (RepoType gpd) = let
 pkgTypeToCblPkg _ (GhcType n v) = createGhcPkg n v
 pkgTypeToCblPkg _ (DistroType n v r) = createDistroPkg n v r
 pkgTypeToCblPkg db (RepoType gpd) = fromJust $ case finalizePkg db gpd of
-    Right (pd, _) -> Just $ createCblPkg pd []
+    Right (pd, fa) -> Just $ createCblPkg pd fa
     Left _ -> Nothing
 
 finalizeToUnsatisfiableDeps db (RepoType gpd) = case finalizePkg db gpd of
