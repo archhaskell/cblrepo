@@ -29,7 +29,7 @@ executable cblrepo
         directory ==1.2.*, Cabal ==1.16.*, json ==0.7.*,
         bytestring ==0.10.*, tar ==0.4.*, zlib ==0.5.*, mtl >=2.0 && <2.2,
         process ==1.1.*, Unixutils ==1.52.*, unix ==2.6.*,
-        ansi-wl-pprint ==0.6.*
+        ansi-wl-pprint ==0.6.*, aeson ==0.6.*
 
 Source-Repository head
     Type:                 git

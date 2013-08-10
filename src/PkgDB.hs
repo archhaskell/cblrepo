@@ -1,5 +1,5 @@
 {-
- - Copyright 2011 Per Magnus Therning
+ - Copyright 2011-2013 Per Magnus Therning
  -
  - Licensed under the Apache License, Version 2.0 (the "License");
  - you may not use this file except in compliance with the License.
@@ -14,21 +14,23 @@
  - limitations under the License.
  -}
 
+{-# LANGUAGE TemplateHaskell #-}
+
 module PkgDB where
 
 -- {{{1 imports
 import Control.Exception as CE
 import Control.Monad
-import Data.Data
 import Data.List
 import Data.Maybe
-import Data.Typeable
 import Distribution.PackageDescription
-import Distribution.Text
 import System.IO.Error
-import Text.JSON
 import qualified Distribution.Package as P
 import qualified Distribution.Version as V
+
+import Data.Aeson (decode, encode)
+import Data.Aeson.TH (deriveJSON)
+import qualified Data.ByteString.Lazy.Char8 as C
 
 -- {{{ temporary
 _depName (P.Dependency (P.PackageName n) _) = n
@@ -175,69 +177,22 @@ readDb fp = (flip CE.catch)
         then return emptyPkgDB
         else throwIO e)
     $ do
-        r <- readFile fp >>= return . sequence . map decode . lines
+        r <- (sequence . map decode . C.lines) `liftM` (C.readFile fp)
         case r of
-            Ok a -> return a
-            Error s -> fail s
+            Just a -> return a
+            Nothing -> fail "JSON parsing failed"
 
 saveDb :: CblDB -> FilePath -> IO ()
-saveDb db fp = writeFile fp s
+saveDb db fp = C.writeFile fp s
     where
-        s = unlines $ map encode $ sort db
+        s = C.unlines $ map encode $ sort db
 
 -- {{{1 JSON instances
-instance JSON CblPkg where
-    showJSON (CP n p) = showJSON (n, p)
-
-    readJSON object = do
-        (n,p) <- readJSON object
-        return (CP n p)
-
-instance JSON V.Version where
-    showJSON v = makeObj [ ("Version", showJSON $ display v) ]
-
-    readJSON object = do
-        obj <- readJSON object
-        version <- valFromObj "Version" obj
-        maybe (fail "Not a Version object") return (simpleParse version)
-
-instance JSON P.Dependency where
-    showJSON d = makeObj [ ("Dependency", showJSON $ display d) ]
-
-    readJSON object = do
-        obj <- readJSON object
-        dep <- valFromObj "Dependency" obj
-        maybe (fail "Not a Dependency object") return (simpleParse dep)
-
-instance JSON FlagName where
-    showJSON (FlagName n) = makeObj [ ("FlagName", showJSON n) ]
-
-    readJSON object = do
-        obj <- readJSON object
-        n <- valFromObj "FlagName" obj
-        return $ FlagName n
-
-instance JSON Pkg where
-    showJSON p@(GhcPkg { version = v}) = makeObj [("GhcPkg", showJSON v)]
-    showJSON p@(DistroPkg { version = v, release = r}) =
-        makeObj [("DistroPkg", showJSON (v, r))]
-    showJSON p@(RepoPkg { version = v, deps = d, flags = fa, release = r }) =
-        makeObj [("RepoPkg", showJSON (v, d, fa, r))]
-
-    readJSON object = let
-            readGhc = do
-                obj <- readJSON object
-                v <- valFromObj "GhcPkg" obj >>= readJSON
-                return $ GhcPkg v
-
-            readDistro = do
-                obj <- readJSON object
-                (v, r) <- valFromObj "DistroPkg" obj >>= readJSON
-                return $ DistroPkg v r
-
-            readRepo = do
-                obj <- readJSON object
-                (v, d, fa, r) <- valFromObj "RepoPkg" obj >>= readJSON
-                return $ RepoPkg v d fa r
-
-        in readGhc `mplus` readDistro `mplus` readRepo `mplus` fail "Not a Pkg object"
+-- $(deriveJSON id ''CblPkg)
+$(deriveJSON id ''V.Version)
+$(deriveJSON id ''V.VersionRange)
+$(deriveJSON id ''P.Dependency)
+$(deriveJSON id ''P.PackageName)
+$(deriveJSON id ''FlagName)
+$(deriveJSON id ''Pkg)
+$(deriveJSON id ''CblPkg)
