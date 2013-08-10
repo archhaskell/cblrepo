@@ -35,4 +35,4 @@ convertDb = do
 doConvert :: ODB.CblPkg -> NDB.CblPkg
 doConvert (ODB.CP n (ODB.GhcPkg v)) = NDB.CP n (NDB.GhcPkg v)
 doConvert (ODB.CP n (ODB.DistroPkg v r)) = NDB.CP n (NDB.DistroPkg v r)
-doConvert (ODB.CP n (ODB.RepoPkg v d r)) = NDB.CP n (NDB.RepoPkg v d [] r)
+doConvert (ODB.CP n (ODB.RepoPkg v d f r)) = NDB.CP n (NDB.RepoPkg v d f r)
