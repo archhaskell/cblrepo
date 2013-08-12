@@ -1,5 +1,5 @@
 {-
- - Copyright 2011 Per Magnus Therning
+ - Copyright 2011-2013 Per Magnus Therning
  -
  - Licensed under the Apache License, Version 2.0 (the "License");
  - you may not use this file except in compliance with the License.
@@ -20,14 +20,11 @@ import qualified PkgDB as DB
 
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip
-import Control.Concurrent
 import Control.Monad
 import Control.Monad.Error
 import Control.Monad.Reader
-import Data.Data
 import Data.Either
 import Data.List
-import Data.Typeable
 import Distribution.Compiler
 import Distribution.Package as P
 import Distribution.PackageDescription
@@ -44,10 +41,7 @@ import System.IO
 import System.Posix.Files
 import System.Process
 import System.Unix.Directory
-import qualified Control.Exception as CE
 import qualified Data.ByteString.Lazy.Char8 as BS
-import Options.Applicative as OA
-import Data.Monoid
 
 -- {{{1 Dependency
 depName (Dependency (PackageName n) _) = n
