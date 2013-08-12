@@ -55,30 +55,30 @@ cmdAddPkgOpts = CmdAdd
 cmdAddPkgCmd = command "add" (info (helper <*> cmdAddPkgOpts)
     (fullDesc <> progDesc "add a package to the database"))
 
-cmdBumpPkgsOpts = BumpPkgs
+cmdBumpPkgsOpts = CmdBumpPkgs
     <$> argAppDir <*> argDbFile <*> argDryRun
     <*> switch (long "inclusive" <> help "include the listed packages")
     <*> arguments1 Just (metavar "PKGNAME ...")
 cmdBumpPkgsCmd = command "bump" (info (helper <*> cmdBumpPkgsOpts)
     (fullDesc <> progDesc "bump packages that need it after updating the named packages"))
 
-cmdBuildPkgsOpts = BuildPkgs
+cmdBuildPkgsOpts = CmdBuildPkgs
     <$> argAppDir <*> argDbFile
     <*> arguments1 Just (metavar "PKGNAME ...")
 cmdBuildPkgsCmd = command "build" (info (helper <*> cmdBuildPkgsOpts)
     (fullDesc <> progDesc "re-order packages into a good build order"))
 
-cmdSyncOpts = Sync <$> argAppDir
+cmdSyncOpts = CmdSync <$> argAppDir
 cmdSyncCmd = command "sync" (info (helper <*> cmdSyncOpts)
     (fullDesc <> progDesc "update the index"))
 
-cmdVersionsOpts = Versions
+cmdVersionsOpts = CmdVersions
     <$> argAppDir
     <*> arguments1 Just (metavar "PKGNAME ...")
 cmdVersionsCmd = command "versions" (info (helper <*> cmdVersionsOpts)
     (fullDesc <> progDesc "list available versions of packages"))
 
-cmdUpdatesOpts = Updates
+cmdUpdatesOpts = CmdUpdates
     <$> argAppDir <*> argDbFile
     <*> switch (short 's' <> help "a shorter output suitable for scripting")
 cmdUpdatesCmd = command "updates" (info (helper <*> cmdUpdatesOpts)
@@ -93,27 +93,27 @@ cmdListPkgsOpts = CmdListPkgs
 cmdListPkgsCmd = command "list" (info (helper <*> cmdListPkgsOpts)
     (fullDesc <> progDesc "list packages in repo"))
 
-cmdUrlsOpts = Urls
+cmdUrlsOpts = CmdUrls
     <$> argAppDir
     <*> arguments1 strPairArg (metavar "PKGNAME,VERSION ...")
 cmdUrlsCmd = command "urls" (info (helper <*> cmdUrlsOpts)
     (fullDesc <> progDesc "list urls of CABAL files for the given packages"))
 
-cmdPkgBuildOpts = PkgBuild
+cmdPkgBuildOpts = CmdPkgBuild
     <$> argAppDir <*> argDbFile
     <*> strOption (long "patchdir" <> value "patches" <> help "location of patches (patches)")
     <*> arguments1 Just (metavar "PKGNAME ...")
 cmdPkgBuildCmd = command "pkgbuild" (info (helper <*> cmdPkgBuildOpts)
     (fullDesc <> progDesc "create PKGBUILD other files necessary for an Arch package"))
 
-cmdConvertDbOpts = ConvertDb
+cmdConvertDbOpts = CmdConvertDb
     <$> argAppDir
     <*> strOption (short 'i' <> long "indb" <> value "cblrepo.db" <> help "old database")
     <*> strOption (short 'o' <> long "outdb" <> value "new-cblrepo.db" <> help "new database")
 cmdConvertDbCmd = command "convertdb" (info (helper <*> cmdConvertDbOpts)
     (fullDesc <> progDesc "convert and old database to the new format"))
 
-cmdRemovePkgOpts = RemovePkg
+cmdRemovePkgOpts = CmdRemovePkg
     <$> argAppDir <*> argDbFile <*> argDryRun
     <*> arguments1 Just (metavar "PKGNAME ...")
 cmdRemovePkgCmd = command "rm" (info (helper <*> cmdRemovePkgOpts)
@@ -134,13 +134,13 @@ main = do
         createDirectoryIfMissing True (aD)
         case c' of
             CmdAdd {} -> runCommand c' add
-            BuildPkgs {} -> runCommand c' buildPkgs
-            BumpPkgs {} -> runCommand c' bumpPkgs
-            Sync {} -> runCommand c' sync
-            Versions {} -> runCommand c' versions
+            CmdBuildPkgs {} -> runCommand c' buildPkgs
+            CmdBumpPkgs {} -> runCommand c' bumpPkgs
+            CmdSync {} -> runCommand c' sync
+            CmdVersions {} -> runCommand c' versions
             CmdListPkgs {} -> runCommand c' listPkgs
-            Updates {} -> runCommand c' updates
-            Urls {} -> runCommand c' urls
-            PkgBuild {} -> runCommand c' pkgBuild
-            ConvertDb {} -> runCommand c' convertDb
-            RemovePkg {} -> runCommand c' remove
+            CmdUpdates {} -> runCommand c' updates
+            CmdUrls {} -> runCommand c' urls
+            CmdPkgBuild {} -> runCommand c' pkgBuild
+            CmdConvertDb {} -> runCommand c' convertDb
+            CmdRemovePkg {} -> runCommand c' remove

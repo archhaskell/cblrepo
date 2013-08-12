@@ -14,6 +14,8 @@
  - limitations under the License.
  -}
 
+{-# LANGUAGE TemplateHaskell #-}
+
 module Util.Misc where
 
 import qualified PkgDB as DB
@@ -70,20 +72,21 @@ data Cmds
         { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, dryRun :: Bool
         , cmdAddGhcPkgs :: [(String,String)], cmdAddDistroPkgs :: [(String, String, String)]
         , cmdAddUrlCbls :: [String], cmdAddFileCbls :: [FilePath], cmdAddCbls :: [(String, String)] }
-    | BuildPkgs { appDir :: FilePath, dbFile :: FilePath, pkgs :: [String] }
-    | BumpPkgs { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, inclusive :: Bool, pkgs :: [String] }
-    | Sync { appDir :: FilePath }
-    | Versions { appDir :: FilePath, pkgs :: [String] }
+    | CmdBuildPkgs { appDir :: FilePath, dbFile :: FilePath, pkgs :: [String] }
+    | CmdBumpPkgs { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, inclusive :: Bool, pkgs :: [String] }
+    | CmdSync { appDir :: FilePath }
+    | CmdVersions { appDir :: FilePath, pkgs :: [String] }
     | CmdListPkgs { appDir :: FilePath, dbFile :: FilePath, listGhc :: Bool, listDistro :: Bool, noListRepo :: Bool, hackageFmt :: Bool }
-    | Updates { appDir :: FilePath, dbFile :: FilePath, idxStyle :: Bool }
-    | Urls { appDir :: FilePath, pkgVers :: [(String, String)] }
-    | PkgBuild { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, pkgs :: [String] }
-    | ConvertDb { appDir :: FilePath, inDbFile :: FilePath, outDbFile :: FilePath }
-    | RemovePkg { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, pkgs :: [String] }
+    | CmdUpdates { appDir :: FilePath, dbFile :: FilePath, idxStyle :: Bool }
+    | CmdUrls { appDir :: FilePath, pkgVers :: [(String, String)] }
+    | CmdPkgBuild { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, pkgs :: [String] }
+    | CmdConvertDb { appDir :: FilePath, inDbFile :: FilePath, outDbFile :: FilePath }
+    | CmdRemovePkg { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, pkgs :: [String] }
     deriving (Show)
 
-data Opts = Opts Cmds
-    deriving (Show)
+data Opts = Opts
+    { optsCmd :: Cmds
+    } deriving (Show)
 
 strPairArg s = let
         (s0, s1) = break (== ',') s
