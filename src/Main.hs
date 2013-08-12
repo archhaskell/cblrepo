@@ -34,102 +34,101 @@ import Paths_cblrepo
 import Control.Monad
 import Control.Monad.Reader
 import Distribution.Text
-import System.Console.CmdArgs
 import System.Directory
 import System.FilePath
+import Options.Applicative as OA
 
--- {{{1 command line arguments
-argAppDir = appDir := def += explicit += name "appdir" += help "application data directory" += typDir
-argDbFile = dbFile := "cblrepo.db" += explicit += name "db" += help "package database" += typFile
-argDryRun = dryRun := False += explicit += name "n" += help "dry run"
+-- -- {{{1 command line arguments
+argAppDir = strOption (long "appdir" <> value "" <> help "application data directory")
+argDbFile = strOption (long "db" <> value "cblrepo.db" <> help "package database")
+argDryRun = switch (short 'n' <> help "dry run")
 
-cmdAddPkg = record defCmdAdd
-    [ argAppDir, argDbFile
-    , patchDir := "patches" += explicit += name "patchdir" += help "location of patches" += typDir
-    , argDryRun
-    , cmdAddGhcPkgs := def += explicit += name "g" += name "ghc-pkg" += typ "PKG,VER" += help "GHC base package (multiple)"
-    , cmdAddDistroPkgs := def += explicit += name "d" += name "distro-pkg" += typ "PKG,VER,REL" += help "distro package (multiple)"
-    , cmdAddUrlCbls := def += explicit += name "u" += name "cbl-url" += typ "URL" += help "url of Cabal file (multiple)"
-    , cmdAddFileCbls := def += explicit += name "f" += name "cbl-file" += typFile += help "Cabal file (multiple)"
-    , cmdAddCbls := def += args += typ "PKG,VER"
-    ] += name "add" += help "add a package to the database"
+cmdAddPkgOpts = CmdAdd
+    <$> argAppDir <*> argDbFile
+    <*> strOption (long "patchdir" <> value "patches" <> help "location of patches (patches)")
+    <*> argDryRun
+    <*> many (nullOption (short 'g' <> long "ghc-pkg" <> OA.reader strPairArg <> metavar "PKG,VER" <> help "GHC base package (multiple)"))
+    <*> many (nullOption (short 'd' <> long "distro-pkg" <> OA.reader strTripleArg <> metavar "PKG,VER,REL" <> help "distro package (multiple)"))
+    <*> many (strOption (short 'u' <> long "cbl-url" <> metavar "URL" <> help "url of CABAL file (multiple)"))
+    <*> many (strOption (short 'f' <> long "cbl-file" <> metavar "FILE" <> help "CABAL file (multiple)"))
+    <*> arguments strPairArg (metavar "PKGNAME,VERSION ...")
+cmdAddPkgCmd = command "add" (info (helper <*> cmdAddPkgOpts)
+    (fullDesc <> progDesc "add a package to the database"))
 
-cmdBumpPkgs = record defBumpPkgs
-    [ argAppDir, argDbFile
-    , argDryRun
-    , inclusive := False += explicit += name "inclusive" += help "include listed packages"
-    , pkgs := def += args += typ "PKG"
-    ] += name "bump" += help "bump packages that need it after updating the named packages"
+cmdBumpPkgsOpts = BumpPkgs
+    <$> argAppDir <*> argDbFile <*> argDryRun
+    <*> switch (long "inclusive" <> help "include the listed packages")
+    <*> arguments1 Just (metavar "PKGNAME ...")
+cmdBumpPkgsCmd = command "bump" (info (helper <*> cmdBumpPkgsOpts)
+    (fullDesc <> progDesc "bump packages that need it after updating the named packages"))
 
-cmdBuildPkgs = record defBuildPkgs
-    [ argAppDir, argDbFile
-    , pkgs := def += args += typ "PKG"
-    ] += name "build" += help "list packages that need rebuilding, in order"
+cmdBuildPkgsOpts = BuildPkgs
+    <$> argAppDir <*> argDbFile
+    <*> arguments1 Just (metavar "PKGNAME ...")
+cmdBuildPkgsCmd = command "build" (info (helper <*> cmdBuildPkgsOpts)
+    (fullDesc <> progDesc "re-order packages into a good build order"))
 
-cmdSync = record defSync [ argAppDir ] += name "sync" += help "update the index"
+cmdSyncOpts = Sync <$> argAppDir
+cmdSyncCmd = command "sync" (info (helper <*> cmdSyncOpts)
+    (fullDesc <> progDesc "update the index"))
 
-cmdVersions = record defVersions
-    [ argAppDir
-    , pkgs := def += args += typ "PKG"
-    ] += name "versions" += help "list available versions"
+cmdVersionsOpts = Versions
+    <$> argAppDir
+    <*> arguments1 Just (metavar "PKGNAME ...")
+cmdVersionsCmd = command "versions" (info (helper <*> cmdVersionsOpts)
+    (fullDesc <> progDesc "list available versions of packages"))
 
-cmdUpdates = record defUpdates
-    [ argAppDir, argDbFile
-    , idxStyle := False += explicit += name "s" += help "a shorter output suitable for scripting"
-    ] += name "updates" += help "check for available updates"
+cmdUpdatesOpts = Updates
+    <$> argAppDir <*> argDbFile
+    <*> switch (short 's' <> help "a shorter output suitable for scripting")
+cmdUpdatesCmd = command "updates" (info (helper <*> cmdUpdatesOpts)
+    (fullDesc <> progDesc "check for available updates"))
 
-cmdListPkgs = record defCmdListPkgs
-    [ argAppDir, argDbFile
-    , listGhc := False += explicit += name "g" += name "ghc" += help "list ghc packages"
-    , listDistro := False += explicit += name "d" += name "distro" += help "list distro packages"
-    , noListRepo := False += explicit += name "no-repo" += help "do not list repo packages"
-    , hackageFmt := False += explicit += name "hackage" += help "list in hackage format"
-    ] += name "list" += help "list packages in repo"
+cmdListPkgsOpts = CmdListPkgs
+    <$> argAppDir <*> argDbFile
+    <*> switch (short 'g' <> long "ghc" <> help "list ghc packages")
+    <*> switch (short 'd' <> long "distro" <> help "list distro packages")
+    <*> switch (long "no-repo" <> help "do not list repo packages")
+    <*> switch (long "hackage" <> help "list in hackage format")
+cmdListPkgsCmd = command "list" (info (helper <*> cmdListPkgsOpts)
+    (fullDesc <> progDesc "list packages in repo"))
 
-cmdUrls = record defUrls
-    [ argAppDir
-    , pkgVers := def += args += typ "STRING,STRING"
-    ] += help "list urls of cabal files for the given packages" += details
-        [ "The format for a package is <name>,<version>." ]
+cmdUrlsOpts = Urls
+    <$> argAppDir
+    <*> arguments1 strPairArg (metavar "PKGNAME,VERSION ...")
+cmdUrlsCmd = command "urls" (info (helper <*> cmdUrlsOpts)
+    (fullDesc <> progDesc "list urls of CABAL files for the given packages"))
 
-cmdPkgBuild = record defPkgBuild
-    [ argAppDir, argDbFile
-    , patchDir := "patches" += explicit += name "patchdir" += help "location of patches (patches)" += typDir
-    , pkgs := def += args += typ "PKG"
-    ] += help "create a PKGBUILD, and other files necessary for an Arch package"
+cmdPkgBuildOpts = PkgBuild
+    <$> argAppDir <*> argDbFile
+    <*> strOption (long "patchdir" <> value "patches" <> help "location of patches (patches)")
+    <*> arguments1 Just (metavar "PKGNAME ...")
+cmdPkgBuildCmd = command "pkgbuild" (info (helper <*> cmdPkgBuildOpts)
+    (fullDesc <> progDesc "create PKGBUILD other files necessary for an Arch package"))
 
-cmdConvertDb = record defConvertDb
-    [ argAppDir
-    , inDbFile := "cblrepo.db" += explicit += name "i" += name "indb" += typFile += help "old database"
-    , outDbFile := "new-cblrepo.db" += explicit += name "o" += name "outdb" += typFile += help "new database"
-    ] += help "convert an old database to the new format"
+cmdConvertDbOpts = ConvertDb
+    <$> argAppDir
+    <*> strOption (short 'i' <> long "indb" <> value "cblrepo.db" <> help "old database")
+    <*> strOption (short 'o' <> long "outdb" <> value "new-cblrepo.db" <> help "new database")
+cmdConvertDbCmd = command "convertdb" (info (helper <*> cmdConvertDbOpts)
+    (fullDesc <> progDesc "convert and old database to the new format"))
 
-cmdRemovePkg = record defRemovePkg
-    [ argAppDir, argDbFile, argDryRun
-    , pkgs := def += args += typ "PKG"
-    ] += name "rm" += help "remove packages"
+cmdRemovePkgOpts = RemovePkg
+    <$> argAppDir <*> argDbFile <*> argDryRun
+    <*> arguments1 Just (metavar "PKGNAME ...")
+cmdRemovePkgCmd = command "rm" (info (helper <*> cmdRemovePkgOpts)
+    (fullDesc <> progDesc "remove packages"))
 
-cmds = cmdArgsMode_ $ modes_
-    [ cmdAddPkg
-    , cmdBuildPkgs
-    , cmdBumpPkgs
-    , cmdSync
-    , cmdVersions
-    , cmdListPkgs
-    , cmdUpdates
-    , cmdUrls
-    , cmdPkgBuild
-    , cmdConvertDb
-    , cmdRemovePkg
-    ]
-    += program progName
-    += summary (progName ++ " v" ++ (display version))
-    += help "maintain a database of dependencies of CABAL packages"
+argParser = info (helper <*> opts) (fullDesc <> header (progName ++ " v" ++ (display version)) <> progDesc "maintain a datatbase of dependencies of CABAL packages")
+    where
+        opts = Opts <$> subparser (
+            cmdAddPkgCmd <> cmdBumpPkgsCmd <> cmdBuildPkgsCmd <> cmdSyncCmd <> cmdVersionsCmd <>
+            cmdUpdatesCmd <> cmdListPkgsCmd <> cmdUrlsCmd <> cmdPkgBuildCmd <> cmdConvertDbCmd <> cmdRemovePkgCmd)
 
 -- {{{1 main
 main = do
     defAppDir <- getAppUserDataDirectory progName
-    cmdArgsRun cmds >>= \ c -> do
+    execParser argParser >>= \ (Opts c) -> do
         let aD = if null (appDir c) then defAppDir else (appDir c)
         let c' = c { appDir = aD }
         createDirectoryIfMissing True (aD)

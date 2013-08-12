@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable #-}
 {-
  - Copyright 2011 Per Magnus Therning
  -
@@ -47,6 +46,8 @@ import System.Process
 import System.Unix.Directory
 import qualified Control.Exception as CE
 import qualified Data.ByteString.Lazy.Char8 as BS
+import Options.Applicative as OA
+import Data.Monoid
 
 -- {{{1 Dependency
 depName (Dependency (PackageName n) _) = n
@@ -85,19 +86,18 @@ data Cmds
     | PkgBuild { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, pkgs :: [String] }
     | ConvertDb { appDir :: FilePath, inDbFile :: FilePath, outDbFile :: FilePath }
     | RemovePkg { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, pkgs :: [String] }
-    deriving (Show, Data, Typeable)
+    deriving (Show)
 
-defCmdAdd = CmdAdd "" "" "" True [] [] [] [] []
-defBuildPkgs =  BuildPkgs "" "" []
-defBumpPkgs =  BumpPkgs "" "" False False []
-defSync =  Sync ""
-defVersions =  Versions "" []
-defCmdListPkgs =  CmdListPkgs "" "" False False False False
-defUpdates =  Updates "" "" False
-defUrls =  Urls "" []
-defPkgBuild =  PkgBuild "" "" "" []
-defConvertDb = ConvertDb "" "" ""
-defRemovePkg = RemovePkg "" "" False []
+data Opts = Opts Cmds
+    deriving (Show)
+
+strPairArg s = let
+        (s0, s1) = break (== ',') s
+    in return (s0, tail s1)
+strTripleArg s = let
+        (s0, r1) = break (== ',') s
+        (s1, r2) = break (== ',') (tail r1)
+    in return (s0, s1, tail r2)
 
 cfgGet f = liftM f ask
 
