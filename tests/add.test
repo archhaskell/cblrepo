@@ -61,7 +61,7 @@ Failed to satisfy the following dependencies for dataenc:
 >>>= 0
 
 # add a package from hackage (with its deps)
-cblrepo add -g array,0.3 -g base,4.0, -g containers,0.4 dataenc,0.14.0.3
+cblrepo add -g array,0.3 -g base,4.0 -g containers,0.4 dataenc,0.14.0.3
 >>>
 >>>2
 >>>= 0
@@ -84,7 +84,7 @@ foo  1.2.3-1
 >>>= 0
 
 # {{{1 check ordering of db
-cblrepo list -gd
+cblrepo list -g -d
 >>>
 array  0.3-xx
 base  4.0-xx
