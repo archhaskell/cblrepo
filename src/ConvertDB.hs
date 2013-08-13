@@ -27,8 +27,8 @@ import Control.Monad.Reader
 
 convertDb :: Command ()
 convertDb = do
-    inDbFn <- cfgGet inDbFile
-    outDbFn <- cfgGet outDbFile
+    inDbFn <- cfgGet $ inDbFile . optsCmd
+    outDbFn <- cfgGet $ outDbFile . optsCmd
     newDb <- liftIO $ liftM (map doConvert) (ODB.readDb inDbFn)
     liftIO $ NDB.saveDb newDb outDbFn
 

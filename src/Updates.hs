@@ -31,9 +31,9 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 
 updates :: Command ()
 updates = do
-    db <- cfgGet dbFile >>= liftIO . readDb
+    db <- cfgGet (dbFile . optsCmd) >>= liftIO . readDb
     aD <- cfgGet appDir
-    aCS <- cfgGet idxStyle
+    aCS <- cfgGet $ idxStyle .optsCmd
     entries <- liftIO $ liftM (Tar.read . GZip.decompress)
         (BS.readFile $ aD </> "00-index.tar.gz")
     let nonBasePkgs = filter (not . isBasePkg) db

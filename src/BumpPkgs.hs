@@ -27,11 +27,11 @@ import System.FilePath
 
 bumpPkgs :: Command ()
 bumpPkgs = do
-    dbFn <- cfgGet dbFile
+    dbFn <- cfgGet $ dbFile . optsCmd
     db <- liftIO $ readDb dbFn
-    dR <- cfgGet dryRun
-    pkgs <- cfgGet pkgs
-    incl <- cfgGet inclusive
+    dR <- cfgGet  $ dryRun . optsCmd
+    pkgs <- cfgGet  $ pkgs . optsCmd
+    incl <- cfgGet  $ inclusive . optsCmd
     let bpkgs = transDependants db incl pkgs
     let newDb = foldl (\ db p -> bumpRelease db p) db bpkgs
     if dR

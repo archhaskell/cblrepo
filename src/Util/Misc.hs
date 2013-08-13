@@ -69,23 +69,24 @@ ghcVersionDep = "ghc=" ++ display ghcVersion ++ "-1"
 
 data Cmds
     = CmdAdd
-        { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, dryRun :: Bool
+        { dbFile :: FilePath, patchDir :: FilePath, dryRun :: Bool
         , cmdAddGhcPkgs :: [(String,String)], cmdAddDistroPkgs :: [(String, String, String)]
         , cmdAddUrlCbls :: [String], cmdAddFileCbls :: [FilePath], cmdAddCbls :: [(String, String)] }
-    | CmdBuildPkgs { appDir :: FilePath, dbFile :: FilePath, pkgs :: [String] }
-    | CmdBumpPkgs { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, inclusive :: Bool, pkgs :: [String] }
-    | CmdSync { appDir :: FilePath }
-    | CmdVersions { appDir :: FilePath, pkgs :: [String] }
-    | CmdListPkgs { appDir :: FilePath, dbFile :: FilePath, listGhc :: Bool, listDistro :: Bool, noListRepo :: Bool, hackageFmt :: Bool }
-    | CmdUpdates { appDir :: FilePath, dbFile :: FilePath, idxStyle :: Bool }
-    | CmdUrls { appDir :: FilePath, pkgVers :: [(String, String)] }
-    | CmdPkgBuild { appDir :: FilePath, dbFile :: FilePath, patchDir :: FilePath, pkgs :: [String] }
-    | CmdConvertDb { appDir :: FilePath, inDbFile :: FilePath, outDbFile :: FilePath }
-    | CmdRemovePkg { appDir :: FilePath, dbFile :: FilePath, dryRun :: Bool, pkgs :: [String] }
+    | CmdBuildPkgs { dbFile :: FilePath, pkgs :: [String] }
+    | CmdBumpPkgs { dbFile :: FilePath, dryRun :: Bool, inclusive :: Bool, pkgs :: [String] }
+    | CmdSync { unused :: Bool }
+    | CmdVersions { pkgs :: [String] }
+    | CmdListPkgs { dbFile :: FilePath, listGhc :: Bool, listDistro :: Bool, noListRepo :: Bool, hackageFmt :: Bool }
+    | CmdUpdates { dbFile :: FilePath, idxStyle :: Bool }
+    | CmdUrls { pkgVers :: [(String, String)] }
+    | CmdPkgBuild { dbFile :: FilePath, patchDir :: FilePath, pkgs :: [String] }
+    | CmdConvertDb { inDbFile :: FilePath, outDbFile :: FilePath }
+    | CmdRemovePkg { dbFile :: FilePath, dryRun :: Bool, pkgs :: [String] }
     deriving (Show)
 
 data Opts = Opts
-    { optsCmd :: Cmds
+    { appDir :: FilePath
+    , optsCmd :: Cmds
     } deriving (Show)
 
 strPairArg s = let
@@ -208,7 +209,7 @@ checkAgainstDb db name dep = let
             Just (DB.CP _ p) -> withinRange (DB.version p) dVR
 
 -- {{{1 Command type
-type Command a = ReaderT Cmds IO a
+type Command a = ReaderT Opts IO a
 
 runCommand cmds func = runReaderT func cmds
 

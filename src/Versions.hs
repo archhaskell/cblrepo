@@ -32,7 +32,7 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 versions :: Command ()
 versions = do
     aD <- cfgGet appDir
-    pkgs <- cfgGet pkgs
+    pkgs <- cfgGet $ pkgs . optsCmd
     liftIO $ do
         es <- liftM (Tar.read . GZip.decompress) (BS.readFile $ aD </> "00-index.tar.gz")
         mapM_ (printVersions . findVersions es) pkgs

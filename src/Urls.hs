@@ -22,7 +22,7 @@ import Control.Monad.Reader
 
 urls :: Command ()
 urls = do
-    pkgs <- cfgGet pkgVers
+    pkgs <- cfgGet $ pkgVers . optsCmd
     liftIO $ mapM_ (putStrLn . createUrl) pkgs
 
 createUrl (pkg, ver) = "http://hackage.haskell.org/packages/archive/" ++ pkg ++ "/" ++ ver ++ "/" ++ pkg ++ ".cabal"

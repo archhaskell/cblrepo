@@ -30,11 +30,11 @@ import Distribution.PackageDescription
 
 listPkgs :: Command ()
 listPkgs = do
-    lG <- cfgGet listGhc
-    lD <- cfgGet listDistro
-    lR <- cfgGet noListRepo
-    lH <- cfgGet hackageFmt
-    db <- cfgGet dbFile >>= liftIO . readDb
+    lG <- cfgGet $ listGhc . optsCmd
+    lD <- cfgGet $ listDistro . optsCmd
+    lR <- cfgGet $ noListRepo . optsCmd
+    lH <- cfgGet $ hackageFmt . optsCmd
+    db <- cfgGet (dbFile . optsCmd) >>= liftIO . readDb
     let pkgs = filter (pkgFilter lG lD lR) db
     let printer = if lH
             then printCblPkgHackage

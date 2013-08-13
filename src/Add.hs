@@ -44,16 +44,16 @@ data PkgType
 -- {{{1 add
 add :: Command ()
 add = do
-    dbFn <- cfgGet dbFile
+    dbFn <- cfgGet  $ dbFile . optsCmd
     db <- liftIO $ readDb dbFn
-    pd <- cfgGet patchDir
-    dr <- cfgGet dryRun
+    pd <- cfgGet  $ patchDir . optsCmd
+    dr <- cfgGet  $ dryRun . optsCmd
     --
-    ghcPkgs <- cfgGet cmdAddGhcPkgs
-    distroPkgs <- cfgGet cmdAddDistroPkgs
-    genUrlPkgs <- cfgGet cmdAddUrlCbls >>= mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromUrl pd c d))
-    genFilePkgs <- cfgGet cmdAddFileCbls >>= mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromFile pd c d))
-    genIdxPkgs <- cfgGet cmdAddCbls >>= mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromIdx pd c d))
+    ghcPkgs <- cfgGet  $ cmdAddGhcPkgs . optsCmd
+    distroPkgs <- cfgGet  $ cmdAddDistroPkgs . optsCmd
+    genUrlPkgs <- cfgGet (cmdAddUrlCbls . optsCmd) >>= mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromUrl pd c d))
+    genFilePkgs <- cfgGet (cmdAddFileCbls . optsCmd) >>= mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromFile pd c d))
+    genIdxPkgs <- cfgGet (cmdAddCbls . optsCmd) >>= mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromIdx pd c d))
     pkgs <- exitOnErrors $ argsToPkgType ghcPkgs distroPkgs (genUrlPkgs ++ genFilePkgs ++ genIdxPkgs)
     --
     let pkgNames = map getName pkgs
