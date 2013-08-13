@@ -27,6 +27,6 @@ import System.FilePath
 
 buildPkgs :: Command ()
 buildPkgs = do
-    db <- cfgGet (dbFile . optsCmd) >>= liftIO . readDb
+    db <- cfgGet dbFile >>= liftIO . readDb
     pkgs <- cfgGet  $ pkgs . optsCmd
     liftIO $ mapM_ putStrLn $ transitiveDependants db pkgs

@@ -69,23 +69,25 @@ ghcVersionDep = "ghc=" ++ display ghcVersion ++ "-1"
 
 data Cmds
     = CmdAdd
-        { dbFile :: FilePath, patchDir :: FilePath, dryRun :: Bool
+        { patchDir :: FilePath
         , cmdAddGhcPkgs :: [(String,String)], cmdAddDistroPkgs :: [(String, String, String)]
         , cmdAddUrlCbls :: [String], cmdAddFileCbls :: [FilePath], cmdAddCbls :: [(String, String)] }
-    | CmdBuildPkgs { dbFile :: FilePath, pkgs :: [String] }
-    | CmdBumpPkgs { dbFile :: FilePath, dryRun :: Bool, inclusive :: Bool, pkgs :: [String] }
+    | CmdBuildPkgs { pkgs :: [String] }
+    | CmdBumpPkgs { inclusive :: Bool, pkgs :: [String] }
     | CmdSync { unused :: Bool }
     | CmdVersions { pkgs :: [String] }
-    | CmdListPkgs { dbFile :: FilePath, listGhc :: Bool, listDistro :: Bool, noListRepo :: Bool, hackageFmt :: Bool }
-    | CmdUpdates { dbFile :: FilePath, idxStyle :: Bool }
+    | CmdListPkgs { listGhc :: Bool, listDistro :: Bool, noListRepo :: Bool, hackageFmt :: Bool }
+    | CmdUpdates { idxStyle :: Bool }
     | CmdUrls { pkgVers :: [(String, String)] }
-    | CmdPkgBuild { dbFile :: FilePath, patchDir :: FilePath, pkgs :: [String] }
+    | CmdPkgBuild { patchDir :: FilePath, pkgs :: [String] }
     | CmdConvertDb { inDbFile :: FilePath, outDbFile :: FilePath }
-    | CmdRemovePkg { dbFile :: FilePath, dryRun :: Bool, pkgs :: [String] }
+    | CmdRemovePkg { pkgs :: [String] }
     deriving (Show)
 
 data Opts = Opts
     { appDir :: FilePath
+    , dbFile :: FilePath
+    , dryRun :: Bool
     , optsCmd :: Cmds
     } deriving (Show)
 

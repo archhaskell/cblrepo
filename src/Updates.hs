@@ -31,7 +31,7 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 
 updates :: Command ()
 updates = do
-    db <- cfgGet (dbFile . optsCmd) >>= liftIO . readDb
+    db <- cfgGet dbFile >>= liftIO . readDb
     aD <- cfgGet appDir
     aCS <- cfgGet $ idxStyle .optsCmd
     entries <- liftIO $ liftM (Tar.read . GZip.decompress)

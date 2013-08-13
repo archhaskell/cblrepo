@@ -34,7 +34,7 @@ listPkgs = do
     lD <- cfgGet $ listDistro . optsCmd
     lR <- cfgGet $ noListRepo . optsCmd
     lH <- cfgGet $ hackageFmt . optsCmd
-    db <- cfgGet (dbFile . optsCmd) >>= liftIO . readDb
+    db <- cfgGet dbFile >>= liftIO . readDb
     let pkgs = filter (pkgFilter lG lD lR) db
     let printer = if lH
             then printCblPkgHackage

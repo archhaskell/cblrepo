@@ -34,7 +34,7 @@ import Text.PrettyPrint.ANSI.Leijen
 
 pkgBuild :: Command ()
 pkgBuild = do
-    db <- cfgGet (dbFile . optsCmd) >>= liftIO . readDb
+    db <- cfgGet dbFile >>= liftIO . readDb
     pD <- cfgGet  $ patchDir . optsCmd
     pkgs <- cfgGet  $ pkgs . optsCmd
     mapM (runErrorT . generatePkgBuild db pD) pkgs >>= exitOnErrors >> return ()

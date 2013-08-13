@@ -44,9 +44,7 @@ argDbFile = strOption (long "db" <> value "cblrepo.db" <> help "package database
 argDryRun = switch (short 'n' <> help "dry run")
 
 cmdAddPkgOpts = CmdAdd
-    <$> argDbFile
-    <*> strOption (long "patchdir" <> value "patches" <> help "location of patches (patches)")
-    <*> argDryRun
+    <$> strOption (long "patchdir" <> value "patches" <> help "location of patches (patches)")
     <*> many (nullOption (short 'g' <> long "ghc-pkg" <> OA.reader strPairArg <> metavar "PKG,VER" <> help "GHC base package (multiple)"))
     <*> many (nullOption (short 'd' <> long "distro-pkg" <> OA.reader strTripleArg <> metavar "PKG,VER,REL" <> help "distro package (multiple)"))
     <*> many (strOption (short 'u' <> long "cbl-url" <> metavar "URL" <> help "url of CABAL file (multiple)"))
@@ -56,15 +54,13 @@ cmdAddPkgCmd = command "add" (info (helper <*> cmdAddPkgOpts)
     (fullDesc <> progDesc "add a package to the database"))
 
 cmdBumpPkgsOpts = CmdBumpPkgs
-    <$> argDbFile <*> argDryRun
-    <*> switch (long "inclusive" <> help "include the listed packages")
+    <$> switch (long "inclusive" <> help "include the listed packages")
     <*> arguments1 Just (metavar "PKGNAME ...")
 cmdBumpPkgsCmd = command "bump" (info (helper <*> cmdBumpPkgsOpts)
     (fullDesc <> progDesc "bump packages that need it after updating the named packages"))
 
 cmdBuildPkgsOpts = CmdBuildPkgs
-    <$> argDbFile
-    <*> arguments1 Just (metavar "PKGNAME ...")
+    <$> arguments1 Just (metavar "PKGNAME ...")
 cmdBuildPkgsCmd = command "build" (info (helper <*> cmdBuildPkgsOpts)
     (fullDesc <> progDesc "re-order packages into a good build order"))
 
@@ -78,14 +74,12 @@ cmdVersionsCmd = command "versions" (info (helper <*> cmdVersionsOpts)
     (fullDesc <> progDesc "list available versions of packages"))
 
 cmdUpdatesOpts = CmdUpdates
-    <$> argDbFile
-    <*> switch (short 's' <> help "a shorter output suitable for scripting")
+    <$> switch (short 's' <> help "a shorter output suitable for scripting")
 cmdUpdatesCmd = command "updates" (info (helper <*> cmdUpdatesOpts)
     (fullDesc <> progDesc "check for available updates"))
 
 cmdListPkgsOpts = CmdListPkgs
-    <$> argDbFile
-    <*> switch (short 'g' <> long "ghc" <> help "list ghc packages")
+    <$> switch (short 'g' <> long "ghc" <> help "list ghc packages")
     <*> switch (short 'd' <> long "distro" <> help "list distro packages")
     <*> switch (long "no-repo" <> help "do not list repo packages")
     <*> switch (long "hackage" <> help "list in hackage format")
@@ -98,8 +92,7 @@ cmdUrlsCmd = command "urls" (info (helper <*> cmdUrlsOpts)
     (fullDesc <> progDesc "list urls of CABAL files for the given packages"))
 
 cmdPkgBuildOpts = CmdPkgBuild
-    <$> argDbFile
-    <*> strOption (long "patchdir" <> value "patches" <> help "location of patches (patches)")
+    <$> strOption (long "patchdir" <> value "patches" <> help "location of patches (patches)")
     <*> arguments1 Just (metavar "PKGNAME ...")
 cmdPkgBuildCmd = command "pkgbuild" (info (helper <*> cmdPkgBuildOpts)
     (fullDesc <> progDesc "create PKGBUILD other files necessary for an Arch package"))
@@ -111,14 +104,13 @@ cmdConvertDbCmd = command "convertdb" (info (helper <*> cmdConvertDbOpts)
     (fullDesc <> progDesc "convert and old database to the new format"))
 
 cmdRemovePkgOpts = CmdRemovePkg
-    <$> argDbFile <*> argDryRun
-    <*> arguments1 Just (metavar "PKGNAME ...")
+    <$> arguments1 Just (metavar "PKGNAME ...")
 cmdRemovePkgCmd = command "rm" (info (helper <*> cmdRemovePkgOpts)
     (fullDesc <> progDesc "remove packages"))
 
 argParser = info (helper <*> opts) (fullDesc <> header (progName ++ " v" ++ (display version)) <> progDesc "maintain a datatbase of dependencies of CABAL packages")
     where
-        opts = Opts <$> argAppDir
+        opts = Opts <$> argAppDir <*> argDbFile <*> argDryRun
             <*> subparser (
                 cmdAddPkgCmd <> cmdBumpPkgsCmd <> cmdBuildPkgsCmd <> cmdSyncCmd <> cmdVersionsCmd <>
                 cmdUpdatesCmd <> cmdListPkgsCmd <> cmdUrlsCmd <> cmdPkgBuildCmd <> cmdConvertDbCmd <> cmdRemovePkgCmd)

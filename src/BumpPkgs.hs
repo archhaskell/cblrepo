@@ -27,9 +27,9 @@ import System.FilePath
 
 bumpPkgs :: Command ()
 bumpPkgs = do
-    dbFn <- cfgGet $ dbFile . optsCmd
+    dbFn <- cfgGet $ dbFile
     db <- liftIO $ readDb dbFn
-    dR <- cfgGet  $ dryRun . optsCmd
+    dR <- cfgGet  $ dryRun
     pkgs <- cfgGet  $ pkgs . optsCmd
     incl <- cfgGet  $ inclusive . optsCmd
     let bpkgs = transDependants db incl pkgs

@@ -44,10 +44,10 @@ data PkgType
 -- {{{1 add
 add :: Command ()
 add = do
-    dbFn <- cfgGet  $ dbFile . optsCmd
+    dbFn <- cfgGet  dbFile
     db <- liftIO $ readDb dbFn
     pd <- cfgGet  $ patchDir . optsCmd
-    dr <- cfgGet  $ dryRun . optsCmd
+    dr <- cfgGet  dryRun
     --
     ghcPkgs <- cfgGet  $ cmdAddGhcPkgs . optsCmd
     distroPkgs <- cfgGet  $ cmdAddDistroPkgs . optsCmd
