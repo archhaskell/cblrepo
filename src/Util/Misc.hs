@@ -18,6 +18,7 @@
 
 module Util.Misc where
 
+-- {{{1 imports
 import qualified PkgDB as DB
 
 import Codec.Archive.Tar as Tar
@@ -45,7 +46,7 @@ import System.Process
 import System.Unix.Directory
 import qualified Data.ByteString.Lazy.Char8 as BS
 
--- {{{1 Dependency
+-- {{{1 dependency
 depName (Dependency (PackageName n) _) = n
 depVersionRange (Dependency _ vr) = vr
 
@@ -69,14 +70,16 @@ ghcVersionDep = "ghc=" ++ display ghcVersion ++ "-1"
 
 data Cmds
     = CmdAdd
-        { patchDir :: FilePath
-        , cmdAddGhcPkgs :: [(String,String)], cmdAddDistroPkgs :: [(String, String, String)]
-        , cmdAddUrlCbls :: [String], cmdAddFileCbls :: [FilePath], cmdAddCbls :: [(String, String)] }
+        { patchDir :: FilePath, cmdAddGhcPkgs :: [(String,String)]
+        , cmdAddDistroPkgs :: [(String, String, String)], cmdAddUrlCbls :: [String]
+        , cmdAddFileCbls :: [FilePath], cmdAddCbls :: [(String, String)] }
     | CmdBuildPkgs { pkgs :: [String] }
     | CmdBumpPkgs { inclusive :: Bool, pkgs :: [String] }
     | CmdSync { unused :: Bool }
     | CmdVersions { pkgs :: [String] }
-    | CmdListPkgs { listGhc :: Bool, listDistro :: Bool, noListRepo :: Bool, hackageFmt :: Bool }
+    | CmdListPkgs
+        { listGhc :: Bool, listDistro :: Bool, noListRepo :: Bool
+        , hackageFmt :: Bool }
     | CmdUpdates { idxStyle :: Bool }
     | CmdUrls { pkgVers :: [(String, String)] }
     | CmdPkgBuild { patchDir :: FilePath, pkgs :: [String] }
