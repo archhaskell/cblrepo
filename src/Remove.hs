@@ -23,7 +23,6 @@ import Util.Misc
 
 -- {{{1 system
 import Control.Monad.Error
-import Control.Monad.Reader
 import System.Exit
 
 -- {{{1 remove

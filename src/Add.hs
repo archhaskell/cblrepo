@@ -16,8 +16,6 @@
 
 module Add where
 
-import Debug.Trace
-
 -- {{{1 imports
 -- {{{2 local
 import PkgDB
@@ -25,8 +23,6 @@ import Util.Misc
 
 -- {{{2 system
 import Control.Monad.Error
-import Control.Monad.Reader
-import Data.Either
 import Data.List
 import Data.Maybe
 import Distribution.PackageDescription

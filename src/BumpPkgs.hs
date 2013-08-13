@@ -19,11 +19,7 @@ module BumpPkgs where
 import PkgDB
 import Util.Misc
 
-import Control.Monad
 import Control.Monad.Reader
-import Data.List
-import Data.Maybe
-import System.FilePath
 
 bumpPkgs :: Command ()
 bumpPkgs = do

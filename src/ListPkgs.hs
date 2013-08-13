@@ -20,12 +20,9 @@ module ListPkgs where
 import Util.Misc
 import PkgDB
 
-import Control.Monad
 import Control.Monad.Reader
 import Data.List
-import Data.Maybe
 import Distribution.Text
-import System.FilePath
 import Distribution.PackageDescription
 
 listPkgs :: Command ()

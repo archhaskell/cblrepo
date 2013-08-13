@@ -21,13 +21,10 @@ import Util.Misc
 import Util.Translation
 
 import Control.Monad.Error
-import Control.Monad.Reader
-import Data.Either
 import Data.Maybe
 import Distribution.Text
 import System.Directory
 import System.FilePath
-import System.Exit
 import System.IO
 import System.Unix.Directory
 import Text.PrettyPrint.ANSI.Leijen
