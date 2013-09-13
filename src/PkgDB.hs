@@ -29,7 +29,7 @@ import qualified Distribution.Package as P
 import qualified Distribution.Version as V
 
 import Data.Aeson (decode, encode)
-import Data.Aeson.TH (deriveJSON)
+import Data.Aeson.TH (deriveJSON, defaultOptions, Options(..), SumEncoding(..))
 import qualified Data.ByteString.Lazy.Char8 as C
 
 -- {{{ temporary
@@ -188,11 +188,10 @@ saveDb db fp = C.writeFile fp s
         s = C.unlines $ map encode $ sort db
 
 -- {{{1 JSON instances
--- $(deriveJSON id ''CblPkg)
-$(deriveJSON id ''V.Version)
-$(deriveJSON id ''V.VersionRange)
-$(deriveJSON id ''P.Dependency)
-$(deriveJSON id ''P.PackageName)
-$(deriveJSON id ''FlagName)
-$(deriveJSON id ''Pkg)
-$(deriveJSON id ''CblPkg)
+$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''V.Version)
+$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''V.VersionRange)
+$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''P.Dependency)
+$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''P.PackageName)
+$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''FlagName)
+$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''Pkg)
+$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''CblPkg)
