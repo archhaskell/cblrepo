@@ -173,12 +173,12 @@ instance Pretty ArchPkg where
             where
                 libBuildFunction = text "build() {" <>
                     nest 4 (empty <$>
-                        text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
+                        text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
                         maybe empty (\ _ ->
-                            text $ "patch " ++ shVarValue hkgName ++ ".cabal ${srcdir}/cabal.patch ")
+                            text $ "patch " ++ shVarValue hkgName ++ ".cabal \"${srcdir}/cabal.patch\" ")
                             cabalPatchFile <$>
                         maybe empty (\ _ ->
-                            text $ "patch -p4 < ${srcdir}/source.patch")
+                            text $ "patch -p4 < \"${srcdir}/source.patch\"")
                             buildPatchFile <$>
                         nest 4 (text "runhaskell Setup configure -O -p --enable-split-objs --enable-shared \\" <$>
                             text "--prefix=/usr --docdir=/usr/share/doc/${pkgname} \\" <$>
@@ -192,12 +192,12 @@ instance Pretty ArchPkg where
                     char '}'
 
                 exeBuildFunction = text "build() {" <>
-                    nest 4 (empty <$> text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
+                    nest 4 (empty <$> text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
                         maybe empty
-                            (\ _ -> text $ "patch " ++ shVarValue hkgName ++ ".cabal ${srcdir}/cabal.patch ")
+                            (\ _ -> text $ "patch " ++ shVarValue hkgName ++ ".cabal \"${srcdir}/cabal.patch\" ")
                             cabalPatchFile <$>
                         maybe empty (\ _ ->
-                            text $ "patch -p4 < ${srcdir}/source.patch")
+                            text $ "patch -p4 < \"${srcdir}/source.patch\"")
                             buildPatchFile <$>
                         text "runhaskell Setup configure -O --prefix=/usr --docdir=/usr/share/doc/${pkgname}" <> confFlags <$>
                         text "runhaskell Setup build"
@@ -211,20 +211,20 @@ instance Pretty ArchPkg where
 
                 libPackageFunction = text "package() {" <>
                     nest 4 (empty <$>
-                        text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
-                        text "install -D -m744 register.sh   ${pkgdir}/usr/share/haskell/${pkgname}/register.sh" <$>
-                        text "install    -m744 unregister.sh ${pkgdir}/usr/share/haskell/${pkgname}/unregister.sh" <$>
-                        text "install -d -m755 ${pkgdir}/usr/share/doc/ghc/html/libraries" <$>
-                        text "ln -s /usr/share/doc/${pkgname}/html ${pkgdir}/usr/share/doc/ghc/html/libraries/${_hkgname}" <$>
-                        text "runhaskell Setup copy --destdir=${pkgdir}" <$>
-                        (maybe empty (\ _ -> text "install -D -m644 ${_licensefile} ${pkgdir}/usr/share/licenses/${pkgname}/LICENSE" <$>
-                            text "rm -f ${pkgdir}/usr/share/doc/${pkgname}/${_licensefile}") licenseFile)
+                        text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
+                        text "install -D -m744 register.sh   \"${pkgdir}/usr/share/haskell/${pkgname}/register.sh\"" <$>
+                        text "install    -m744 unregister.sh \"${pkgdir}/usr/share/haskell/${pkgname}/unregister.sh\"" <$>
+                        text "install -d -m755 \"${pkgdir}/usr/share/doc/ghc/html/libraries\"" <$>
+                        text "ln -s /usr/share/doc/${pkgname}/html \"${pkgdir}/usr/share/doc/ghc/html/libraries/${_hkgname}\"" <$>
+                        text "runhaskell Setup copy --destdir=\"${pkgdir}\"" <$>
+                        (maybe empty (\ _ -> text "install -D -m644 ${_licensefile} \"${pkgdir}/usr/share/licenses/${pkgname}/LICENSE\"" <$>
+                            text "rm -f \"${pkgdir}/usr/share/doc/${pkgname}/${_licensefile}\"") licenseFile)
                         ) <$>
                     char '}'
 
                 exePackageFunction = text "package() {" <>
-                    nest 4 (empty <$> text "cd ${srcdir}/${_hkgname}-${pkgver}" <$>
-                        text "runhaskell Setup copy --destdir=${pkgdir}"
+                    nest 4 (empty <$> text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
+                        text "runhaskell Setup copy --destdir=\"${pkgdir}\""
                         ) <$>
                     char '}'
 
