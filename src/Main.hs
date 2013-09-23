@@ -101,7 +101,7 @@ cmdConvertDbOpts = CmdConvertDb
     <$> strOption (short 'i' <> long "indb" <> value "cblrepo.db" <> help "old database")
     <*> strOption (short 'o' <> long "outdb" <> value "new-cblrepo.db" <> help "new database")
 cmdConvertDbCmd = command "convertdb" (info (helper <*> cmdConvertDbOpts)
-    (fullDesc <> progDesc "convert and old database to the new format"))
+    (fullDesc <> progDesc "convert an old database to the new format"))
 
 cmdRemovePkgOpts = CmdRemovePkg
     <$> arguments1 Just (metavar "PKGNAME ...")
