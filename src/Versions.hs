@@ -1,5 +1,5 @@
 {-
- - Copyright 2011 Per Magnus Therning
+ - Copyright 2011-2013 Per Magnus Therning
  -
  - Licensed under the Apache License, Version 2.0 (the "License");
  - you may not use this file except in compliance with the License.
@@ -32,10 +32,12 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 versions :: Command ()
 versions = do
     aD <- cfgGet appDir
+    l <- cfgGet $ latest . optsCmd
     pkgs <- cfgGet $ pkgs . optsCmd
+    let printFunc = if l then printLatestVersion else printAllVersions
     liftIO $ do
         es <- liftM (Tar.read . GZip.decompress) (BS.readFile $ aD </> "00-index.tar.gz")
-        mapM_ (printVersions . findVersions es) pkgs
+        mapM_ (printFunc . findVersions es) pkgs
 
 findVersions es p = (p, findV p es [])
     where
@@ -51,6 +53,10 @@ findVersions es p = (p, findV p es [])
                 vs = map (fromJust . simpleParse) acc
             in map display $ sort vs
 
-printVersions (p, vs) = do
+printAllVersions (p, vs) = do
     putStr $ p ++ " : "
     putStrLn $ unwords vs
+
+printLatestVersion (p, vs) = do
+    putStr $ p ++ ","
+    putStrLn $ last vs

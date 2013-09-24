@@ -76,7 +76,7 @@ data Cmds
     | CmdBuildPkgs { pkgs :: [String] }
     | CmdBumpPkgs { inclusive :: Bool, pkgs :: [String] }
     | CmdSync { unused :: Bool }
-    | CmdVersions { pkgs :: [String] }
+    | CmdVersions { latest :: Bool, pkgs :: [String] }
     | CmdListPkgs
         { listGhc :: Bool, listDistro :: Bool, noListRepo :: Bool
         , hackageFmt :: Bool }

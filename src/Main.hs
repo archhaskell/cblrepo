@@ -69,7 +69,8 @@ cmdSyncCmd = command "sync" (info (helper <*> cmdSyncOpts)
     (fullDesc <> progDesc "update the index"))
 
 cmdVersionsOpts = CmdVersions
-    <$> arguments1 Just (metavar "PKGNAME ...")
+    <$> switch (short 'l' <> long "latest" <> help "list only the latest version of packages")
+    <*> arguments1 Just (metavar "PKGNAME ...")
 cmdVersionsCmd = command "versions" (info (helper <*> cmdVersionsOpts)
     (fullDesc <> progDesc "list available versions of packages"))
 
