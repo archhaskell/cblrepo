@@ -66,6 +66,9 @@ dbName = progName ++ ".db"
 ghcVersion = (Version [7, 6, 3] [])
 ghcVersionDep = "ghc=" ++ display ghcVersion ++ "-1"
 
+indexUrl = "http://hackage.haskell.org/packages/index.tar.gz"
+indexFileName = "index.tar.gz"
+
 -- {{{1 command line argument type
 
 data Cmds
@@ -166,9 +169,9 @@ readCabal patchDir loc tmpDir = let
                         _ -> Nothing
 
             in do
-                fp <- liftIO $ getAppUserDataDirectory "cblrepo"
+                aD <- liftIO $ getAppUserDataDirectory "cblrepo"
                 es <- liftM (Tar.read . GZip.decompress)
-                    (liftIO $ BS.readFile $ fp </> "00-index.tar.gz")
+                    (liftIO $ BS.readFile $ aD </> indexFileName)
                 e <- maybe (throwError $ "No entry for " ++ pkgStr)
                     return
                     (esFindEntry path es)

@@ -36,7 +36,7 @@ versions = do
     pkgs <- cfgGet $ pkgs . optsCmd
     let printFunc = if l then printLatestVersion else printAllVersions
     liftIO $ do
-        es <- liftM (Tar.read . GZip.decompress) (BS.readFile $ aD </> "00-index.tar.gz")
+        es <- liftM (Tar.read . GZip.decompress) (BS.readFile $ aD </> indexFileName)
         mapM_ (printFunc . findVersions es) pkgs
 
 findVersions es p = (p, findV p es [])

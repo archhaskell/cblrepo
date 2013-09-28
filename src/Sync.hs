@@ -1,5 +1,5 @@
 {-
- - Copyright 2011 Per Magnus Therning
+ - Copyright 2011-2013 Per Magnus Therning
  -
  - Licensed under the Apache License, Version 2.0 (the "License");
  - you may not use this file except in compliance with the License.
@@ -20,9 +20,8 @@ import Util.Misc
 
 import Control.Monad.Reader
 import System.FilePath
-import Control.Monad.Error
 
 sync :: Command ()
 sync = do
     aD <- cfgGet appDir
-    liftIO $ getFromURL "http://hackage.haskell.org/packages/index.tar.gz" (aD </> "00-index.tar.gz")
+    liftIO $ getFromURL indexUrl (aD </> indexFileName)

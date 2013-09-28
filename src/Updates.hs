@@ -1,5 +1,5 @@
 {-
- - Copyright 2011 Per Magnus Therning
+ - Copyright 2011-2013 Per Magnus Therning
  -
  - Licensed under the Apache License, Version 2.0 (the "License");
  - you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ updates = do
     aD <- cfgGet appDir
     aCS <- cfgGet $ idxStyle .optsCmd
     entries <- liftIO $ liftM (Tar.read . GZip.decompress)
-        (BS.readFile $ aD </> "00-index.tar.gz")
+        (BS.readFile $ aD </> indexFileName)
     let nonBasePkgs = filter (not . isBasePkg) db
     let pkgsNVers = map (\ p -> (pkgName p, pkgVersion p)) nonBasePkgs
     let availPkgs = catMaybes $ eMap extractPkgVer entries
