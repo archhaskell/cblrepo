@@ -25,4 +25,4 @@ import Control.Monad.Error
 sync :: Command ()
 sync = do
     aD <- cfgGet appDir
-    liftIO $ getFromURL "http://hackage.haskell.org/packages/archive/00-index.tar.gz" (aD </> "00-index.tar.gz")
+    liftIO $ getFromURL "http://hackage.haskell.org/packages/index.tar.gz" (aD </> "00-index.tar.gz")
