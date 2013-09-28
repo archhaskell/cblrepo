@@ -181,7 +181,7 @@ instance Pretty ArchPkg where
                             text $ "patch -p4 < \"${srcdir}/source.patch\"")
                             buildPatchFile <$>
                         nest 4 (text "runhaskell Setup configure -O -p --enable-split-objs --enable-shared \\" <$>
-                            text "--prefix=/usr --docdir=/usr/share/doc/${pkgname} \\" <$>
+                            text "--prefix=/usr --docdir=\"/usr/share/doc/${pkgname}\" \\" <$>
                             text "--libsubdir=\\$compiler/site-local/\\$pkgid" <> confFlags) <$>
                         text "runhaskell Setup build" <$>
                         text "runhaskell Setup haddock" <$>
@@ -199,7 +199,7 @@ instance Pretty ArchPkg where
                         maybe empty (\ _ ->
                             text $ "patch -p4 < \"${srcdir}/source.patch\"")
                             buildPatchFile <$>
-                        text "runhaskell Setup configure -O --prefix=/usr --docdir=/usr/share/doc/${pkgname}" <> confFlags <$>
+                        text "runhaskell Setup configure -O --prefix=/usr --docdir=\"/usr/share/doc/${pkgname}\"" <> confFlags <$>
                         text "runhaskell Setup build"
                         ) <$>
                     char '}'
@@ -215,9 +215,9 @@ instance Pretty ArchPkg where
                         text "install -D -m744 register.sh   \"${pkgdir}/usr/share/haskell/${pkgname}/register.sh\"" <$>
                         text "install    -m744 unregister.sh \"${pkgdir}/usr/share/haskell/${pkgname}/unregister.sh\"" <$>
                         text "install -d -m755 \"${pkgdir}/usr/share/doc/ghc/html/libraries\"" <$>
-                        text "ln -s /usr/share/doc/${pkgname}/html \"${pkgdir}/usr/share/doc/ghc/html/libraries/${_hkgname}\"" <$>
+                        text "ln -s \"/usr/share/doc/${pkgname}/html\" \"${pkgdir}/usr/share/doc/ghc/html/libraries/${_hkgname}\"" <$>
                         text "runhaskell Setup copy --destdir=\"${pkgdir}\"" <$>
-                        (maybe empty (\ _ -> text "install -D -m644 ${_licensefile} \"${pkgdir}/usr/share/licenses/${pkgname}/LICENSE\"" <$>
+                        (maybe empty (\ _ -> text "install -D -m644 \"${_licensefile}\" \"${pkgdir}/usr/share/licenses/${pkgname}/LICENSE\"" <$>
                             text "rm -f \"${pkgdir}/usr/share/doc/${pkgname}/${_licensefile}\"") licenseFile)
                         ) <$>
                     char '}'
