@@ -1,6 +1,6 @@
 # What is cblrepo?
 
-The goal of `cblrepo` is to aid in maintaining a consistent set of Haskell packages, e.g. for a Linux distribution.  Currently it's heavily influenced by the work required to maintain Haskell packages for [ArchLinux](http://www.archlinux.org/), but it's proven useful also for other distributions.
+The goal of `cblrepo` is to aid in maintaining a consistent set of Haskell packages, e.g. for a Linux distribution.  Currently it's heavily influenced by the work required to maintain Haskell packages for [Arch Linux](http://www.archlinux.org/), but it's proven useful also for other distributions.
 
 # Building it
 
@@ -62,7 +62,7 @@ The *add* command is used to update packages as well.
 
 ## Generating PKGBUILDs for packages
 
-Use the *pkgbuild* command to generate the source ArchLinux package.
+Use the *pkgbuild* command to generate the source Arch Linux package.
 
     $ cblrepo pkgbuild yesod
 
@@ -70,11 +70,11 @@ Use the *pkgbuild* command to generate the source ArchLinux package.
 
 In some, hopefully rare, cases the packages found on Hackage require patching in order to work properly.  There are three types of patches used by `cblrepo` at the moment:
 
-*Cabal patches* -- A patch `<patch dir>/<pkg name>.cabal` is applied to the CABAL file before it's use.  It's also included in the ArchLinux source package created with the `pkgbuild` command.
+*Cabal patches* -- A patch `<patch dir>/<pkg name>.cabal` is applied to the CABAL file before it's use.  It's also included in the Arch Linux source package created with the `pkgbuild` command.
 
 *Pkgbuild patches* -- A patch `<patch dir>/<pkg name>.pkgbuild` is applied to the generated PKGBUILD when executing the `pkgbuild` command.
 
-*Source patches* -- A patch `<patch dir>/<pkg name>.source` is included in the ArchLinux source package created with the `pkgbuild` command.
+*Source patches* -- A patch `<patch dir>/<pkg name>.source` is included in the Arch Linux source package created with the `pkgbuild` command.
 
 The default location for patches is the dir `./patches`, but `cblrepo` can be told to look elsewhere by using the `--patchdir=` flag.
 

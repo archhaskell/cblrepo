@@ -11,11 +11,12 @@ bug-reports: mailto:magnus@therning.org
 synopsis: Tool to maintain a database of CABAL packages and their dependencies
 description:
     Helper tool for people maintaining a set of CABAL packages for their
-    distribution.  It maintains a database of packages and verifies
-    dependencies of the entire set as packages are added or updated.  It also
-    makes it trivial to track packages as new versions are released on Hackage.
+    distribution. It maintains a database of packages and verifies dependencies
+    of the entire set as packages are added or updated. It also makes it trivial
+    to track packages as new versions are released on Hackage.
 
-    It can also be used to build source packages for the ArchLinux distribution.
+    It can also be used to build source packages for the Arch Linux
+    distribution.
 category: Utils, Distribution
 build-type: Custom
 
