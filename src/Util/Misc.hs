@@ -109,7 +109,7 @@ cfgGet f = liftM f ask
 
 -- {{{1 getFromURL
 getFromURL url fn = do
-    (ec, _, er) <- readProcessWithExitCode "curl" ["-f", "-o", fn, url] ""
+    (ec, _, er) <- readProcessWithExitCode "curl" ["-f", "-L", "-o", fn, url] ""
     case ec of
         ExitSuccess -> return ()
         ExitFailure _ -> do
