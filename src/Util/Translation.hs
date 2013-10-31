@@ -180,7 +180,8 @@ instance Pretty ArchPkg where
                         maybe empty (\ _ ->
                             text $ "patch -p4 < \"${srcdir}/source.patch\"")
                             buildPatchFile <$>
-                        nest 4 (text "runhaskell Setup configure -O -p --enable-split-objs --enable-shared \\" <$>
+                        nest 4 (text "runhaskell Setup configure -O -p \\" <$>
+                            text "--enable-split-objs --enable-shared --enable-executable-dynamic \\" <$>
                             text "--prefix=/usr --docdir=\"/usr/share/doc/${pkgname}\" \\" <$>
                             text "--libsubdir=\\$compiler/site-local/\\$pkgid" <> confFlags) <$>
                         text "runhaskell Setup build" <$>
