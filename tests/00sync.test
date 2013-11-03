@@ -1,0 +1,4 @@
+# a test to ensure that there is an up-to-date index of packages
+
+cblrepo sync
+>>>= 0
