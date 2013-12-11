@@ -39,6 +39,7 @@ import Distribution.Text
 import System.Directory
 import System.Exit
 import System.FilePath
+import System.IO
 import System.Process
 import System.Unix.Directory
 import Text.PrettyPrint.ANSI.Leijen hiding((</>))
@@ -165,21 +166,31 @@ instance Pretty ArchPkg where
             , maybe empty pretty install
             , pretty sha256sums
             , empty, text "# PKGBUILD functions"
+            , empty
+            , prepareFunction
+            , empty
             , if hasLib then libBuildFunction else exeBuildFunction
             , empty
             , if hasLib then libPackageFunction else exePackageFunction
             , empty
             ]
             where
+                prepareFunction = text "prepare() {" <>
+                    nest 4 (empty <$>
+                        text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
+                        empty <$>
+                        maybe (text "# no cabal patch") (\ _ ->
+                            text $ "patch " ++ shVarValue hkgName ++ ".cabal \"${srcdir}/cabal.patch\" ")
+                            cabalPatchFile <$>
+                        maybe (text "# no source patch") (\ _ ->
+                            text $ "patch -p4 < \"${srcdir}/source.patch\"")
+                            buildPatchFile
+                        ) <$>
+                    char '}'
                 libBuildFunction = text "build() {" <>
                     nest 4 (empty <$>
                         text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
-                        maybe empty (\ _ ->
-                            text $ "patch " ++ shVarValue hkgName ++ ".cabal \"${srcdir}/cabal.patch\" ")
-                            cabalPatchFile <$>
-                        maybe empty (\ _ ->
-                            text $ "patch -p4 < \"${srcdir}/source.patch\"")
-                            buildPatchFile <$>
+                        empty <$>
                         nest 4 (text "runhaskell Setup configure -O -p --enable-split-objs --enable-shared \\" <$>
                             text "--prefix=/usr --docdir=\"/usr/share/doc/${pkgname}\" \\" <$>
                             text "--libsubdir=\\$compiler/site-local/\\$pkgid" <> confFlags) <$>
@@ -193,12 +204,7 @@ instance Pretty ArchPkg where
 
                 exeBuildFunction = text "build() {" <>
                     nest 4 (empty <$> text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
-                        maybe empty
-                            (\ _ -> text $ "patch " ++ shVarValue hkgName ++ ".cabal \"${srcdir}/cabal.patch\" ")
-                            cabalPatchFile <$>
-                        maybe empty (\ _ ->
-                            text $ "patch -p4 < \"${srcdir}/source.patch\"")
-                            buildPatchFile <$>
+                        empty <$>
                         text "runhaskell Setup configure -O --prefix=/usr --docdir=\"/usr/share/doc/${pkgname}\"" <> confFlags <$>
                         text "runhaskell Setup build"
                         ) <$>
@@ -212,6 +218,7 @@ instance Pretty ArchPkg where
                 libPackageFunction = text "package() {" <>
                     nest 4 (empty <$>
                         text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
+                        empty <$>
                         text "install -D -m744 register.sh   \"${pkgdir}/usr/share/haskell/${pkgname}/register.sh\"" <$>
                         text "install    -m744 unregister.sh \"${pkgdir}/usr/share/haskell/${pkgname}/unregister.sh\"" <$>
                         text "install -d -m755 \"${pkgdir}/usr/share/doc/ghc/html/libraries\"" <$>
@@ -389,7 +396,7 @@ addHashes ap tmpDir = let
         (ec, out, er) <- liftIO $ withWorkingDirectory tmpDir (readProcessWithExitCode "makepkg" ["-g"] "")
         case ec of
             ExitFailure _ -> do
-                -- hPutStrLn stderr er
+                -- liftIO $ hPutStrLn stderr er
                 throwError $ "makepkg: error while calculating the source hashes for " ++ (apHkgName ap)
             ExitSuccess -> do
                 if "sha256sums=(" `isPrefixOf` out
