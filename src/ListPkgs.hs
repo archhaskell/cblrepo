@@ -31,12 +31,16 @@ listPkgs = do
     lD <- cfgGet $ listDistro . optsCmd
     lR <- cfgGet $ noListRepo . optsCmd
     lH <- cfgGet $ hackageFmt . optsCmd
+    ps <- cfgGet $ pkgs . optsCmd
     db <- cfgGet dbFile >>= liftIO . readDb
     let allPkgs = filter (pkgFilter lG lD lR) db
+    let pkgsToList = if null ps
+            then allPkgs
+            else filter (\p -> (pkgName p) `elem` ps) allPkgs
     let printer = if lH
             then printCblPkgHackage
             else printCblPkgShort
-    liftIO $ mapM_ printer allPkgs
+    liftIO $ mapM_ printer pkgsToList
 
 pkgFilter :: Bool -> Bool -> Bool -> CblPkg -> Bool
 pkgFilter g d r p = (g && isGhcPkg p) || (d && isDistroPkg p) || (not r && isRepoPkg p)

@@ -84,6 +84,7 @@ cmdListPkgsOpts = CmdListPkgs
     <*> switch (short 'd' <> long "distro" <> help "list distro packages")
     <*> switch (long "no-repo" <> help "do not list repo packages")
     <*> switch (long "hackage" <> help "list in hackage format")
+    <*> arguments str (metavar "PKGNAME ...")
 cmdListPkgsCmd = command "list" (info (helper <*> cmdListPkgsOpts)
     (fullDesc <> progDesc "list packages in repo"))
 

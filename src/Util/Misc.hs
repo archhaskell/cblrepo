@@ -82,7 +82,7 @@ data Cmds
     | CmdVersions { latest :: Bool, pkgs :: [String] }
     | CmdListPkgs
         { listGhc :: Bool, listDistro :: Bool, noListRepo :: Bool
-        , hackageFmt :: Bool }
+        , hackageFmt :: Bool, pkgs :: [String] }
     | CmdUpdates { idxStyle :: Bool }
     | CmdUrls { pkgVers :: [(String, String)] }
     | CmdPkgBuild { patchDir :: FilePath, pkgs :: [String] }

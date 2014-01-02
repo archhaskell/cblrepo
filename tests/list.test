@@ -1,0 +1,45 @@
+# a few tests to verify the list command, run with shelltestrunner
+
+# {{{1 set up
+  rm -f cblrepo.db
+>>>= 0
+
+cblrepo add -f tests/data/foo.cabal -f tests/data/bar.cabal -f tests/data/baz.cabal
+>>>= 0
+
+# {{{1 ordinary listing
+cblrepo list
+>>>
+bar  0-1
+baz  1-1
+foo  1.2.3-1
+>>>= 0
+
+# {{{1 hackage listing
+cblrepo list --hackage
+>>>
+("bar","0",Nothing)
+("baz","1",Nothing)
+("foo","1.2.3",Nothing)
+>>>= 0
+
+# {{{1 list individual packages
+cblrepo list bar
+>>>
+bar  0-1
+>>>= 0
+
+cblrepo list --hackage bar
+>>>
+("bar","0",Nothing)
+>>>= 0
+
+cblrepo list --hackage bar foo
+>>>
+("bar","0",Nothing)
+("foo","1.2.3",Nothing)
+>>>= 0
+
+# {{{1 clean up
+  rm -f cblrepo.db
+>>>= 0
