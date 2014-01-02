@@ -32,21 +32,22 @@ listPkgs = do
     lR <- cfgGet $ noListRepo . optsCmd
     lH <- cfgGet $ hackageFmt . optsCmd
     db <- cfgGet dbFile >>= liftIO . readDb
-    let pkgs = filter (pkgFilter lG lD lR) db
+    let allPkgs = filter (pkgFilter lG lD lR) db
     let printer = if lH
             then printCblPkgHackage
             else printCblPkgShort
-    liftIO $ mapM_ printer pkgs
+    liftIO $ mapM_ printer allPkgs
 
+pkgFilter :: Bool -> Bool -> Bool -> CblPkg -> Bool
 pkgFilter g d r p = (g && isGhcPkg p) || (d && isDistroPkg p) || (not r && isRepoPkg p)
 
 printCblPkgShort :: CblPkg -> IO ()
 printCblPkgShort p =
     putStrLn $ pkgName p ++ "  " ++ (display $ pkgVersion p) ++ "-" ++ pkgRelease p ++ showFlagsIfPresent p
         where
-            showFlagsIfPresent p
-                | [] <- pkgFlags p = ""
-                | fa <- pkgFlags p = " (" ++ (intercalate " " $ map showSingleFlag fa) ++ ")"
+            showFlagsIfPresent _p
+                | [] <- pkgFlags _p = ""
+                | fa <- pkgFlags _p = " (" ++ (intercalate " " $ map showSingleFlag fa) ++ ")"
             showSingleFlag (FlagName n, True) = n
             showSingleFlag (FlagName n, False) = '-' : n
 
