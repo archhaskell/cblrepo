@@ -1,0 +1,6 @@
+" {{{1 plugin config
+" let g:hdevtools_options = '-g -isrc -g -idist/build/autogen -g -hide-package -g monads-tf'
+let g:ghcmod_ghc_options = ['-isrc', '-idist/build/autogen']
+let g:syntastic_haskell_ghc_mod_args = '-g -fno-warn-missing-signatures -g -fno-warn-orphans -g -fno-warn-name-shadowing'
+
+" vim: ft=vim :
