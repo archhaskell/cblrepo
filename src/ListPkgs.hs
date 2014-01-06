@@ -21,7 +21,6 @@ import Util.Misc
 import PkgDB
 
 import Control.Monad.Reader
-import Data.List
 import Distribution.Text
 import Distribution.PackageDescription
 
@@ -36,7 +35,7 @@ listPkgs = do
     let allPkgs = filter (pkgFilter lG lD lR) db
     let pkgsToList = if null ps
             then allPkgs
-            else filter (\p -> (pkgName p) `elem` ps) allPkgs
+            else filter (\p -> pkgName p `elem` ps) allPkgs
     let printer = if lH
             then printCblPkgHackage
             else printCblPkgShort
@@ -47,14 +46,14 @@ pkgFilter g d r p = (g && isGhcPkg p) || (d && isDistroPkg p) || (not r && isRep
 
 printCblPkgShort :: CblPkg -> IO ()
 printCblPkgShort p =
-    putStrLn $ pkgName p ++ "  " ++ (display $ pkgVersion p) ++ "-" ++ pkgRelease p ++ showFlagsIfPresent p
+    putStrLn $ pkgName p ++ "  " ++ display (pkgVersion p) ++ "-" ++ pkgRelease p ++ showFlagsIfPresent p
         where
             showFlagsIfPresent _p
                 | [] <- pkgFlags _p = ""
-                | fa <- pkgFlags _p = " (" ++ (intercalate " " $ map showSingleFlag fa) ++ ")"
+                | fa <- pkgFlags _p = " (" ++ unwords (map showSingleFlag fa) ++ ")"
             showSingleFlag (FlagName n, True) = n
             showSingleFlag (FlagName n, False) = '-' : n
 
 printCblPkgHackage :: CblPkg -> IO ()
 printCblPkgHackage p =
-    print (pkgName p, (display $ pkgVersion p), Nothing :: Maybe String)
+    print (pkgName p, display $ pkgVersion p, Nothing :: Maybe String)

@@ -47,9 +47,9 @@ add = do
     --
     ghcPkgs <- cfgGet  $ cmdAddGhcPkgs . optsCmd
     distroPkgs <- cfgGet  $ cmdAddDistroPkgs . optsCmd
-    genUrlPkgs <- cfgGet (cmdAddUrlCbls . optsCmd) >>= mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromUrl pd c d))
-    genFilePkgs <- cfgGet (cmdAddFileCbls . optsCmd) >>= mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromFile pd c d))
-    genIdxPkgs <- cfgGet (cmdAddCbls . optsCmd) >>= mapM (\ c -> runErrorT $ withTempDirErrT "/tmp/cblrepo." (\ d -> readCabalFromIdx pd c d))
+    genUrlPkgs <- cfgGet (cmdAddUrlCbls . optsCmd) >>= mapM (runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromUrl pd)
+    genFilePkgs <- cfgGet (cmdAddFileCbls . optsCmd) >>= mapM (runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromFile pd)
+    genIdxPkgs <- cfgGet (cmdAddCbls . optsCmd) >>= mapM (runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromIdx pd)
     pkgs <- exitOnErrors $ argsToPkgType ghcPkgs distroPkgs (genUrlPkgs ++ genFilePkgs ++ genIdxPkgs)
     --
     let pkgNames = map getName pkgs
@@ -101,7 +101,7 @@ pkgTypeToCblPkg db (RepoType gpd) = fromJust $ case finalizePkg db gpd of
     Left _ -> Nothing
 
 finalizeToUnsatisfiableDeps db (RepoType gpd) = case finalizePkg db gpd of
-    Left ds -> Just $ (((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) gpd, ds)
+    Left ds -> Just (((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) gpd, ds)
     _ -> Nothing
 finalizeToUnsatisfiableDeps _ _ = Nothing
 

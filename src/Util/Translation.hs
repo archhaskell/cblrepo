@@ -17,12 +17,6 @@
 
 module Util.Translation where
 
---
-import Add
-import Distribution.PackageDescription.Parse
-import Distribution.Verbosity
---
-
 import PkgDB as DB
 import Util.Misc
 
@@ -39,7 +33,6 @@ import Distribution.Text
 import System.Directory
 import System.Exit
 import System.FilePath
-import System.IO
 import System.Process
 import System.Unix.Directory
 import Text.PrettyPrint.ANSI.Leijen hiding((</>))
@@ -66,6 +59,7 @@ instance Pretty ShArray where
 data ShVar a = ShVar String a
     deriving (Eq, Show)
 
+{-# ANN shVarNewValue "HLint: ignore Eta reduce" #-}
 shVarNewValue (ShVar n _) v = ShVar n v
 shVarAppendValue (ShVar n v1) v2 = ShVar n (v1 `mappend` v2)
 shVarValue (ShVar _ v) = v
@@ -150,7 +144,7 @@ instance Pretty ArchPkg where
         }) = vsep
             [ text "# custom variables"
             , pretty hkgName
-            , maybe empty (\ fn -> pretty $ ShVar "_licensefile" fn) licenseFile
+            , maybe empty (pretty . ShVar "_licensefile") licenseFile
             , empty, text "# PKGBUILD options/directives"
             , pretty pkgName
             , pretty pkgVer
@@ -183,7 +177,7 @@ instance Pretty ArchPkg where
                             text $ "patch " ++ shVarValue hkgName ++ ".cabal \"${srcdir}/cabal.patch\" ")
                             cabalPatchFile <$>
                         maybe (text "# no source patch") (\ _ ->
-                            text $ "patch -p4 < \"${srcdir}/source.patch\"")
+                            text "patch -p4 < \"${srcdir}/source.patch\"")
                             buildPatchFile
                         ) <$>
                     char '}'
@@ -216,7 +210,7 @@ instance Pretty ArchPkg where
                         nest 4 (empty <$> (hsep . map (uncurry (<>)) $ zip (repeat $ text "-f") (map pretty flags)))
 
                 libPackageFunction = text "package() {" <>
-                    nest 4 (empty <$>
+                    nest 4 empty <$>
                         text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
                         empty <$>
                         text "install -D -m744 register.sh   \"${pkgdir}/usr/share/haskell/${pkgname}/register.sh\"" <$>
@@ -224,9 +218,9 @@ instance Pretty ArchPkg where
                         text "install -d -m755 \"${pkgdir}/usr/share/doc/ghc/html/libraries\"" <$>
                         text "ln -s \"/usr/share/doc/${pkgname}/html\" \"${pkgdir}/usr/share/doc/ghc/html/libraries/${_hkgname}\"" <$>
                         text "runhaskell Setup copy --destdir=\"${pkgdir}\"" <$>
-                        (maybe empty (\ _ -> text "install -D -m644 \"${_licensefile}\" \"${pkgdir}/usr/share/licenses/${pkgname}/LICENSE\"" <$>
-                            text "rm -f \"${pkgdir}/usr/share/doc/${pkgname}/${_licensefile}\"") licenseFile)
-                        ) <$>
+                        maybe empty (\ _ -> text "install -D -m644 \"${_licensefile}\" \"${pkgdir}/usr/share/licenses/${pkgname}/LICENSE\"" <$>
+                            text "rm -f \"${pkgdir}/usr/share/doc/${pkgname}/${_licensefile}\"") licenseFile
+                        <$>
                     char '}'
 
                 exePackageFunction = text "package() {" <>
@@ -300,16 +294,16 @@ translate db fa pd = let
         (PackageName hkgName) = packageName pd
         pkgVer = packageVersion pd
         pkgRel = maybe "1" pkgRelease (lookupPkg db hkgName)
-        hasLib = maybe False (const True) (library pd)
+        hasLib = isJust (library pd)
         licFn = let l = licenseFile pd in if null l then Nothing else Just l
-        archName = (if hasLib then "haskell-" else "") ++ (map toLower hkgName)
+        archName = (if hasLib then "haskell-" else "") ++ map toLower hkgName
         pkgDesc = synopsis pd
-        url = if null (homepage pd) then "http://hackage.haskell.org/package/${_hkgname}" else (homepage pd)
+        url = if null (homepage pd) then "http://hackage.haskell.org/package/${_hkgname}" else homepage pd
         lic = display (license pd)
-        makeDepends = if hasLib then [] else [ghcVersionDep] ++ calcExactDeps db pd
-        depends = if hasLib then [ghcVersionDep] ++ calcExactDeps db pd else []
+        makeDepends = if hasLib then [] else ghcVersionDep : calcExactDeps db pd
+        depends = if hasLib then ghcVersionDep : calcExactDeps db pd else []
         extraLibDepends = maybe [] (extraLibs . libBuildInfo) (library pd)
-        install = if hasLib then (apShInstall ap) else Nothing
+        install = if hasLib then apShInstall ap else Nothing
     in ap
         { apPkgName = archName
         , apHkgName = hkgName
@@ -336,9 +330,9 @@ translate db fa pd = let
 --  correctly for all possible dependencies
 calcExactDeps db pd = let
         n = (\ (P.PackageName n) -> n ) (P.packageName pd)
-        remPkgs = (map DB.pkgName (filter isGhcPkg db)) ++ ghcPkgs ++ [n]
+        remPkgs = map DB.pkgName (filter isGhcPkg db) ++ ghcPkgs ++ [n]
         deps = filter (not . flip elem remPkgs) (map depName (buildDepends pd))
-        lookupPkgVer = display . DB.pkgVersion . fromJust . lookupPkg db
+        -- lookupPkgVer = display . DB.pkgVersion . fromJust . lookupPkg db
         depString n = let
                 pkg = fromJust $ lookupPkg db n
                 name = map toLower $ DB.pkgName pkg
@@ -392,13 +386,12 @@ addHashes ap tmpDir = let
     in do
         liftIO $ copyPatches tmpDir ap
         liftIO $ writeFile pkgbuildFn (show $ pretty ap)
-        maybe (return ()) (\ pfn -> (applyPatch pkgbuildFn pfn) >> return ()) pkgbuildPatch
-        (ec, out, er) <- liftIO $ withWorkingDirectory tmpDir (readProcessWithExitCode "makepkg" ["-g"] "")
+        maybe (return ()) (void . applyPatch pkgbuildFn) pkgbuildPatch
+        (ec, out, _) <- liftIO $ withWorkingDirectory tmpDir (readProcessWithExitCode "makepkg" ["-g"] "")
         case ec of
-            ExitFailure _ -> do
-                -- liftIO $ hPutStrLn stderr er
-                throwError $ "makepkg: error while calculating the source hashes for " ++ (apHkgName ap)
-            ExitSuccess -> do
-                if "sha256sums=(" `isPrefixOf` out
-                    then return ap { apShSha256Sums = shVarNewValue (apShSha256Sums ap) (ShArray $ hashes out) }
-                    else return ap
+            ExitFailure _ ->
+                throwError $ "makepkg: error while calculating the source hashes for " ++ apHkgName ap
+            ExitSuccess ->
+                return (if "sha256sums=(" `isPrefixOf` out then replaced else ap)
+                    where
+                        replaced = ap { apShSha256Sums = shVarNewValue (apShSha256Sums ap) (ShArray $ hashes out) }

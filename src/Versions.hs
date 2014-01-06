@@ -44,14 +44,15 @@ findVersions es p = (p, findV p es [])
         findV pkgName (Next e es) acc = let
                 eP = entryPath e
                 (ePkg:v:_) = splitDirectories eP
-            in if ('/' `elem` eP) && (pkgName == ePkg)
-                then findV pkgName es (v:acc)
-                else findV pkgName es acc
+            in findV pkgName es
+                (if ('/' `elem` eP) && (pkgName == ePkg) then v:acc else acc)
 
         findV _ Done acc = let
                 vs :: [Version]
                 vs = map (fromJust . simpleParse) acc
             in map display $ sort vs
+
+        findV _ (Fail _) _ = error "Failure to read index file"
 
 printAllVersions (p, vs) = do
     putStr $ p ++ " : "

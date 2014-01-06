@@ -31,11 +31,8 @@ import Remove
 
 import Paths_cblrepo
 
-import Control.Monad
-import Control.Monad.Reader
 import Distribution.Text
 import System.Directory
-import System.FilePath
 import Options.Applicative as OA
 
 -- -- {{{1 command line arguments
@@ -110,7 +107,7 @@ cmdRemovePkgOpts = CmdRemovePkg
 cmdRemovePkgCmd = command "rm" (info (helper <*> cmdRemovePkgOpts)
     (fullDesc <> progDesc "remove packages"))
 
-argParser = info (helper <*> opts) (fullDesc <> header (progName ++ " v" ++ (display version)) <> progDesc "maintain a datatbase of dependencies of CABAL packages")
+argParser = info (helper <*> opts) (fullDesc <> header (progName ++ " v" ++ display version) <> progDesc "maintain a datatbase of dependencies of CABAL packages")
     where
         opts = Opts <$> argAppDir <*> argDbFile <*> argDryRun
             <*> subparser (
@@ -118,13 +115,14 @@ argParser = info (helper <*> opts) (fullDesc <> header (progName ++ " v" ++ (dis
                 cmdUpdatesCmd <> cmdListPkgsCmd <> cmdUrlsCmd <> cmdPkgBuildCmd <> cmdConvertDbCmd <> cmdRemovePkgCmd)
 
 -- {{{1 main
+main :: IO ()
 main = do
     defAppDir <- getAppUserDataDirectory progName
     execParser argParser >>= \ o -> do
-        let aD = if null (appDir o) then defAppDir else (appDir o)
+        let aD = if null (appDir o) then defAppDir else appDir o
         let o' = o { appDir = aD }
-        createDirectoryIfMissing True (aD)
-        case (optsCmd o') of
+        createDirectoryIfMissing True aD
+        case optsCmd o' of
             CmdAdd {} -> runCommand o' add
             CmdBuildPkgs {} -> runCommand o' buildPkgs
             CmdBumpPkgs {} -> runCommand o' bumpPkgs

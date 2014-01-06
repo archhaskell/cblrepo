@@ -23,15 +23,15 @@ import Control.Monad.Reader
 
 bumpPkgs :: Command ()
 bumpPkgs = do
-    dbFn <- cfgGet $ dbFile
+    dbFn <- cfgGet dbFile
     db <- liftIO $ readDb dbFn
-    dR <- cfgGet  $ dryRun
+    dR <- cfgGet dryRun
     pkgs <- cfgGet  $ pkgs . optsCmd
     incl <- cfgGet  $ inclusive . optsCmd
     let bpkgs = transDependants db incl pkgs
-    let newDb = foldl (\ db p -> bumpRelease db p) db bpkgs
-    if dR
-        then liftIO $ putStrLn "Would bump:" >> mapM_ putStrLn bpkgs
-        else liftIO $ saveDb newDb dbFn
+    let newDb = foldl bumpRelease db bpkgs
+    liftIO $ if dR
+        then putStrLn "Would bump:" >> mapM_ putStrLn bpkgs
+        else saveDb newDb dbFn
 
-transDependants db i pkgs = filter ((||) i . (not . flip elem pkgs)) $ transitiveDependants db pkgs
+transDependants db i pkgs = filter ((||) i . not . flip elem pkgs) $ transitiveDependants db pkgs

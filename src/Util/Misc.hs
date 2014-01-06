@@ -14,8 +14,6 @@
  - limitations under the License.
  -}
 
-{-# LANGUAGE TemplateHaskell #-}
-
 module Util.Misc where
 
 -- {{{1 imports
@@ -56,14 +54,14 @@ printUnSat (n, ds) = do
     mapM_ (putStrLn . ("  " ++) . display) ds
 
 printBrksOth  ((n, v), brks) = do
-    putStrLn $ "Adding " ++ n ++ " " ++ (display v) ++ " would break:"
-    mapM_ (\ (bN, (Just bD)) -> putStrLn $ "  " ++ bN ++ " : " ++ (display bD)) brks
+    putStrLn $ "Adding " ++ n ++ " " ++ display v ++ " would break:"
+    mapM_ (\ (bN, Just bD) -> putStrLn $ "  " ++ bN ++ " : " ++ display bD) brks
 
 -- {{{1 program variables
 progName = "cblrepo"
 dbName = progName ++ ".db"
 
-ghcVersion = (Version [7, 6, 3] [])
+ghcVersion = Version [7, 6, 3] []
 ghcVersionDep = "ghc=" ++ display ghcVersion ++ "-1"
 
 indexUrl = "http://hackage.haskell.org/packages/index.tar.gz"
@@ -119,14 +117,14 @@ getFromURL url fn = do
 
 -- {{{1 applyPatchIfExist
 applyPatch origFilename patchFilename = do
-    (ec, _, err) <- liftIO $ readProcessWithExitCode "patch" [origFilename, patchFilename] ""
+    (ec, _, _) <- liftIO $ readProcessWithExitCode "patch" [origFilename, patchFilename] ""
     case ec of
         ExitSuccess -> return ()
         ExitFailure _ ->
             throwError ("Failed patching " ++ origFilename ++ " with " ++ patchFilename)
 
 applyPatchIfExist origFilename patchFilename =
-    (liftIO $ fileExist patchFilename) >>= flip when (applyPatch origFilename patchFilename)
+    liftIO (fileExist patchFilename) >>= flip when (applyPatch origFilename patchFilename)
 
 -- {{{1 package descriptions
 -- {{{2 readCabal
@@ -135,7 +133,7 @@ data LocType = Url | Idx | File
 -- | Read in a Cabal file.
 readCabalFromUrl = readCabal
 readCabalFromFile = readCabal
-readCabalFromIdx pd (p, v) td = readCabal pd (p ++ "," ++ v) td
+readCabalFromIdx pd (p, v) = readCabal pd (p ++ "," ++ v)
 
 readCabal :: FilePath -> String -> FilePath -> ErrorT String IO GenericPackageDescription
 readCabal patchDir loc tmpDir = let
@@ -152,12 +150,12 @@ readCabal patchDir loc tmpDir = let
                 fn = tmpDir </> takeFileName loc
 
         extractCabal tmpDir loc = let
-                (p, (_: v)) = span (/= ',') loc
+                (p, _: v) = span (/= ',') loc
                 path = p </> v </> p ++ ".cabal"
                 pkgStr = p ++ " " ++ v
                 fn = tmpDir </> (p ++ ".cabal")
 
-                esFindEntry p (Next e es) = if p == (entryPath e)
+                esFindEntry p (Next e es) = if p == entryPath e
                     then Just e
                     else esFindEntry p es
                 esFindEntry _ _ = Nothing
@@ -210,11 +208,10 @@ finalizePkg db gpd = let
 checkAgainstDb db name dep = let
         dN = depName dep
         dVR = depVersionRange dep
-    in if dN == name
-        then True
-        else case DB.lookupPkg db dN of
-            Nothing -> False
-            Just (DB.CP _ p) -> withinRange (DB.version p) dVR
+    in (dN == name) ||
+            (case DB.lookupPkg db dN of
+                Nothing -> False
+                Just (DB.CP _ p) -> withinRange (DB.version p) dVR)
 
 -- {{{1 Command type
 type Command a = ReaderT Opts IO a
@@ -226,12 +223,12 @@ withTempDirErrT fp func = let
         reWrapErrT (Left e) = throwError e
         reWrapErrT (Right v) = return v
     in do
-        r <- liftIO $ withTemporaryDirectory fp (\ p -> runErrorT $ func p)
+        r <- liftIO $ withTemporaryDirectory fp (runErrorT . func)
         reWrapErrT r
 
 exitOnErrors vs = let
         es = lefts vs
     in
-        if (not $ null $ lefts vs)
+        if not $ null $ lefts vs
             then liftIO $ mapM_ (hPutStrLn stderr) es >> exitFailure
             else return (rights vs)

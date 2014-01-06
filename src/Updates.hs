@@ -21,6 +21,7 @@ import Util.Misc
 
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip
+import Control.Arrow
 import Control.Monad
 import Control.Monad.Reader
 import Data.Maybe
@@ -37,7 +38,7 @@ updates = do
     entries <- liftIO $ liftM (Tar.read . GZip.decompress)
         (BS.readFile $ aD </> indexFileName)
     let nonBasePkgs = filter (not . isBasePkg) db
-    let pkgsNVers = map (\ p -> (pkgName p, pkgVersion p)) nonBasePkgs
+    let pkgsNVers = map (pkgName &&& pkgVersion) nonBasePkgs
     let availPkgs = catMaybes $ eMap extractPkgVer entries
     let outdated = filter
             (\ (p, v) -> maybe False (> v) (latestVer p availPkgs))
@@ -45,7 +46,7 @@ updates = do
     let printer = if aCS
             then printOutdatedIdx
             else printOutdated
-    liftIO $ mapM_ (flip printer availPkgs) outdated
+    liftIO $ mapM_ (`printer` availPkgs) outdated
 
 type PkgVer = (String, Version)
 
@@ -56,7 +57,7 @@ extractPkgVer e = let
         (pkg:ver':_) = map dropTrailingPathSeparator $ splitPath ep
         ver = simpleParse ver'
     in if isCabal && isJust ver
-        then Just $ (pkg, (fromJust ver))
+        then Just (pkg, fromJust ver)
         else Nothing
 
 latestVer p pvs = let
@@ -66,14 +67,15 @@ latestVer p pvs = let
         else Just $ maximum vs
 
 eMap _ Done = []
-eMap f (Next e es) = (f e):(eMap f es)
+eMap f (Next e es) = f e:eMap f es
+eMap _ (Fail _) = error "Failure to read index"
 
 printOutdated (p, v) avail = let
         l = fromJust $ latestVer p avail
     in
-        putStrLn $ p ++ ": " ++ (display v) ++ " (" ++ (display l) ++ ")"
+        putStrLn $ p ++ ": " ++ display v ++ " (" ++ display l ++ ")"
 
-printOutdatedIdx (p, v) avail = let
+printOutdatedIdx (p, _) avail = let
         l = fromJust $ latestVer p avail
     in
-        putStrLn $ p ++ "," ++ (display l)
+        putStrLn $ p ++ "," ++ display l

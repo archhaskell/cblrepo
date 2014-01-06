@@ -34,12 +34,12 @@ pkgBuild = do
     db <- cfgGet dbFile >>= liftIO . readDb
     pD <- cfgGet  $ patchDir . optsCmd
     pkgs <- cfgGet  $ pkgs . optsCmd
-    mapM (runErrorT . generatePkgBuild db pD) pkgs >>= exitOnErrors >> return ()
+    void $ mapM (runErrorT . generatePkgBuild db pD) pkgs >>= exitOnErrors
 
 -- TODO:
 -- generatePkgBuild :: CblDB -> String -> String -> ErrorT String IO ()
 generatePkgBuild db patchDir pkg = let
-        appendPkgVer = pkg ++ "," ++ (display $ pkgVersion $ fromJust $ lookupPkg db pkg)
+        appendPkgVer = pkg ++ "," ++ display (pkgVersion $ fromJust $ lookupPkg db pkg)
     in do
         maybe (throwError $ "Unknown package: " ++ pkg) (const $ return ()) (lookupPkg db pkg)
         genericPkgDesc <- withTempDirErrT "/tmp/cblrepo." (readCabal patchDir appendPkgVer)
@@ -53,10 +53,10 @@ generatePkgBuild db patchDir pkg = let
             hPKGBUILD <- openFile "PKGBUILD" WriteMode
             hPutDoc hPKGBUILD $ pretty archPkgWHash
             hClose hPKGBUILD
-            maybe (return ()) (\ pfn -> (runErrorT $ applyPatch "PKGBUILD" pfn) >> return ()) (apPkgbuildPatch archPkgWHash)
+            maybe (return ()) (void . runErrorT . applyPatch "PKGBUILD") (apPkgbuildPatch archPkgWHash)
             when (apHasLibrary archPkgWHash) $ do
                 hInstall <- openFile (apPkgName archPkgWHash <.> "install") WriteMode
                 let archInstall = aiFromAP archPkgWHash
                 hPutDoc hInstall $ pretty archInstall
                 hClose hInstall
-                maybe (return ()) (\ pfn -> (runErrorT $ applyPatch (apPkgName archPkgWHash <.> "install") pfn)>> return ()) (apInstallPatch archPkgWHash)
+                maybe (return ()) (void . runErrorT . applyPatch (apPkgName archPkgWHash <.> "install") ) (apInstallPatch archPkgWHash)

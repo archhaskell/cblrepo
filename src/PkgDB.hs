@@ -19,6 +19,7 @@
 module PkgDB where
 
 -- {{{1 imports
+import Control.Arrow
 import Control.Exception as CE
 import Control.Monad
 import Data.List
@@ -125,7 +126,7 @@ addPkg :: CblDB -> String -> Pkg -> CblDB
 addPkg db n p = nubBy cmp newdb
     where
         cmp (CP n1 _) (CP n2 _) = n1 == n2
-        newdb = (CP n p):db
+        newdb = CP n p:db
 
 addPkg2 :: CblDB -> CblPkg -> CblDB
 addPkg2 db (CP n p) = addPkg db n p
@@ -143,7 +144,7 @@ bumpRelease :: CblDB -> String -> CblDB
 bumpRelease db n = let
         doBump (CP n' p@RepoPkg { release = r }) = CP n' (p { release = nr })
             where
-                nr = show $ (read r) + 1
+                nr = show $ read r + (1 :: Int)
         doBump p = p
     in maybe db (addPkg2 db . doBump) (lookupPkg db n)
 
@@ -153,12 +154,12 @@ lookupPkg (p:db) n
     | n == pkgName p = Just p
     | otherwise = lookupPkg db n
 
-lookupDependants db n = filter (/= n) $ map pkgName $ filter (\ p -> doesDependOn p n) db
+lookupDependants db n = filter (/= n) $ map pkgName $ filter (`doesDependOn` n) db
     where
-        doesDependOn p n = n `elem` (map _depName $ pkgDeps p)
+        doesDependOn p n = n `elem` map _depName (pkgDeps p)
 
 transitiveDependants :: CblDB -> [String] -> [String]
-transitiveDependants db names = keepLast $ concat $ map transUsersOfOne names
+transitiveDependants db names = keepLast $ concatMap transUsersOfOne names
     where
         transUsersOfOne n = n : transitiveDependants db (lookupDependants db n)
         keepLast = reverse . nub . reverse
@@ -166,18 +167,19 @@ transitiveDependants db names = keepLast $ concat $ map transUsersOfOne names
 -- Todo: test
 checkDependants :: CblDB -> String -> V.Version -> [(String, Maybe P.Dependency)]
 checkDependants db n v = let
-        d1 = catMaybes $ map (lookupPkg db) (lookupDependants db n)
-        d2 = map (\ p -> (pkgName p, getDependencyOn n p)) d1
+        d1 = mapMaybe (lookupPkg db) (lookupDependants db n)
+        -- d2 = map (\ p -> (pkgName p, getDependencyOn n p)) d1
+        d2 = map (pkgName &&& getDependencyOn n ) d1
         fails = filter (not . V.withinRange v . _depVersionRange . fromJust . snd) d2
     in fails
 
 readDb :: FilePath -> IO CblDB
-readDb fp = (flip CE.catch)
+readDb fp = handle
     (\ e -> if isDoesNotExistError e
         then return emptyPkgDB
         else throwIO e)
     $ do
-        r <- (sequence . map decode . C.lines) `liftM` (C.readFile fp)
+        r <- (mapM decode . C.lines) `liftM` C.readFile fp
         case r of
             Just a -> return a
             Nothing -> fail "JSON parsing failed"
