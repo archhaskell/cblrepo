@@ -37,81 +37,81 @@ import System.Directory
 import Options.Applicative as OA
 
 -- -- {{{1 command line arguments
-argAppDir = strOption (long "appdir" <> value "" <> help "application data directory")
-argDbFile = strOption (long "db" <> value "cblrepo.db" <> help "package database")
-argDryRun = switch (short 'n' <> help "dry run")
+argAppDir = strOption (long "appdir" <> value "" <> help "Path to application data directory")
+argDbFile = strOption (long "db" <> value "cblrepo.db" <> help "Path to package database")
+argDryRun = switch (short 'n' <> help "Make no changes, (dry run)")
 
 cmdAddPkgOpts = CmdAdd
-    <$> strOption (long "patchdir" <> value "patches" <> help "location of patches (patches)")
-    <*> nullOption (long "ghc-version" <> reader readerGhcVersion <> value ghcDefVersion <> help "ghc version to use")
+    <$> strOption (long "patchdir" <> value "patches" <> help "Location of patches (patches)")
+    <*> nullOption (long "ghc-version" <> reader readerGhcVersion <> value ghcDefVersion <> help "GHC version to use")
     <*> many (nullOption (short 'g' <> long "ghc-pkg" <> OA.reader strPairArg <> metavar "PKG,VER" <> help "GHC base package (multiple)"))
-    <*> many (nullOption (short 'd' <> long "distro-pkg" <> OA.reader strTripleArg <> metavar "PKG,VER,REL" <> help "distro package (multiple)"))
-    <*> many (strOption (short 'u' <> long "cbl-url" <> metavar "URL" <> help "url of CABAL file (multiple)"))
+    <*> many (nullOption (short 'd' <> long "distro-pkg" <> OA.reader strTripleArg <> metavar "PKG,VER,REL" <> help "Distro package (multiple)"))
+    <*> many (strOption (short 'u' <> long "cbl-url" <> metavar "URL" <> help "URL of CABAL file (multiple)"))
     <*> many (strOption (short 'f' <> long "cbl-file" <> metavar "FILE" <> help "CABAL file (multiple)"))
     <*> arguments strPairArg (metavar "PKGNAME,VERSION ...")
 cmdAddPkgCmd = command "add" (info (helper <*> cmdAddPkgOpts)
-    (fullDesc <> progDesc "add a package to the database"))
+    (fullDesc <> progDesc "Add a package to the database"))
 
 cmdBumpPkgsOpts = CmdBumpPkgs
-    <$> switch (long "inclusive" <> help "include the listed packages")
+    <$> switch (long "inclusive" <> help "Include the listed packages")
     <*> arguments1 Just (metavar "PKGNAME ...")
 cmdBumpPkgsCmd = command "bump" (info (helper <*> cmdBumpPkgsOpts)
-    (fullDesc <> progDesc "bump packages that need it after updating the named packages"))
+    (fullDesc <> progDesc "Bump packages that need it after updating the named packages"))
 
 cmdBuildPkgsOpts = CmdBuildPkgs
     <$> arguments1 Just (metavar "PKGNAME ...")
 cmdBuildPkgsCmd = command "build" (info (helper <*> cmdBuildPkgsOpts)
-    (fullDesc <> progDesc "re-order packages into a good build order"))
+    (fullDesc <> progDesc "Re-order packages into a good build order"))
 
 cmdSyncOpts = CmdSync <$> switch (internal <> hidden)
 cmdSyncCmd = command "sync" (info (helper <*> cmdSyncOpts)
-    (fullDesc <> progDesc "update the index"))
+    (fullDesc <> progDesc "Update the index"))
 
 cmdVersionsOpts = CmdVersions
-    <$> switch (short 'l' <> long "latest" <> help "list only the latest version of packages")
+    <$> switch (short 'l' <> long "latest" <> help "List only the latest version of packages")
     <*> arguments1 Just (metavar "PKGNAME ...")
 cmdVersionsCmd = command "versions" (info (helper <*> cmdVersionsOpts)
-    (fullDesc <> progDesc "list available versions of packages"))
+    (fullDesc <> progDesc "List available versions of packages"))
 
 cmdUpdatesOpts = CmdUpdates
-    <$> switch (short 's' <> help "a shorter output suitable for scripting")
+    <$> switch (short 's' <> help "A shorter output suitable for scripting")
 cmdUpdatesCmd = command "updates" (info (helper <*> cmdUpdatesOpts)
-    (fullDesc <> progDesc "check for available updates"))
+    (fullDesc <> progDesc "Check for available updates"))
 
 cmdListPkgsOpts = CmdListPkgs
-    <$> switch (short 'g' <> long "ghc" <> help "list ghc packages")
-    <*> switch (short 'd' <> long "distro" <> help "list distro packages")
-    <*> switch (long "no-repo" <> help "do not list repo packages")
-    <*> switch (long "hackage" <> help "list in hackage format")
+    <$> switch (short 'g' <> long "ghc" <> help "List ghc packages")
+    <*> switch (short 'd' <> long "distro" <> help "List distro packages")
+    <*> switch (long "no-repo" <> help "Do not list repo packages")
+    <*> switch (long "hackage" <> help "List in hackage format")
     <*> arguments str (metavar "PKGNAME ...")
 cmdListPkgsCmd = command "list" (info (helper <*> cmdListPkgsOpts)
-    (fullDesc <> progDesc "list packages in repo"))
+    (fullDesc <> progDesc "List packages in repo"))
 
 cmdUrlsOpts = CmdUrls
     <$> arguments1 strPairArg (metavar "PKGNAME,VERSION ...")
 cmdUrlsCmd = command "urls" (info (helper <*> cmdUrlsOpts)
-    (fullDesc <> progDesc "list urls of CABAL files for the given packages"))
+    (fullDesc <> progDesc "List urls of CABAL files for the given packages"))
 
 cmdPkgBuildOpts = CmdPkgBuild
-    <$> nullOption (long "ghc-version" <> reader readerGhcVersion <> value ghcDefVersion <> help "ghc version to use in PKGBUILD")
-    <*> option (long "ghc-release" <> value 1 <> help "ghc release to use in PKGBUILD")
-    <*> strOption (long "patchdir" <> value "patches" <> help "location of patches (patches)")
+    <$> nullOption (long "ghc-version" <> reader readerGhcVersion <> value ghcDefVersion <> help "GHC version to use in PKGBUILD")
+    <*> option (long "ghc-release" <> value 1 <> help "GHC release to use in PKGBUILD")
+    <*> strOption (long "patchdir" <> value "patches" <> help "Location of patches (patches)")
     <*> arguments1 Just (metavar "PKGNAME ...")
 cmdPkgBuildCmd = command "pkgbuild" (info (helper <*> cmdPkgBuildOpts)
-    (fullDesc <> progDesc "create PKGBUILD other files necessary for an Arch package"))
+    (fullDesc <> progDesc "Create PKGBUILD other files necessary for an Arch package"))
 
 cmdConvertDbOpts = CmdConvertDb
-    <$> strOption (short 'i' <> long "indb" <> value "cblrepo.db" <> help "old database")
-    <*> strOption (short 'o' <> long "outdb" <> value "new-cblrepo.db" <> help "new database")
+    <$> strOption (short 'i' <> long "indb" <> value "cblrepo.db" <> help "Old database")
+    <*> strOption (short 'o' <> long "outdb" <> value "new-cblrepo.db" <> help "New database")
 cmdConvertDbCmd = command "convertdb" (info (helper <*> cmdConvertDbOpts)
-    (fullDesc <> progDesc "convert an old database to the new format"))
+    (fullDesc <> progDesc "Convert an old database to the new format"))
 
 cmdRemovePkgOpts = CmdRemovePkg
     <$> arguments1 Just (metavar "PKGNAME ...")
 cmdRemovePkgCmd = command "rm" (info (helper <*> cmdRemovePkgOpts)
-    (fullDesc <> progDesc "remove packages"))
+    (fullDesc <> progDesc "Remove packages"))
 
-argParser = info (helper <*> opts) (fullDesc <> header (progName ++ " v" ++ display version) <> progDesc "maintain a datatbase of dependencies of CABAL packages")
+argParser = info (helper <*> opts) (fullDesc <> header (progName ++ " v" ++ display version) <> progDesc "Maintain a datatbase of dependencies of CABAL packages")
     where
         opts = Opts <$> argAppDir <*> argDbFile <*> argDryRun
             <*> subparser (
