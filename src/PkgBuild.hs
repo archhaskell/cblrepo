@@ -1,5 +1,5 @@
 {-
- - Copyright 2011 Per Magnus Therning
+ - Copyright 2011-2014 Per Magnus Therning
  -
  - Licensed under the Apache License, Version 2.0 (the "License");
  - you may not use this file except in compliance with the License.
@@ -34,17 +34,17 @@ pkgBuild = do
     db <- cfgGet dbFile >>= liftIO . readDb
     pD <- cfgGet  $ patchDir . optsCmd
     pkgs <- cfgGet  $ pkgs . optsCmd
-    void $ mapM (runErrorT . generatePkgBuild db pD) pkgs >>= exitOnErrors
+    ghcVersion <- cfgGet $ ghcVer . optsCmd
+    ghcRelease <- cfgGet $ ghcRel . optsCmd
+    void $ mapM (runErrorT . generatePkgBuild ghcVersion ghcRelease db pD) pkgs >>= exitOnErrors
 
--- TODO:
--- generatePkgBuild :: CblDB -> String -> String -> ErrorT String IO ()
-generatePkgBuild db patchDir pkg = let
+generatePkgBuild ghcVer ghcRel db patchDir pkg = let
         appendPkgVer = pkg ++ "," ++ display (pkgVersion $ fromJust $ lookupPkg db pkg)
     in do
         maybe (throwError $ "Unknown package: " ++ pkg) (const $ return ()) (lookupPkg db pkg)
         genericPkgDesc <- withTempDirErrT "/tmp/cblrepo." (readCabal patchDir appendPkgVer)
-        pkgDescAndFlags <- either (const $ throwError ("Failed to finalize package: " ++ pkg)) return (finalizePkg db genericPkgDesc)
-        let archPkg = translate db (snd pkgDescAndFlags) (fst pkgDescAndFlags)
+        pkgDescAndFlags <- either (const $ throwError ("Failed to finalize package: " ++ pkg)) return (finalizePkg ghcVer db genericPkgDesc)
+        let archPkg = translate ghcVer ghcRel db (snd pkgDescAndFlags) (fst pkgDescAndFlags)
         archPkgWPatches <- liftIO $ addPatches patchDir archPkg
         archPkgWHash <- withTempDirErrT "/tmp/cblrepo." (addHashes archPkgWPatches)
         liftIO $ createDirectoryIfMissing False (apPkgName archPkgWHash)

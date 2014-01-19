@@ -289,7 +289,7 @@ instance Pretty (FlagName, Bool) where
 -- {{{1 translate
 -- TODO:
 --  • translation of extraLibDepends-libs to Arch packages
-translate db fa pd = let
+translate ghcVer ghcRel db fa pd = let
         ap = baseArchPkg
         (PackageName hkgName) = packageName pd
         pkgVer = packageVersion pd
@@ -300,8 +300,8 @@ translate db fa pd = let
         pkgDesc = synopsis pd
         url = if null (homepage pd) then "http://hackage.haskell.org/package/${_hkgname}" else homepage pd
         lic = display (license pd)
-        makeDepends = if hasLib then [] else ghcVersionDep : calcExactDeps db pd
-        depends = if hasLib then ghcVersionDep : calcExactDeps db pd else []
+        makeDepends = if hasLib then [] else ghcVersionDep ghcVer ghcRel : calcExactDeps db pd
+        depends = if hasLib then ghcVersionDep ghcVer ghcRel : calcExactDeps db pd else []
         extraLibDepends = maybe [] (extraLibs . libBuildInfo) (library pd)
         install = if hasLib then apShInstall ap else Nothing
     in ap

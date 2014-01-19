@@ -26,6 +26,7 @@ import Control.Monad.Error
 import Control.Monad.Reader
 import Data.Either
 import Data.List
+import Data.Version
 import Distribution.Compiler
 import Distribution.Package as P
 import Distribution.PackageDescription
@@ -35,6 +36,8 @@ import Distribution.System
 import Distribution.Text
 import Distribution.Verbosity
 import Distribution.Version
+import Options.Applicative
+import Safe (lastMay)
 import System.Directory
 import System.Exit
 import System.FilePath
@@ -42,6 +45,7 @@ import System.IO
 import System.Posix.Files
 import System.Process
 import System.Unix.Directory
+import Text.ParserCombinators.ReadP (readP_to_S)
 import qualified Data.ByteString.Lazy.Char8 as BS
 
 -- {{{1 dependency
@@ -61,17 +65,24 @@ printBrksOth  ((n, v), brks) = do
 progName = "cblrepo"
 dbName = progName ++ ".db"
 
-ghcVersion = Version [7, 6, 3] []
-ghcVersionDep = "ghc=" ++ display ghcVersion ++ "-1"
+ghcDefVersion = Version [7, 6, 3] []
+ghcVersionDep :: Version -> Int -> String
+ghcVersionDep ghcVer ghcRel = "ghc=" ++ display ghcVer ++ "-" ++ show ghcRel
 
 indexUrl = "http://hackage.haskell.org/packages/index.tar.gz"
 indexFileName = "index.tar.gz"
+
+-- {{{1 command line parser helpers
+readerGhcVersion :: String -> ReadM Version
+readerGhcVersion arg = case lastMay $ readP_to_S parseVersion arg of
+    Just (v, "") -> return v
+    _ -> fail $ "cannot parse value `" ++ arg ++ "`"
 
 -- {{{1 command line argument type
 
 data Cmds
     = CmdAdd
-        { patchDir :: FilePath, cmdAddGhcPkgs :: [(String,String)]
+        { patchDir :: FilePath, ghcVer :: Version, cmdAddGhcPkgs :: [(String,String)]
         , cmdAddDistroPkgs :: [(String, String, String)], cmdAddUrlCbls :: [String]
         , cmdAddFileCbls :: [FilePath], cmdAddCbls :: [(String, String)] }
     | CmdBuildPkgs { pkgs :: [String] }
@@ -83,7 +94,7 @@ data Cmds
         , hackageFmt :: Bool, pkgs :: [String] }
     | CmdUpdates { idxStyle :: Bool }
     | CmdUrls { pkgVers :: [(String, String)] }
-    | CmdPkgBuild { patchDir :: FilePath, pkgs :: [String] }
+    | CmdPkgBuild { ghcVer :: Version, ghcRel :: Int, patchDir :: FilePath, pkgs :: [String] }
     | CmdConvertDb { inDbFile :: FilePath, outDbFile :: FilePath }
     | CmdRemovePkg { pkgs :: [String] }
     deriving (Show)
@@ -195,7 +206,7 @@ readCabal patchDir loc tmpDir = let
         liftIO $ readPackageDescription silent cblFn
 
 -- {{{2 finalising
-finalizePkg db gpd = let
+finalizePkg ghcVersion db gpd = let
         n = ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) gpd
     in finalizePackageDescription
         [] -- no flags

@@ -1,5 +1,5 @@
 {-
- - Copyright 2011-2013 Per Magnus Therning
+ - Copyright 2011-2014 Per Magnus Therning
  -
  - Licensed under the Apache License, Version 2.0 (the "License");
  - you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 module Main where
 
+-- {{{1 imports
 import Add
 import BuildPkgs
 import BumpPkgs
@@ -42,6 +43,7 @@ argDryRun = switch (short 'n' <> help "dry run")
 
 cmdAddPkgOpts = CmdAdd
     <$> strOption (long "patchdir" <> value "patches" <> help "location of patches (patches)")
+    <*> nullOption (long "ghc-version" <> reader readerGhcVersion <> value ghcDefVersion <> help "ghc version to use")
     <*> many (nullOption (short 'g' <> long "ghc-pkg" <> OA.reader strPairArg <> metavar "PKG,VER" <> help "GHC base package (multiple)"))
     <*> many (nullOption (short 'd' <> long "distro-pkg" <> OA.reader strTripleArg <> metavar "PKG,VER,REL" <> help "distro package (multiple)"))
     <*> many (strOption (short 'u' <> long "cbl-url" <> metavar "URL" <> help "url of CABAL file (multiple)"))
@@ -91,7 +93,9 @@ cmdUrlsCmd = command "urls" (info (helper <*> cmdUrlsOpts)
     (fullDesc <> progDesc "list urls of CABAL files for the given packages"))
 
 cmdPkgBuildOpts = CmdPkgBuild
-    <$> strOption (long "patchdir" <> value "patches" <> help "location of patches (patches)")
+    <$> nullOption (long "ghc-version" <> reader readerGhcVersion <> value ghcDefVersion <> help "ghc version to use in PKGBUILD")
+    <*> option (long "ghc-release" <> value 1 <> help "ghc release to use in PKGBUILD")
+    <*> strOption (long "patchdir" <> value "patches" <> help "location of patches (patches)")
     <*> arguments1 Just (metavar "PKGNAME ...")
 cmdPkgBuildCmd = command "pkgbuild" (info (helper <*> cmdPkgBuildOpts)
     (fullDesc <> progDesc "create PKGBUILD other files necessary for an Arch package"))
