@@ -27,7 +27,6 @@ import Data.Maybe
 import Distribution.Text
 import Distribution.Version
 import System.FilePath
-import qualified Data.ByteString.Lazy.Char8 as BS
 
 versions :: Command ()
 versions = do
@@ -36,7 +35,7 @@ versions = do
     pkgs <- cfgGet $ pkgs . optsCmd
     let printFunc = if l then printLatestVersion else printAllVersions
     liftIO $ do
-        es <- liftM (Tar.read . GZip.decompress) (BS.readFile $ aD </> indexFileName)
+        es <- liftM (Tar.read . GZip.decompress) (readIndexFile aD)
         mapM_ (printFunc . findVersions es) pkgs
 
 findVersions es p = (p, findV p es [])

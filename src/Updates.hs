@@ -28,15 +28,13 @@ import Data.Maybe
 import Distribution.Text
 import Distribution.Version
 import System.FilePath
-import qualified Data.ByteString.Lazy.Char8 as BS
 
 updates :: Command ()
 updates = do
     db <- cfgGet dbFile >>= liftIO . readDb
     aD <- cfgGet appDir
     aCS <- cfgGet $ idxStyle .optsCmd
-    entries <- liftIO $ liftM (Tar.read . GZip.decompress)
-        (BS.readFile $ aD </> indexFileName)
+    entries <- liftIO $ liftM (Tar.read . GZip.decompress) (readIndexFile aD)
     let nonBasePkgs = filter (not . isBasePkg) db
     let pkgsNVers = map (pkgName &&& pkgVersion) nonBasePkgs
     let availPkgs = catMaybes $ eMap extractPkgVer entries

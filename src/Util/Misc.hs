@@ -21,6 +21,7 @@ import qualified PkgDB as DB
 
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip
+import Control.Exception (onException)
 import Control.Monad
 import Control.Monad.Error
 import Control.Monad.Reader
@@ -137,6 +138,11 @@ applyPatch origFilename patchFilename = do
 applyPatchIfExist origFilename patchFilename =
     liftIO (fileExist patchFilename) >>= flip when (applyPatch origFilename patchFilename)
 
+-- {{{1 index functions
+readIndexFile indexLocation = exitOnException
+    "Cannot open index file, have you run the 'sync' command?"
+    (BS.readFile $ indexLocation </> indexFileName)
+
 -- {{{1 package descriptions
 -- {{{2 readCabal
 data LocType = Url | Idx | File
@@ -179,8 +185,7 @@ readCabal patchDir loc tmpDir = let
 
             in do
                 aD <- liftIO $ getAppUserDataDirectory "cblrepo"
-                es <- liftM (Tar.read . GZip.decompress)
-                    (liftIO $ BS.readFile $ aD </> indexFileName)
+                es <- liftM (Tar.read . GZip.decompress) (liftIO $ readIndexFile aD)
                 e <- maybe (throwError $ "No entry for " ++ pkgStr)
                     return
                     (esFindEntry path es)
@@ -243,3 +248,5 @@ exitOnErrors vs = let
         if not $ null $ lefts vs
             then liftIO $ mapM_ (hPutStrLn stderr) es >> exitFailure
             else return (rights vs)
+
+exitOnException msg a = onException a $ hPutStrLn stderr msg >> exitFailure
