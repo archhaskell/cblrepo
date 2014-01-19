@@ -330,9 +330,8 @@ translate ghcVer ghcRel db fa pd = let
 --  correctly for all possible dependencies
 calcExactDeps db pd = let
         n = (\ (P.PackageName n) -> n ) (P.packageName pd)
-        remPkgs = map DB.pkgName (filter isGhcPkg db) ++ ghcPkgs ++ [n]
-        deps = filter (not . flip elem remPkgs) (map depName (buildDepends pd))
-        -- lookupPkgVer = display . DB.pkgVersion . fromJust . lookupPkg db
+        remPkgs = map DB.pkgName (filter isGhcPkg db) ++ [n]
+        deps = filter (not . (`elem` remPkgs)) (map depName (buildDepends pd))
         depString n = let
                 pkg = fromJust $ lookupPkg db n
                 name = map toLower $ DB.pkgName pkg
@@ -340,10 +339,6 @@ calcExactDeps db pd = let
                 rel = pkgRelease pkg
             in "haskell-" ++ name ++ "=" ++ ver ++ "-" ++ rel
     in map depString deps
-
--- {{{2 ghcPkgs
--- libraries included in GHC, but not marked as provided by the Arch package
-ghcPkgs = ["base", "bin-package-db", "ffi", "ghc", "ghc-binary", "ghc-prim", "haskell2010", "integer-gmp", "rts"]
 
 -- {{{1 stuff with patches
 -- {{{2 addPatches
