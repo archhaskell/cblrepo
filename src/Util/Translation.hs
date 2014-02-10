@@ -210,7 +210,7 @@ instance Pretty ArchPkg where
                         nest 4 (empty <$> (hsep . map (uncurry (<>)) $ zip (repeat $ text "-f") (map pretty flags)))
 
                 libPackageFunction = text "package() {" <>
-                    nest 4 empty <$>
+                    nest 4 (empty <$>
                         text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
                         empty <$>
                         text "install -D -m744 register.sh   \"${pkgdir}/usr/share/haskell/${pkgname}/register.sh\"" <$>
@@ -220,7 +220,7 @@ instance Pretty ArchPkg where
                         text "runhaskell Setup copy --destdir=\"${pkgdir}\"" <$>
                         maybe empty (\ _ -> text "install -D -m644 \"${_licensefile}\" \"${pkgdir}/usr/share/licenses/${pkgname}/LICENSE\"" <$>
                             text "rm -f \"${pkgdir}/usr/share/doc/${pkgname}/${_licensefile}\"") licenseFile
-                        <$>
+                        ) <$>
                     char '}'
 
                 exePackageFunction = text "package() {" <>
