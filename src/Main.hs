@@ -48,18 +48,18 @@ cmdAddPkgOpts = CmdAdd
     <*> many (nullOption (short 'd' <> long "distro-pkg" <> OA.reader strTripleArg <> metavar "PKG,VER,REL" <> help "Distro package (multiple)"))
     <*> many (strOption (short 'u' <> long "cbl-url" <> metavar "URL" <> help "URL of CABAL file (multiple)"))
     <*> many (strOption (short 'f' <> long "cbl-file" <> metavar "FILE" <> help "CABAL file (multiple)"))
-    <*> arguments strPairArg (metavar "PKGNAME,VERSION ...")
+    <*> many (argument strPairArg (metavar "PKGNAME,VERSION ..."))
 cmdAddPkgCmd = command "add" (info (helper <*> cmdAddPkgOpts)
     (fullDesc <> progDesc "Add a package to the database"))
 
 cmdBumpPkgsOpts = CmdBumpPkgs
     <$> switch (long "inclusive" <> help "Include the listed packages")
-    <*> arguments1 Just (metavar "PKGNAME ...")
+    <*> some (argument Just (metavar "PKGNAME ..."))
 cmdBumpPkgsCmd = command "bump" (info (helper <*> cmdBumpPkgsOpts)
     (fullDesc <> progDesc "Bump packages that need it after updating the named packages"))
 
 cmdBuildPkgsOpts = CmdBuildPkgs
-    <$> arguments1 Just (metavar "PKGNAME ...")
+    <$> some (argument Just (metavar "PKGNAME ..."))
 cmdBuildPkgsCmd = command "build" (info (helper <*> cmdBuildPkgsOpts)
     (fullDesc <> progDesc "Re-order packages into a good build order"))
 
@@ -69,7 +69,7 @@ cmdSyncCmd = command "sync" (info (helper <*> cmdSyncOpts)
 
 cmdVersionsOpts = CmdVersions
     <$> switch (short 'l' <> long "latest" <> help "List only the latest version of packages")
-    <*> arguments1 Just (metavar "PKGNAME ...")
+    <*> some (argument Just (metavar "PKGNAME ..."))
 cmdVersionsCmd = command "versions" (info (helper <*> cmdVersionsOpts)
     (fullDesc <> progDesc "List available versions of packages"))
 
@@ -83,12 +83,12 @@ cmdListPkgsOpts = CmdListPkgs
     <*> switch (short 'd' <> long "distro" <> help "List distro packages")
     <*> switch (long "no-repo" <> help "Do not list repo packages")
     <*> switch (long "hackage" <> help "List in hackage format")
-    <*> arguments str (metavar "PKGNAME ...")
+    <*> many (argument str (metavar "PKGNAME ..."))
 cmdListPkgsCmd = command "list" (info (helper <*> cmdListPkgsOpts)
     (fullDesc <> progDesc "List packages in repo"))
 
 cmdUrlsOpts = CmdUrls
-    <$> arguments1 strPairArg (metavar "PKGNAME,VERSION ...")
+    <$> some (argument strPairArg (metavar "PKGNAME,VERSION ..."))
 cmdUrlsCmd = command "urls" (info (helper <*> cmdUrlsOpts)
     (fullDesc <> progDesc "List urls of CABAL files for the given packages"))
 
@@ -96,7 +96,7 @@ cmdPkgBuildOpts = CmdPkgBuild
     <$> nullOption (long "ghc-version" <> reader readerGhcVersion <> value ghcDefVersion <> help "GHC version to use in PKGBUILD")
     <*> option (long "ghc-release" <> value 1 <> help "GHC release to use in PKGBUILD")
     <*> strOption (long "patchdir" <> value "patches" <> help "Location of patches (patches)")
-    <*> arguments1 Just (metavar "PKGNAME ...")
+    <*> some (argument Just (metavar "PKGNAME ..."))
 cmdPkgBuildCmd = command "pkgbuild" (info (helper <*> cmdPkgBuildOpts)
     (fullDesc <> progDesc "Create PKGBUILD other files necessary for an Arch package"))
 
@@ -107,7 +107,7 @@ cmdConvertDbCmd = command "convertdb" (info (helper <*> cmdConvertDbOpts)
     (fullDesc <> progDesc "Convert an old database to the new format"))
 
 cmdRemovePkgOpts = CmdRemovePkg
-    <$> arguments1 Just (metavar "PKGNAME ...")
+    <$> some (argument Just (metavar "PKGNAME ..."))
 cmdRemovePkgCmd = command "rm" (info (helper <*> cmdRemovePkgOpts)
     (fullDesc <> progDesc "Remove packages"))
 
