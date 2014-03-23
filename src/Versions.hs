@@ -30,9 +30,9 @@ import System.FilePath
 
 versions :: Command ()
 versions = do
-    aD <- cfgGet appDir
-    l <- cfgGet $ latest . optsCmd
-    pkgs <- cfgGet $ pkgs . optsCmd
+    aD <- optGet appDir
+    l <- optGet $ latest . optsCmd
+    pkgs <- optGet $ pkgs . optsCmd
     let printFunc = if l then printLatestVersion else printAllVersions
     liftIO $ do
         es <- liftM (Tar.read . GZip.decompress) (readIndexFile aD)

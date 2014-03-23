@@ -28,10 +28,10 @@ import System.Exit
 -- {{{1 remove
 remove :: Command ()
 remove = do
-    dbFn <- cfgGet dbFile
+    dbFn <- optGet dbFile
     db <- liftIO $ readDb dbFn
-    pkgs <- cfgGet $ pkgs . optsCmd
-    dR <- cfgGet dryRun
+    pkgs <- optGet $ pkgs . optsCmd
+    dR <- optGet dryRun
     liftIO $ either
         (\ s -> putStrLn s >> exitFailure)
         (\ newDb -> unless dR $ saveDb newDb dbFn)

@@ -26,12 +26,12 @@ import Distribution.PackageDescription
 
 listPkgs :: Command ()
 listPkgs = do
-    lG <- cfgGet $ listGhc . optsCmd
-    lD <- cfgGet $ listDistro . optsCmd
-    lR <- cfgGet $ noListRepo . optsCmd
-    lH <- cfgGet $ hackageFmt . optsCmd
-    ps <- cfgGet $ pkgs . optsCmd
-    db <- cfgGet dbFile >>= liftIO . readDb
+    lG <- optGet $ listGhc . optsCmd
+    lD <- optGet $ listDistro . optsCmd
+    lR <- optGet $ noListRepo . optsCmd
+    lH <- optGet $ hackageFmt . optsCmd
+    ps <- optGet $ pkgs . optsCmd
+    db <- optGet dbFile >>= liftIO . readDb
     let allPkgs = filter (pkgFilter lG lD lR) db
     let pkgsToList = if null ps
             then allPkgs

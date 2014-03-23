@@ -79,8 +79,22 @@ readerGhcVersion arg = case lastMay $ readP_to_S parseVersion arg of
     Just (v, "") -> return v
     _ -> fail $ "cannot parse value `" ++ arg ++ "`"
 
--- {{{1 command line argument type
+strPairArg :: Monad m => String -> m (String, String)
+strPairArg s = let
+        (s0, s1) = break (== ',') s
+    in if null s1 then error "Missing version" else return (s0, tail s1)
 
+strTripleArg :: Monad m => String -> m (String, String, String)
+strTripleArg s = let
+        (s0, r1) = break (== ',') s
+        (s1, r2) = break (== ',') (tail r1)
+    in return (s0, s1, tail r2)
+
+-- Helper for grabbing things out of the options
+optGet :: MonadReader o m => (o -> s) -> m s
+optGet f = liftM f ask
+
+-- {{{1 command line argument type
 data Cmds
     = CmdAdd
         { patchDir :: FilePath, ghcVer :: Version, cmdAddGhcPkgs :: [(String,String)]
@@ -106,16 +120,6 @@ data Opts = Opts
     , dryRun :: Bool
     , optsCmd :: Cmds
     } deriving (Show)
-
-strPairArg s = let
-        (s0, s1) = break (== ',') s
-    in if null s1 then error "Missing version" else return (s0, tail s1)
-strTripleArg s = let
-        (s0, r1) = break (== ',') s
-        (s1, r2) = break (== ',') (tail r1)
-    in return (s0, s1, tail r2)
-
-cfgGet f = liftM f ask
 
 -- {{{1 getFromURL
 getFromURL url fn = do

@@ -31,11 +31,11 @@ import Text.PrettyPrint.ANSI.Leijen
 
 pkgBuild :: Command ()
 pkgBuild = do
-    db <- cfgGet dbFile >>= liftIO . readDb
-    pD <- cfgGet  $ patchDir . optsCmd
-    pkgs <- cfgGet  $ pkgs . optsCmd
-    ghcVersion <- cfgGet $ ghcVer . optsCmd
-    ghcRelease <- cfgGet $ ghcRel . optsCmd
+    db <- optGet dbFile >>= liftIO . readDb
+    pD <- optGet  $ patchDir . optsCmd
+    pkgs <- optGet  $ pkgs . optsCmd
+    ghcVersion <- optGet $ ghcVer . optsCmd
+    ghcRelease <- optGet $ ghcRel . optsCmd
     void $ mapM (runErrorT . generatePkgBuild ghcVersion ghcRelease db pD) pkgs >>= exitOnErrors
 
 generatePkgBuild ghcVer ghcRel db patchDir pkg = let

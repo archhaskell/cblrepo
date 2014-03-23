@@ -23,6 +23,6 @@ import Control.Monad.Reader
 
 buildPkgs :: Command ()
 buildPkgs = do
-    db <- cfgGet dbFile >>= liftIO . readDb
-    pkgs <- cfgGet  $ pkgs . optsCmd
+    db <- optGet dbFile >>= liftIO . readDb
+    pkgs <- optGet  $ pkgs . optsCmd
     liftIO $ mapM_ putStrLn $ transitiveDependants db pkgs

@@ -31,9 +31,9 @@ import System.FilePath
 
 updates :: Command ()
 updates = do
-    db <- cfgGet dbFile >>= liftIO . readDb
-    aD <- cfgGet appDir
-    aCS <- cfgGet $ idxStyle .optsCmd
+    db <- optGet dbFile >>= liftIO . readDb
+    aD <- optGet appDir
+    aCS <- optGet $ idxStyle .optsCmd
     entries <- liftIO $ liftM (Tar.read . GZip.decompress) (readIndexFile aD)
     let nonBasePkgs = filter (not . isBasePkg) db
     let pkgsNVers = map (pkgName &&& pkgVersion) nonBasePkgs
