@@ -32,17 +32,18 @@ import Text.PrettyPrint.ANSI.Leijen
 pkgBuild :: Command ()
 pkgBuild = do
     db <- optGet dbFile >>= liftIO . readDb
+    aD <- optGet appDir
     pD <- optGet  $ patchDir . optsCmd
     pkgs <- optGet  $ pkgs . optsCmd
     ghcVersion <- optGet $ ghcVer . optsCmd
     ghcRelease <- optGet $ ghcRel . optsCmd
-    void $ mapM (runErrorT . generatePkgBuild ghcVersion ghcRelease db pD) pkgs >>= exitOnErrors
+    void $ mapM (runErrorT . generatePkgBuild ghcVersion ghcRelease db aD pD) pkgs >>= exitOnErrors
 
-generatePkgBuild ghcVer ghcRel db patchDir pkg = let
+generatePkgBuild ghcVer ghcRel db appDir patchDir pkg = let
         appendPkgVer = pkg ++ "," ++ display (pkgVersion $ fromJust $ lookupPkg db pkg)
     in do
         maybe (throwError $ "Unknown package: " ++ pkg) (const $ return ()) (lookupPkg db pkg)
-        genericPkgDesc <- withTempDirErrT "/tmp/cblrepo." (readCabal patchDir appendPkgVer)
+        genericPkgDesc <- withTempDirErrT "/tmp/cblrepo." (readCabal appDir patchDir appendPkgVer)
         pkgDescAndFlags <- either (const $ throwError ("Failed to finalize package: " ++ pkg)) return (finalizePkg ghcVer db genericPkgDesc)
         let archPkg = translate ghcVer ghcRel db (snd pkgDescAndFlags) (fst pkgDescAndFlags)
         archPkgWPatches <- liftIO $ addPatches patchDir archPkg

@@ -154,10 +154,10 @@ data LocType = Url | Idx | File
 -- | Read in a Cabal file.
 readCabalFromUrl = readCabal
 readCabalFromFile = readCabal
-readCabalFromIdx pd (p, v) = readCabal pd (p ++ "," ++ v)
+readCabalFromIdx ad pd (p, v) = readCabal ad pd (p ++ "," ++ v)
 
-readCabal :: FilePath -> String -> FilePath -> ErrorT String IO GenericPackageDescription
-readCabal patchDir loc tmpDir = let
+readCabal :: FilePath -> FilePath -> String -> FilePath -> ErrorT String IO GenericPackageDescription
+readCabal appDir patchDir loc tmpDir = let
         locType
             | isInfixOf "://" loc = Url
             | ',' `elem` loc = Idx
@@ -188,8 +188,7 @@ readCabal patchDir loc tmpDir = let
                         _ -> Nothing
 
             in do
-                aD <- liftIO $ getAppUserDataDirectory "cblrepo"
-                es <- liftM (Tar.read . GZip.decompress) (liftIO $ readIndexFile aD)
+                es <- liftM (Tar.read . GZip.decompress) (liftIO $ readIndexFile appDir)
                 e <- maybe (throwError $ "No entry for " ++ pkgStr)
                     return
                     (esFindEntry path es)

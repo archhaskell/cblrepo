@@ -42,15 +42,16 @@ add :: Command ()
 add = do
     dbFn <- optGet  dbFile
     db <- liftIO $ readDb dbFn
+    ad <- optGet appDir
     pd <- optGet  $ patchDir . optsCmd
     dr <- optGet  dryRun
     ghcVersion <- optGet $ ghcVer . optsCmd
     --
     ghcPkgs <- optGet  $ cmdAddGhcPkgs . optsCmd
     distroPkgs <- optGet  $ cmdAddDistroPkgs . optsCmd
-    genUrlPkgs <- optGet (cmdAddUrlCbls . optsCmd) >>= mapM (runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromUrl pd)
-    genFilePkgs <- optGet (cmdAddFileCbls . optsCmd) >>= mapM (runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromFile pd)
-    genIdxPkgs <- optGet (cmdAddCbls . optsCmd) >>= mapM (runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromIdx pd)
+    genUrlPkgs <- optGet (cmdAddUrlCbls . optsCmd) >>= mapM (runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromUrl ad pd)
+    genFilePkgs <- optGet (cmdAddFileCbls . optsCmd) >>= mapM (runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromFile ad pd)
+    genIdxPkgs <- optGet (cmdAddCbls . optsCmd) >>= mapM (runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromIdx ad pd)
     pkgs <- exitOnErrors $ argsToPkgType ghcPkgs distroPkgs (genUrlPkgs ++ genFilePkgs ++ genIdxPkgs)
     --
     let pkgNames = map getName pkgs
