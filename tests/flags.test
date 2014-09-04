@@ -1,0 +1,33 @@
+# a few tests of flags
+
+# {{{1 set-up
+  rm -f cblrepo.db
+>>>= 0
+
+cblrepo list
+>>>
+>>>= 0
+
+# {{{1 adding simple
+cblrepo add -f tests/data/flags-file0.cabal
+>>>
+>>>= 0
+
+cblrepo list
+>>>
+FlagsSimple0  1.2.3-1 (flag3 -flag2 -flag1 flag0)
+>>>= 0
+
+# {{{1 adding setting
+cblrepo add --flag -flag0 --flag flag1 -f tests/data/flags-file0.cabal
+>>>
+>>>= 0
+
+cblrepo list
+>>>
+FlagsSimple0  1.2.3-1 (flag3 -flag2 flag1 -flag0)
+>>>= 0
+
+# {{{1 clean-up
+  rm -f cblrepo.db
+>>>= 0
