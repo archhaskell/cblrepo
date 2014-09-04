@@ -28,6 +28,16 @@ cblrepo list
 FlagsSimple0  1.2.3-1 (flag3 -flag2 flag1 -flag0)
 >>>= 0
 
+# {{{1 adding without setting should keep flags
+cblrepo add -f tests/data/flags-file0.cabal
+>>>
+>>>= 0
+
+cblrepo list
+>>>
+FlagsSimple0  1.2.3-1 (flag3 -flag2 flag1 -flag0)
+>>>= 0
+
 # {{{1 clean-up
   rm -f cblrepo.db
 >>>= 0
