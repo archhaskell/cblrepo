@@ -1,0 +1,28 @@
+# a few tests related to generating source packages, run with shelltestrunner
+
+  rm -fr ,,test_appdir
+>>>= 0
+  mkdir ,,test_appdir
+>>>= 0
+
+cblrepo --appdir=,,test_appdir --db=,,test_appdir/testrepo.db sync
+>>>= 0
+
+cblrepo --appdir=,,test_appdir --db=,,test_appdir/testrepo.db add -g array,0 -g base,4.8 -g containers,0 -g directory,0 -g filepath,0 -g pretty,0 -g process,0 -g random,0
+>>>= 0
+
+# this version has a test on the GHC version, with ghc 7.6 it doesn't require
+# hashtables, with 7.8 it does
+cblrepo --appdir=,,test_appdir --db=,,test_appdir/testrepo.db add --ghc-version=7.6 gtk2hs-buildtools,0.12.5.2
+>>>
+>>>2
+>>>= 0
+
+cblrepo --appdir=,,test_appdir --db=,,test_appdir/testrepo.db pkgbuild --ghc-version=7.8 gtk2hs-buildtools
+>>>
+>>>2
+Failed to finalize package: gtk2hs-buildtools
+>>>= 1
+
+  rm -fr ,,test_appdir
+>>>= 0
