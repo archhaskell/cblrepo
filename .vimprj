@@ -1,3 +1,5 @@
+set makeprg=./Setup.hs\ build
+
 " {{{1 plugin config
 " let g:hdevtools_options = '-g -isrc -g -idist/build/autogen -g -hide-package -g monads-tf'
 let g:ghcmod_ghc_options = ['-isrc', '-idist/build/autogen']
