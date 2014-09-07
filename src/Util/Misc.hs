@@ -83,9 +83,9 @@ flagReader :: String -> ReadM (FlagName, Bool)
 flagReader ('-':xs) = return (FlagName xs, False)
 flagReader      xs  = return (FlagName xs, True)
 
-strPairArg :: Monad m => String -> m (String, String)
-strPairArg s = let
-        (s0, s1) = break (== ',') s
+strPairArg :: (Monad m, Eq a) => a -> [a] -> m ([a], [a])
+strPairArg c s = let
+        (s0, s1) = break (== c) s
     in if null s1 then error "Missing version" else return (s0, tail s1)
 
 strTripleArg :: Monad m => String -> m (String, String, String)
