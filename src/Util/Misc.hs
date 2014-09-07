@@ -79,20 +79,38 @@ readerGhcVersion arg = case lastMay $ readP_to_S parseVersion arg of
     Just (v, "") -> return v
     _ -> fail $ "cannot parse value `" ++ arg ++ "`"
 
-flagReader :: String -> ReadM (FlagName, Bool)
-flagReader ('-':xs) = return (FlagName xs, False)
-flagReader      xs  = return (FlagName xs, True)
+splitOnElem :: Eq a => a -> [a] -> [[a]]
+splitOnElem e l =
+    let p@(a, b) = break (== e) l
+    in case p of
+        (_, []) -> [a]
+        (_, _) -> a : splitOnElem e (tail b)
 
-strPairArg :: (Monad m, Eq a) => a -> [a] -> m ([a], [a])
-strPairArg c s = let
-        (s0, s1) = break (== c) s
-    in if null s1 then error "Missing version" else return (s0, tail s1)
+strPairArg :: Monad m => Char -> String -> m (String, String)
+strPairArg c s =
+    case splitOnElem c s of
+        [a, b] -> return (a, b)
+        _ -> error $ "Failed to parse pair: " ++ s
 
-strTripleArg :: Monad m => String -> m (String, String, String)
-strTripleArg s = let
-        (s0, r1) = break (== ',') s
-        (s1, r2) = break (== ',') (tail r1)
-    in return (s0, s1, tail r2)
+strTripleArg :: Monad m => Char -> String -> m (String, String, String)
+strTripleArg c s =
+    case splitOnElem c s of
+        [a, b, c] -> return (a, b, c)
+        _ -> error $ "Failed to parse triple: " ++ s
+
+strCblPkgArg :: Monad m => String -> m (String, String, FlagAssignment)
+strCblPkgArg s = let
+        flagReader ('-':cs) = (FlagName cs, False)
+        flagReader cs = (FlagName cs, True)
+        (vi:fs) = splitOnElem ':' s
+        fa = if null fs then [] else map flagReader (splitOnElem ',' $ head fs)
+    in do
+        (pkgName, version) <- strPairArg ',' vi
+        if null fs
+            then do
+                (pkgName, version) <- strPairArg ',' vi
+                return (pkgName, version, [])
+             else return (pkgName, version, fa)
 
 -- Helper for grabbing things out of the options
 optGet :: MonadReader o m => (o -> s) -> m s
@@ -101,9 +119,9 @@ optGet f = liftM f ask
 -- {{{1 command line argument type
 data Cmds
     = CmdAdd
-        { patchDir :: FilePath, ghcVer :: Version, flags :: FlagAssignment, cmdAddGhcPkgs :: [(String,String)]
+        { patchDir :: FilePath, ghcVer :: Version, cmdAddGhcPkgs :: [(String,String)]
         , cmdAddDistroPkgs :: [(String, String, String)], cmdAddUrlCbls :: [String]
-        , cmdAddFileCbls :: [FilePath], cmdAddCbls :: [(String, String)] }
+        , cmdAddFileCbls :: [FilePath], cmdAddCbls :: [(String, String, FlagAssignment)] }
     | CmdBuildPkgs { pkgs :: [String] }
     | CmdBumpPkgs { inclusive :: Bool, pkgs :: [String] }
     | CmdSync { unused :: Bool }
