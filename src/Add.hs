@@ -56,8 +56,9 @@ add = do
     pkgs <- exitOnErrors $ argsToPkgType ghcPkgs distroPkgs (genUrlPkgs ++ genFilePkgs ++ genIdxPkgs)
     --
     let pkgNames = map getName pkgs
-    let tmpDb = foldl delPkg db pkgNames
-    case addPkgs ghcVersion tmpDb fa pkgs of
+        tmpDb = foldl delPkg db pkgNames
+        flags = [("all", fa)]
+    case addPkgs ghcVersion tmpDb flags pkgs of
         Left (unsatisfiables, breaksOthers) -> liftIO (mapM_ printUnSat unsatisfiables >> mapM_ printBrksOth breaksOthers)
         Right newDb -> liftIO $ unless dr $ saveDb newDb dbFn
 
@@ -78,34 +79,42 @@ getName (DistroType n _ _) = n
 getName (RepoType gpd) = (\ (P.PackageName n) -> n) $ P.pkgName $ package $ packageDescription gpd
 
 -- {{{1 addPkgs
-addPkgs ghcVer db fa pkgs = let
-        (succs, fails) = partition (canBeAdded ghcVer db fa) pkgs
-        newDb = foldl addPkg2 db (map (pkgTypeToCblPkg ghcVer db fa) succs)
-        unsatisfieds = mapMaybe (finalizeToUnsatisfiableDeps ghcVer db fa) fails
+addPkgs :: Version -> CblDB -> [(String, FlagAssignment)] -> [PkgType] -> Either ([(String, [P.Dependency])], [((String, Version), [(String, Maybe P.Dependency)])]) CblDB
+addPkgs ghcVer db flags pkgs = let
+        (succs, fails) = partition (canBeAdded ghcVer db flags) pkgs
+        newDb = foldl addPkg2 db (map (pkgTypeToCblPkg ghcVer db flags) succs)
+        unsatisfieds = mapMaybe (finalizeToUnsatisfiableDeps ghcVer db flags) fails
         breaksOthers = mapMaybe (findBreaking db) fails
     in case (succs, fails) of
         (_, []) -> Right newDb
         ([], _) -> Left (unsatisfieds, breaksOthers)
-        (_, _) -> addPkgs ghcVer newDb fa fails
+        (_, _) -> addPkgs ghcVer newDb flags fails
 
+canBeAdded :: Version -> CblDB -> [(String, FlagAssignment)] -> PkgType -> Bool
 canBeAdded _ db _ (GhcType n v) = null $ checkDependants db n v
 canBeAdded _ db _ (DistroType n v _) = null $ checkDependants db n v
-canBeAdded ghcVer db fa (RepoType gpd) = let
+canBeAdded ghcVer db flags (RepoType gpd) =  finable && depsOK
+    where
+        fa = fromMaybe [] $ lookup "all" flags -- fixme
         finable = either (const False) (const True) (finalizePkg ghcVer db fa gpd)
         n = ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) gpd
         v = P.pkgVersion $ package $ packageDescription gpd
         depsOK = null $ checkDependants db n v
-    in finable && depsOK
 
 pkgTypeToCblPkg _ _ _ (GhcType n v) = createGhcPkg n v
 pkgTypeToCblPkg _ _ _ (DistroType n v r) = createDistroPkg n v r
-pkgTypeToCblPkg ghcVer db fa (RepoType gpd) = fromJust $ case finalizePkg ghcVer db fa gpd of
-    Right (pd, fa) -> Just $ createCblPkg pd fa
-    Left _ -> Nothing
+pkgTypeToCblPkg ghcVer db flags (RepoType gpd) =
+    let fa = fromMaybe [] $ lookup "all" flags -- fixme
+    in fromJust $ case finalizePkg ghcVer db fa gpd of
+       Right (pd, fa) -> Just $ createCblPkg pd fa
+       Left _ -> Nothing
 
-finalizeToUnsatisfiableDeps ghcVer db fa (RepoType gpd) = case finalizePkg ghcVer db fa gpd of
-    Left ds -> Just (((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) gpd, ds)
-    _ -> Nothing
+finalizeToUnsatisfiableDeps ghcVer db flags (RepoType gpd) =
+    let fa = fromMaybe [] $ lookup "all" flags -- fixme
+    in case finalizePkg ghcVer db fa gpd of
+       Left ds -> Just (((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) gpd, ds)
+       _ -> Nothing
+
 finalizeToUnsatisfiableDeps _ _ _ _ = Nothing
 
 findBreaking db (GhcType n v) = let
