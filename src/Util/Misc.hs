@@ -97,6 +97,14 @@ strTripleArg c s =
         [a, b, c] -> return (a, b, c)
         _ -> error $ "Failed to parse triple: " ++ s
 
+strCblFileArg :: String -> ReadM (FilePath, FlagAssignment)
+strCblFileArg s = let
+        flagReader ('-':cs) = (FlagName cs, False)
+        flagReader cs = (FlagName cs, True)
+        (fn:fs) = splitOnElem ':' s
+        fa = if null fs then [] else map flagReader (splitOnElem ',' $ head fs)
+    in return (fn, fa)
+
 strCblPkgArg :: Monad m => String -> m (String, String, FlagAssignment)
 strCblPkgArg s = let
         flagReader ('-':cs) = (FlagName cs, False)
@@ -119,7 +127,7 @@ optGet f = liftM f ask
 data Cmds
     = CmdAdd
         { patchDir :: FilePath, ghcVer :: Version, cmdAddGhcPkgs :: [(String,String)]
-        , cmdAddDistroPkgs :: [(String, String, String)], cmdAddFileCbls :: [FilePath]
+        , cmdAddDistroPkgs :: [(String, String, String)], cmdAddFileCbls :: [(FilePath, FlagAssignment)]
         , cmdAddCbls :: [(String, String, FlagAssignment)] }
     | CmdBuildPkgs { pkgs :: [String] }
     | CmdBumpPkgs { inclusive :: Bool, pkgs :: [String] }

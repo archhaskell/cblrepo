@@ -52,7 +52,7 @@ add = do
     --
     ghcPkgs <- optGet  $ cmdAddGhcPkgs . optsCmd
     distroPkgs <- optGet  $ cmdAddDistroPkgs . optsCmd
-    genFilePkgs <- optGet (cmdAddFileCbls . optsCmd) >>= mapM (runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromFile ad pd)
+    genFilePkgs <- optGet (cmdAddFileCbls . optsCmd) >>= mapM ((runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromFile ad pd) . fst)
     genIdxPkgs <- mapM ((runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromIdx ad pd) . (\ (a, b, _) -> (a, b))) idxPkgs
     pkgs <- exitOnErrors $ argsToPkgType ghcPkgs distroPkgs (genFilePkgs ++ genIdxPkgs)
     --
