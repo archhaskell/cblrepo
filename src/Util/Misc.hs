@@ -26,7 +26,6 @@ import Control.Monad
 import Control.Monad.Error
 import Control.Monad.Reader
 import Data.Either
-import Data.List
 import Data.Version
 import Distribution.Compiler
 import Distribution.Package as P
@@ -120,8 +119,8 @@ optGet f = liftM f ask
 data Cmds
     = CmdAdd
         { patchDir :: FilePath, ghcVer :: Version, cmdAddGhcPkgs :: [(String,String)]
-        , cmdAddDistroPkgs :: [(String, String, String)], cmdAddUrlCbls :: [String]
-        , cmdAddFileCbls :: [FilePath], cmdAddCbls :: [(String, String, FlagAssignment)] }
+        , cmdAddDistroPkgs :: [(String, String, String)], cmdAddFileCbls :: [FilePath]
+        , cmdAddCbls :: [(String, String, FlagAssignment)] }
     | CmdBuildPkgs { pkgs :: [String] }
     | CmdBumpPkgs { inclusive :: Bool, pkgs :: [String] }
     | CmdSync { unused :: Bool }
@@ -171,26 +170,20 @@ readIndexFile indexLocation = exitOnException
 
 -- {{{1 package descriptions
 -- {{{2 readCabal
-data LocType = Url | Idx | File
+data LocType = Idx | File
 
 -- | Read in a Cabal file.
-readCabalFromUrl = readCabal
 readCabalFromFile = readCabal
 readCabalFromIdx ad pd (p, v) = readCabal ad pd (p ++ "," ++ v)
 
 readCabal :: FilePath -> FilePath -> String -> FilePath -> ErrorT String IO GenericPackageDescription
 readCabal appDir patchDir loc tmpDir = let
         locType
-            | isInfixOf "://" loc = Url
             | ',' `elem` loc = Idx
             | otherwise = File
 
         copyCabal tmpDir loc = copyFile loc fn >> return fn
             where fn = tmpDir </> takeFileName loc
-
-        downloadCabal tmpDir loc = getFromURL loc fn >> return fn
-            where
-                fn = tmpDir </> takeFileName loc
 
         extractCabal tmpDir loc = let
                 (p, _: v) = span (/= ',') loc
@@ -229,7 +222,6 @@ readCabal appDir patchDir loc tmpDir = let
         cblFn <- case locType of
             File -> liftIO $ copyCabal tmpDir loc
             Idx -> extractCabal tmpDir loc
-            Url -> liftIO $ downloadCabal tmpDir loc
         pn <- liftIO $ extractName cblFn
         let patchFn = patchDir </> pn <.> "cabal"
         applyPatchIfExist cblFn patchFn

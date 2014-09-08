@@ -46,7 +46,6 @@ cmdAddPkgOpts = CmdAdd
     <*> nullOption (long "ghc-version" <> reader readerGhcVersion <> value ghcDefVersion <> help "GHC version to use")
     <*> many (nullOption (short 'g' <> long "ghc-pkg" <> OA.reader (strPairArg ',') <> metavar "PKG,VER" <> help "GHC base package (multiple)"))
     <*> many (nullOption (short 'd' <> long "distro-pkg" <> OA.reader (strTripleArg ',') <> metavar "PKG,VER,REL" <> help "Distro package (multiple)"))
-    <*> many (strOption (short 'u' <> long "cbl-url" <> metavar "URL" <> help "URL of CABAL file (multiple)"))
     <*> many (strOption (short 'f' <> long "cbl-file" <> metavar "FILE" <> help "CABAL file (multiple)"))
     <*> many (argument strCblPkgArg (metavar "PKGNAME,VERSION[:flag,-flag] ..."))
 
