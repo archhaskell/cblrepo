@@ -19,7 +19,7 @@ FlagsSimple0  1.2.3-1 (flag3 -flag2 -flag1 flag0)
 >>>= 0
 
 # {{{1 adding setting
-cblrepo add --flag -flag0 --flag flag1 -f tests/data/flags-file0.cabal
+cblrepo add -f tests/data/flags-file0.cabal:-flag0,flag1
 >>>
 >>>= 0
 

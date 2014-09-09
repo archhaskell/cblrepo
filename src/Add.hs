@@ -30,6 +30,7 @@ import Distribution.Version
 import qualified Distribution.Package as P
 import Control.Arrow
 import Data.Monoid
+import Data.Either
 
 -- {{{1 types
 data PkgType
@@ -47,11 +48,12 @@ add = do
     pd <- optGet  $ patchDir . optsCmd
     dr <- optGet  dryRun
     ghcVersion <- optGet $ ghcVer . optsCmd
+    filePkgs <- optGet $ cmdAddFileCbls . optsCmd
     idxPkgs <- optGet $ cmdAddCbls . optsCmd
     --
     ghcPkgs <- optGet  $ map (uncurry GhcType) . cmdAddGhcPkgs . optsCmd
     distroPkgs <- optGet $ map (\ (n, v, r) -> DistroType n v r) . cmdAddDistroPkgs . optsCmd
-    genFilePkgs <- optGet (cmdAddFileCbls . optsCmd) >>= mapM ((runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromFile ad pd) . fst)
+    genFilePkgs <- mapM ((runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromFile ad pd) . fst) filePkgs
     genIdxPkgs <- mapM ((runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromIdx ad pd) . (\ (a, b, _) -> (a, b))) idxPkgs
     genPkgs <- liftM (map RepoType) $ exitOnErrors (genFilePkgs ++ genIdxPkgs)
     --
@@ -59,8 +61,9 @@ add = do
         pkgNames = map getName pkgs
         tmpDb = foldl delPkg db pkgNames
         oldFlags = map (maybe ([], []) (pkgName &&& pkgFlags) . lookupPkg db . getName) pkgs
-        argFlags = map (\ (a, _, b) -> (a, b)) idxPkgs
-        flags = combineFlags argFlags oldFlags
+        fileFlags = map (\ (pkg, (_, fa)) -> ((\ (P.PackageName n) -> n) $ P.packageName pkg, fa)) (zip (rights genFilePkgs) filePkgs)
+        idxFlags = map (\ (a, _, b) -> (a, b)) idxPkgs
+        flags = fileFlags `combineFlags` idxFlags `combineFlags` oldFlags
     case addPkgs ghcVersion tmpDb flags pkgs of
         Left (unsatisfiables, breaksOthers) -> liftIO (mapM_ printUnSat unsatisfiables >> mapM_ printBrksOth breaksOthers)
         Right newDb -> liftIO $ unless dr $ saveDb newDb dbFn
