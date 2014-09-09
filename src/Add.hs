@@ -53,9 +53,10 @@ add = do
     distroPkgs <- optGet $ map (\ (n, v, r) -> DistroType n v r) . cmdAddDistroPkgs . optsCmd
     genFilePkgs <- optGet (cmdAddFileCbls . optsCmd) >>= mapM ((runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromFile ad pd) . fst)
     genIdxPkgs <- mapM ((runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromIdx ad pd) . (\ (a, b, _) -> (a, b))) idxPkgs
-    pkgs <- liftM ((ghcPkgs ++ distroPkgs) ++) (exitOnErrors $ argsToPkgType (genFilePkgs ++ genIdxPkgs))
+    genPkgs <- liftM (map RepoType) $ exitOnErrors (genFilePkgs ++ genIdxPkgs)
     --
-    let pkgNames = map getName pkgs
+    let pkgs = ghcPkgs ++ distroPkgs ++ genPkgs
+        pkgNames = map getName pkgs
         tmpDb = foldl delPkg db pkgNames
         oldFlags = map (maybe ([], []) (pkgName &&& pkgFlags) . lookupPkg db . getName) pkgs
         argFlags = map (\ (a, _, b) -> (a, b)) idxPkgs
@@ -63,10 +64,6 @@ add = do
     case addPkgs ghcVersion tmpDb flags pkgs of
         Left (unsatisfiables, breaksOthers) -> liftIO (mapM_ printUnSat unsatisfiables >> mapM_ printBrksOth breaksOthers)
         Right newDb -> liftIO $ unless dr $ saveDb newDb dbFn
-
-argsToPkgType repoPkgs = let
-        toRepoType = either Left (Right . RepoType)
-    in map toRepoType repoPkgs
 
 getName (GhcType n _) = n
 getName (DistroType n _ _) = n
