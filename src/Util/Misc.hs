@@ -101,8 +101,15 @@ ghcPkgArgReader :: String -> ReadM (String, Version)
 ghcPkgArgReader s = do
     (pkgName, verStr) <- strPairArg ',' s
     case simpleParse verStr of
-        Nothing -> fail $ "Failed to parse version: " ++ s
+        Nothing -> fail $ "Failed to parse version in " ++ s
         Just v -> return (pkgName, v)
+
+distroPkgArgReader :: String -> ReadM (String, Version, String)
+distroPkgArgReader s = do
+    (pkgName, verStr, revStr) <- strTripleArg ',' s
+    case simpleParse verStr of
+        Nothing -> fail $ "Failed to parse version in " ++ s
+        Just v -> return (pkgName, v, revStr)
 
 strCblFileArg :: String -> ReadM (FilePath, FlagAssignment)
 strCblFileArg s = let
@@ -134,7 +141,7 @@ optGet f = liftM f ask
 data Cmds
     = CmdAdd
         { patchDir :: FilePath, ghcVer :: Version, cmdAddGhcPkgs :: [(String, Version)]
-        , cmdAddDistroPkgs :: [(String, String, String)], cmdAddFileCbls :: [(FilePath, FlagAssignment)]
+        , cmdAddDistroPkgs :: [(String, Version, String)], cmdAddFileCbls :: [(FilePath, FlagAssignment)]
         , cmdAddCbls :: [(String, String, FlagAssignment)] }
     | CmdBuildPkgs { pkgs :: [String] }
     | CmdBumpPkgs { inclusive :: Bool, pkgs :: [String] }

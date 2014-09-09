@@ -26,7 +26,6 @@ import Control.Monad.Error
 import Data.List
 import Data.Maybe
 import Distribution.PackageDescription
-import Distribution.Text
 import Distribution.Version
 import qualified Distribution.Package as P
 import Control.Arrow
@@ -51,10 +50,10 @@ add = do
     idxPkgs <- optGet $ cmdAddCbls . optsCmd
     --
     ghcPkgs <- optGet  $ map (uncurry GhcType) . cmdAddGhcPkgs . optsCmd
-    distroPkgs <- optGet  $ cmdAddDistroPkgs . optsCmd
+    distroPkgs <- optGet $ map (\ (n, v, r) -> DistroType n v r) . cmdAddDistroPkgs . optsCmd
     genFilePkgs <- optGet (cmdAddFileCbls . optsCmd) >>= mapM ((runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromFile ad pd) . fst)
     genIdxPkgs <- mapM ((runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromIdx ad pd) . (\ (a, b, _) -> (a, b))) idxPkgs
-    pkgs <- liftM (ghcPkgs ++) (exitOnErrors $ argsToPkgType distroPkgs (genFilePkgs ++ genIdxPkgs))
+    pkgs <- liftM ((ghcPkgs ++ distroPkgs) ++) (exitOnErrors $ argsToPkgType (genFilePkgs ++ genIdxPkgs))
     --
     let pkgNames = map getName pkgs
         tmpDb = foldl delPkg db pkgNames
@@ -65,13 +64,9 @@ add = do
         Left (unsatisfiables, breaksOthers) -> liftIO (mapM_ printUnSat unsatisfiables >> mapM_ printBrksOth breaksOthers)
         Right newDb -> liftIO $ unless dr $ saveDb newDb dbFn
 
-argsToPkgType distroPkgs repoPkgs = let
-        toDistroType (n, v, r) = maybe
-            (Left $ "Not a valid version given for " ++ n ++ " (" ++ v ++ ")")
-            (\ v' -> Right $ DistroType n v' r)
-            (simpleParse v :: Maybe Version)
+argsToPkgType repoPkgs = let
         toRepoType = either Left (Right . RepoType)
-    in map toDistroType distroPkgs ++ map toRepoType repoPkgs
+    in map toRepoType repoPkgs
 
 getName (GhcType n _) = n
 getName (DistroType n _ _) = n
