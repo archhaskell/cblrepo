@@ -44,7 +44,7 @@ argDryRun = switch (short 'n' <> help "Make no changes, (dry run)")
 cmdAddPkgOpts = CmdAdd
     <$> strOption (long "patchdir" <> value "patches" <> help "Location of patches (patches)")
     <*> nullOption (long "ghc-version" <> reader readerGhcVersion <> value ghcDefVersion <> help "GHC version to use")
-    <*> many (nullOption (short 'g' <> long "ghc-pkg" <> OA.reader (strPairArg ',') <> metavar "PKG,VER" <> help "GHC base package (multiple)"))
+    <*> many (option (short 'g' <> long "ghc-pkg" <> reader ghcPkgArgReader <> metavar "PKG,VER" <> help "GHC base package (multiple)"))
     <*> many (nullOption (short 'd' <> long "distro-pkg" <> OA.reader (strTripleArg ',') <> metavar "PKG,VER,REL" <> help "Distro package (multiple)"))
     <*> many (option (short 'f' <> long "cbl-file" <> reader strCblFileArg <> metavar "FILE[:flag,-flag]" <> help "CABAL file (multiple)"))
     <*> many (argument strCblPkgArg (metavar "PKGNAME,VERSION[:flag,-flag] ..."))

@@ -97,6 +97,13 @@ strTripleArg c s =
         [a, b, c] -> return (a, b, c)
         _ -> error $ "Failed to parse triple: " ++ s
 
+ghcPkgArgReader :: String -> ReadM (String, Version)
+ghcPkgArgReader s = do
+    (pkgName, verStr) <- strPairArg ',' s
+    case simpleParse verStr of
+        Nothing -> fail $ "Failed to parse version: " ++ s
+        Just v -> return (pkgName, v)
+
 strCblFileArg :: String -> ReadM (FilePath, FlagAssignment)
 strCblFileArg s = let
         flagReader ('-':cs) = (FlagName cs, False)
@@ -126,7 +133,7 @@ optGet f = liftM f ask
 -- {{{1 command line argument type
 data Cmds
     = CmdAdd
-        { patchDir :: FilePath, ghcVer :: Version, cmdAddGhcPkgs :: [(String,String)]
+        { patchDir :: FilePath, ghcVer :: Version, cmdAddGhcPkgs :: [(String, Version)]
         , cmdAddDistroPkgs :: [(String, String, String)], cmdAddFileCbls :: [(FilePath, FlagAssignment)]
         , cmdAddCbls :: [(String, String, FlagAssignment)] }
     | CmdBuildPkgs { pkgs :: [String] }

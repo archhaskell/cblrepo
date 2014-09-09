@@ -50,11 +50,11 @@ add = do
     ghcVersion <- optGet $ ghcVer . optsCmd
     idxPkgs <- optGet $ cmdAddCbls . optsCmd
     --
-    ghcPkgs <- optGet  $ cmdAddGhcPkgs . optsCmd
+    ghcPkgs <- optGet  $ map (uncurry GhcType) . cmdAddGhcPkgs . optsCmd
     distroPkgs <- optGet  $ cmdAddDistroPkgs . optsCmd
     genFilePkgs <- optGet (cmdAddFileCbls . optsCmd) >>= mapM ((runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromFile ad pd) . fst)
     genIdxPkgs <- mapM ((runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromIdx ad pd) . (\ (a, b, _) -> (a, b))) idxPkgs
-    pkgs <- exitOnErrors $ argsToPkgType ghcPkgs distroPkgs (genFilePkgs ++ genIdxPkgs)
+    pkgs <- liftM (ghcPkgs ++) (exitOnErrors $ argsToPkgType distroPkgs (genFilePkgs ++ genIdxPkgs))
     --
     let pkgNames = map getName pkgs
         tmpDb = foldl delPkg db pkgNames
@@ -65,17 +65,13 @@ add = do
         Left (unsatisfiables, breaksOthers) -> liftIO (mapM_ printUnSat unsatisfiables >> mapM_ printBrksOth breaksOthers)
         Right newDb -> liftIO $ unless dr $ saveDb newDb dbFn
 
-argsToPkgType ghcPkgs distroPkgs repoPkgs = let
-        toGhcType (n, v) = maybe
-            (Left $ "Not a valid version given for " ++ n ++ " (" ++ v ++ ")")
-            (Right . GhcType n)
-            (simpleParse v :: Maybe Version)
+argsToPkgType distroPkgs repoPkgs = let
         toDistroType (n, v, r) = maybe
             (Left $ "Not a valid version given for " ++ n ++ " (" ++ v ++ ")")
             (\ v' -> Right $ DistroType n v' r)
             (simpleParse v :: Maybe Version)
         toRepoType = either Left (Right . RepoType)
-    in map toGhcType ghcPkgs ++ map toDistroType distroPkgs ++ map toRepoType repoPkgs
+    in map toDistroType distroPkgs ++ map toRepoType repoPkgs
 
 getName (GhcType n _) = n
 getName (DistroType n _ _) = n
