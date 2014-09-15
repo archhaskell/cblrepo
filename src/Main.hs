@@ -43,10 +43,10 @@ argDryRun = switch (short 'n' <> help "Make no changes, (dry run)")
 
 cmdAddPkgOpts = CmdAdd
     <$> strOption (long "patchdir" <> value "patches" <> help "Location of patches (patches)")
-    <*> nullOption (long "ghc-version" <> reader readerGhcVersion <> value ghcDefVersion <> help "GHC version to use")
-    <*> many (option (short 'g' <> long "ghc-pkg" <> reader ghcPkgArgReader <> metavar "PKG,VER" <> help "GHC base package (multiple)"))
-    <*> many (option (short 'd' <> long "distro-pkg" <> reader distroPkgArgReader <> metavar "PKG,VER,REL" <> help "Distro package (multiple)"))
-    <*> many (option (short 'f' <> long "cbl-file" <> reader strCblFileArg <> metavar "FILE[:flag,-flag]" <> help "CABAL file (multiple)"))
+    <*> option readerGhcVersion (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use")
+    <*> many (option ghcPkgArgReader (short 'g' <> long "ghc-pkg" <> metavar "PKG,VER" <> help "GHC base package (multiple)"))
+    <*> many (option distroPkgArgReader (short 'd' <> long "distro-pkg" <> metavar "PKG,VER,REL" <> help "Distro package (multiple)"))
+    <*> many (option strCblFileArg (short 'f' <> long "cbl-file" <> metavar "FILE[:flag,-flag]" <> help "CABAL file (multiple)"))
     <*> many (argument strCblPkgArg (metavar "PKGNAME,VERSION[:flag,-flag] ..."))
 
 cmdAddPkgCmd = command "add" (info (helper <*> cmdAddPkgOpts)
@@ -93,8 +93,8 @@ cmdUrlsCmd = command "urls" (info (helper <*> cmdUrlsOpts)
     (fullDesc <> progDesc "List urls of CABAL files for the given packages"))
 
 cmdPkgBuildOpts = CmdPkgBuild
-    <$> nullOption (long "ghc-version" <> reader readerGhcVersion <> value ghcDefVersion <> help "GHC version to use in PKGBUILD")
-    <*> option (long "ghc-release" <> value 1 <> help "GHC release to use in PKGBUILD")
+    <$> option readerGhcVersion (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use in PKGBUILD")
+    <*> option auto (long "ghc-release" <> value 1 <> help "GHC release to use in PKGBUILD")
     <*> strOption (long "patchdir" <> value "patches" <> help "Location of patches (patches)")
     <*> some (argument Just (metavar "PKGNAME ..."))
 cmdPkgBuildCmd = command "pkgbuild" (info (helper <*> cmdPkgBuildOpts)
