@@ -43,11 +43,11 @@ argDryRun = switch (short 'n' <> help "Make no changes, (dry run)")
 
 cmdAddPkgOpts = CmdAdd
     <$> strOption (long "patchdir" <> value "patches" <> help "Location of patches (patches)")
-    <*> option readerGhcVersion (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use")
+    <*> option ghcVersionArgReader (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use")
     <*> many (option ghcPkgArgReader (short 'g' <> long "ghc-pkg" <> metavar "PKG,VER" <> help "GHC base package (multiple)"))
     <*> many (option distroPkgArgReader (short 'd' <> long "distro-pkg" <> metavar "PKG,VER,REL" <> help "Distro package (multiple)"))
-    <*> many (option strCblFileArg (short 'f' <> long "cbl-file" <> metavar "FILE[:flag,-flag]" <> help "CABAL file (multiple)"))
-    <*> many (argument strCblPkgArg (metavar "PKGNAME,VERSION[:flag,-flag] ..."))
+    <*> many (option strCblFileArgReader (short 'f' <> long "cbl-file" <> metavar "FILE[:flag,-flag]" <> help "CABAL file (multiple)"))
+    <*> many (argument strCblPkgArgReader (metavar "PKGNAME,VERSION[:flag,-flag] ..."))
 
 cmdAddPkgCmd = command "add" (info (helper <*> cmdAddPkgOpts)
     (fullDesc <> progDesc "Add a package to the database"))
@@ -88,12 +88,12 @@ cmdListPkgsCmd = command "list" (info (helper <*> cmdListPkgsOpts)
     (fullDesc <> progDesc "List packages in repo"))
 
 cmdUrlsOpts = CmdUrls
-    <$> some (option (strPairArg ',') (metavar "PKGNAME,VERSION ..."))
+    <$> some (option pkgNVersionArgReader (metavar "PKGNAME,VERSION ..."))
 cmdUrlsCmd = command "urls" (info (helper <*> cmdUrlsOpts)
     (fullDesc <> progDesc "List urls of CABAL files for the given packages"))
 
 cmdPkgBuildOpts = CmdPkgBuild
-    <$> option readerGhcVersion (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use in PKGBUILD")
+    <$> option ghcVersionArgReader (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use in PKGBUILD")
     <*> option auto (long "ghc-release" <> value 1 <> help "GHC release to use in PKGBUILD")
     <*> strOption (long "patchdir" <> value "patches" <> help "Location of patches (patches)")
     <*> some (strArgument (metavar "PKGNAME ..."))

@@ -74,47 +74,12 @@ indexUrl = "http://hackage.haskell.org/packages/index.tar.gz"
 indexFileName = "index.tar.gz"
 
 -- {{{1 command line parser helpers
-readerGhcVersion :: ReadM Version
-readerGhcVersion = do
-    arg <- readerAsk
-    case lastMay $ readP_to_S parseVersion arg of
-        Just (v, "") -> return v
-        _ -> fail $ "cannot parse value `" ++ arg ++ "`"
-
-splitOnElem :: Eq a => a -> [a] -> [[a]]
-splitOnElem e l =
-    let p@(a, b) = break (== e) l
-    in case p of
-        (_, []) -> [a]
-        (_, _) -> a : splitOnElem e (tail b)
-
-strPairArg :: Char -> ReadM (String, String)
-strPairArg c = do
-    s <- readerAsk
-    case splitOnElem c s of
-        [a, b] -> return (a, b)
-        _ -> error $ "Failed to parse pair: " ++ s
-
-strTripleArg :: Monad m => Char -> String -> m (String, String, String)
-strTripleArg c s =
-    case splitOnElem c s of
-        [a, b, c] -> return (a, b, c)
-        _ -> error $ "Failed to parse triple: " ++ s
-
-ghcPkgArgReader :: ReadM (String, Version)
-ghcPkgArgReader = do
-    (pkgName, verStr) <- strPairArg ','
-    case simpleParse verStr of
-        Nothing -> fail $ "Failed to parse version in " ++ pkgName ++ "," ++ verStr
-        Just v -> return (pkgName, v)
-
-distroPkgArgReader :: ReadM (String, Version, String)
-distroPkgArgReader = do
-    s <- readerAsk
-    (pkgName, verStr, revStr) <- strTripleArg ',' s
-    case simpleParse verStr of
-        Nothing -> fail $ "Failed to parse version in " ++ s
-        Just v -> return (pkgName, v, revStr)
+readPkgNVersion :: ReadP (String, Version)
+readPkgNVersion = do
+    n <- many (satisfy (/= ','))
+    char ','
+    v <- parseVersion
+    return (n, v)
 
 readFlag :: ReadP (FlagName, Bool)
 readFlag = readNegFlag <++ readPosFlag
@@ -129,8 +94,39 @@ readFlag = readNegFlag <++ readPosFlag
             n <- many (satisfy (/= ','))
             return (FlagName (n0 : n), True)
 
-strCblFileArg :: ReadM (FilePath, FlagAssignment)
-strCblFileArg = let
+ghcVersionArgReader :: ReadM Version
+ghcVersionArgReader = do
+    arg <- readerAsk
+    case lastMay $ readP_to_S parseVersion arg of
+        Just (v, "") -> return v
+        _ -> fail $ "cannot parse value `" ++ arg ++ "`"
+
+pkgNVersionArgReader :: ReadM (String, Version)
+pkgNVersionArgReader = do
+    s <- readerAsk
+    case lastMay (readP_to_S readPkgNVersion s) of
+        Just (r, "") -> return r
+        _ -> fail $ "Cannot parse '" ++ s ++ "' as PKG,VER"
+
+ghcPkgArgReader :: ReadM (String, Version)
+ghcPkgArgReader = pkgNVersionArgReader
+
+distroPkgArgReader :: ReadM (String, Version, String)
+distroPkgArgReader = let
+        readDistroPkg = do
+            (n, v) <- readPkgNVersion
+            char ','
+            r <- many (satisfy (/= ','))
+            return (n, v, r)
+
+    in do
+        s <- readerAsk
+        case lastMay (readP_to_S readDistroPkg s) of
+            Just (r, "") -> return r
+            _ -> fail $ "Cannot parse '" ++ s ++ "' as PKG,VER,REL"
+
+strCblFileArgReader :: ReadM (FilePath, FlagAssignment)
+strCblFileArgReader = let
         readWithFlags = do
             fn <- many $ satisfy (/= ':')
             char ':'
@@ -147,15 +143,8 @@ strCblFileArg = let
             Just (r, "") -> return r
             _ -> fail $ "Cannot parse '" ++ s ++ "' as FILE[:FLAG,-FLAG,..]"
 
-strCblPkgArg :: ReadM (String, Version, FlagAssignment)
-strCblPkgArg = let
-        readPkgNVersion :: ReadP (String, Version)
-        readPkgNVersion = do
-            n <- many (satisfy (/= ','))
-            char ','
-            v <- parseVersion
-            return (n, v)
-
+strCblPkgArgReader :: ReadM (String, Version, FlagAssignment)
+strCblPkgArgReader = let
         readWithFlags = do
             (n, v) <- readPkgNVersion
             char ':'
@@ -190,7 +179,7 @@ data Cmds
         { listGhc :: Bool, listDistro :: Bool, noListRepo :: Bool
         , hackageFmt :: Bool, pkgs :: [String] }
     | CmdUpdates { idxStyle :: Bool }
-    | CmdUrls { pkgVers :: [(String, String)] }
+    | CmdUrls { pkgVers :: [(String, Version)] }
     | CmdPkgBuild { ghcVer :: Version, ghcRel :: Int, patchDir :: FilePath, pkgs :: [String] }
     | CmdConvertDb { inDbFile :: FilePath, outDbFile :: FilePath }
     | CmdRemovePkg { pkgs :: [String] }

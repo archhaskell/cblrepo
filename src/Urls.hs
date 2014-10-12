@@ -19,10 +19,11 @@ module Urls where
 import Util.Misc
 
 import Control.Monad.Reader
+import Distribution.Text (display)
 
 urls :: Command ()
 urls = do
     pkgs <- optGet $ pkgVers . optsCmd
     liftIO $ mapM_ (putStrLn . createUrl) pkgs
 
-createUrl (pkg, ver) = "http://hackage.haskell.org/packages/archive/" ++ pkg ++ "/" ++ ver ++ "/" ++ pkg ++ ".cabal"
+createUrl (pkg, ver) = "http://hackage.haskell.org/packages/archive/" ++ pkg ++ "/" ++ display ver ++ "/" ++ pkg ++ ".cabal"
