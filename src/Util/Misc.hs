@@ -37,6 +37,7 @@ import Distribution.Text
 import Distribution.Verbosity
 import Distribution.Version
 import Options.Applicative
+import Options.Applicative.Types
 import Safe (lastMay)
 import System.Directory
 import System.Exit
@@ -45,7 +46,7 @@ import System.IO
 import System.Posix.Files
 import System.Process
 import System.Unix.Directory
-import Text.ParserCombinators.ReadP (readP_to_S)
+import Text.ParserCombinators.ReadP hiding (many)
 import qualified Data.ByteString.Lazy.Char8 as BS
 
 -- {{{1 dependency
@@ -73,10 +74,12 @@ indexUrl = "http://hackage.haskell.org/packages/index.tar.gz"
 indexFileName = "index.tar.gz"
 
 -- {{{1 command line parser helpers
-readerGhcVersion :: String -> ReadM Version
-readerGhcVersion arg = case lastMay $ readP_to_S parseVersion arg of
-    Just (v, "") -> return v
-    _ -> fail $ "cannot parse value `" ++ arg ++ "`"
+readerGhcVersion :: ReadM Version
+readerGhcVersion = do
+    arg <- readerAsk
+    case lastMay $ readP_to_S parseVersion arg of
+        Just (v, "") -> return v
+        _ -> fail $ "cannot parse value `" ++ arg ++ "`"
 
 splitOnElem :: Eq a => a -> [a] -> [[a]]
 splitOnElem e l =
@@ -85,8 +88,9 @@ splitOnElem e l =
         (_, []) -> [a]
         (_, _) -> a : splitOnElem e (tail b)
 
-strPairArg :: Monad m => Char -> String -> m (String, String)
-strPairArg c s =
+strPairArg :: Char -> ReadM (String, String)
+strPairArg c = do
+    s <- readerAsk
     case splitOnElem c s of
         [a, b] -> return (a, b)
         _ -> error $ "Failed to parse pair: " ++ s
@@ -97,41 +101,67 @@ strTripleArg c s =
         [a, b, c] -> return (a, b, c)
         _ -> error $ "Failed to parse triple: " ++ s
 
-ghcPkgArgReader :: String -> ReadM (String, Version)
-ghcPkgArgReader s = do
-    (pkgName, verStr) <- strPairArg ',' s
+ghcPkgArgReader :: ReadM (String, Version)
+ghcPkgArgReader = do
+    (pkgName, verStr) <- strPairArg ','
     case simpleParse verStr of
-        Nothing -> fail $ "Failed to parse version in " ++ s
+        Nothing -> fail $ "Failed to parse version in " ++ pkgName ++ "," ++ verStr
         Just v -> return (pkgName, v)
 
-distroPkgArgReader :: String -> ReadM (String, Version, String)
-distroPkgArgReader s = do
+distroPkgArgReader :: ReadM (String, Version, String)
+distroPkgArgReader = do
+    s <- readerAsk
     (pkgName, verStr, revStr) <- strTripleArg ',' s
     case simpleParse verStr of
         Nothing -> fail $ "Failed to parse version in " ++ s
         Just v -> return (pkgName, v, revStr)
 
-strCblFileArg :: String -> ReadM (FilePath, FlagAssignment)
-strCblFileArg s = let
+strCblFileArg :: ReadM (FilePath, FlagAssignment)
+strCblFileArg = do
+    s <- readerAsk
+    let
         flagReader ('-':cs) = (FlagName cs, False)
         flagReader cs = (FlagName cs, True)
         (fn:fs) = splitOnElem ':' s
         fa = if null fs then [] else map flagReader (splitOnElem ',' $ head fs)
-    in return (fn, fa)
+    return (fn, fa)
 
-strCblPkgArg :: Monad m => String -> m (String, String, FlagAssignment)
-strCblPkgArg s = let
-        flagReader ('-':cs) = (FlagName cs, False)
-        flagReader cs = (FlagName cs, True)
-        (vi:fs) = splitOnElem ':' s
-        fa = if null fs then [] else map flagReader (splitOnElem ',' $ head fs)
+strCblPkgArg :: ReadM (String, Version, FlagAssignment)
+strCblPkgArg = let
+        readPkgNVersion :: ReadP (String, Version)
+        readPkgNVersion = do
+            n <- many (satisfy (/= ','))
+            char ','
+            v <- parseVersion
+            return (n, v)
+
+        readFlag = readNegFlag <++ readPosFlag
+            where
+                readNegFlag = do
+                    char '-'
+                    n <- many (satisfy (/= ','))
+                    return (FlagName n, False)
+
+        readPosFlag = do
+            n0 <- get
+            n <- many (satisfy (/= ','))
+            return (FlagName (n0 : n), True)
+
+        readWithFlags = do
+            (n, v) <- readPkgNVersion
+            char ':'
+            fas <- sepBy readFlag (char ',')
+            return (n, v, fas)
+
+        readWithoutFlags = do
+            (n, v) <- readPkgNVersion
+            return (n, v, [])
+
     in do
-        (pkgName, version) <- strPairArg ',' vi
-        if null fs
-            then do
-                (pkgName, version) <- strPairArg ',' vi
-                return (pkgName, version, [])
-             else return (pkgName, version, fa)
+        s <- readerAsk
+        case lastMay (readP_to_S (readWithFlags <++ readWithoutFlags) s) of
+            Just (r, "") -> return r
+            _ -> fail $ "Cannot parse: " ++ s
 
 -- Helper for grabbing things out of the options
 optGet :: MonadReader o m => (o -> s) -> m s
@@ -142,7 +172,7 @@ data Cmds
     = CmdAdd
         { patchDir :: FilePath, ghcVer :: Version, cmdAddGhcPkgs :: [(String, Version)]
         , cmdAddDistroPkgs :: [(String, Version, String)], cmdAddFileCbls :: [(FilePath, FlagAssignment)]
-        , cmdAddCbls :: [(String, String, FlagAssignment)] }
+        , cmdAddCbls :: [(String, Version, FlagAssignment)] }
     | CmdBuildPkgs { pkgs :: [String] }
     | CmdBumpPkgs { inclusive :: Bool, pkgs :: [String] }
     | CmdSync { unused :: Bool }
@@ -196,7 +226,8 @@ data LocType = Idx | File
 
 -- | Read in a Cabal file.
 readCabalFromFile = readCabal
-readCabalFromIdx ad pd (p, v) = readCabal ad pd (p ++ "," ++ v)
+readCabalFromIdx ad pd (p, v) = readCabal ad pd (p ++ "," ++ v')
+    where v' = display v
 
 readCabal :: FilePath -> FilePath -> String -> FilePath -> ErrorT String IO GenericPackageDescription
 readCabal appDir patchDir loc tmpDir = let

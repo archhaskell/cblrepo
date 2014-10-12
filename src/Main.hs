@@ -54,12 +54,12 @@ cmdAddPkgCmd = command "add" (info (helper <*> cmdAddPkgOpts)
 
 cmdBumpPkgsOpts = CmdBumpPkgs
     <$> switch (long "inclusive" <> help "Include the listed packages")
-    <*> some (argument Just (metavar "PKGNAME ..."))
+    <*> some (strArgument (metavar "PKGNAME ..."))
 cmdBumpPkgsCmd = command "bump" (info (helper <*> cmdBumpPkgsOpts)
     (fullDesc <> progDesc "Bump packages that need it after updating the named packages"))
 
 cmdBuildPkgsOpts = CmdBuildPkgs
-    <$> some (argument Just (metavar "PKGNAME ..."))
+    <$> some (strArgument (metavar "PKGNAME ..."))
 cmdBuildPkgsCmd = command "build" (info (helper <*> cmdBuildPkgsOpts)
     (fullDesc <> progDesc "Re-order packages into a good build order"))
 
@@ -69,7 +69,7 @@ cmdSyncCmd = command "sync" (info (helper <*> cmdSyncOpts)
 
 cmdVersionsOpts = CmdVersions
     <$> switch (short 'l' <> long "latest" <> help "List only the latest version of packages")
-    <*> some (argument Just (metavar "PKGNAME ..."))
+    <*> some (strArgument (metavar "PKGNAME ..."))
 cmdVersionsCmd = command "versions" (info (helper <*> cmdVersionsOpts)
     (fullDesc <> progDesc "List available versions of packages"))
 
@@ -88,7 +88,7 @@ cmdListPkgsCmd = command "list" (info (helper <*> cmdListPkgsOpts)
     (fullDesc <> progDesc "List packages in repo"))
 
 cmdUrlsOpts = CmdUrls
-    <$> some (argument (strPairArg ',') (metavar "PKGNAME,VERSION ..."))
+    <$> some (option (strPairArg ',') (metavar "PKGNAME,VERSION ..."))
 cmdUrlsCmd = command "urls" (info (helper <*> cmdUrlsOpts)
     (fullDesc <> progDesc "List urls of CABAL files for the given packages"))
 
@@ -96,7 +96,7 @@ cmdPkgBuildOpts = CmdPkgBuild
     <$> option readerGhcVersion (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use in PKGBUILD")
     <*> option auto (long "ghc-release" <> value 1 <> help "GHC release to use in PKGBUILD")
     <*> strOption (long "patchdir" <> value "patches" <> help "Location of patches (patches)")
-    <*> some (argument Just (metavar "PKGNAME ..."))
+    <*> some (strArgument (metavar "PKGNAME ..."))
 cmdPkgBuildCmd = command "pkgbuild" (info (helper <*> cmdPkgBuildOpts)
     (fullDesc <> progDesc "Create PKGBUILD other files necessary for an Arch package"))
 
@@ -107,7 +107,7 @@ cmdConvertDbCmd = command "convertdb" (info (helper <*> cmdConvertDbOpts)
     (fullDesc <> progDesc "Convert an old database to the new format"))
 
 cmdRemovePkgOpts = CmdRemovePkg
-    <$> some (argument Just (metavar "PKGNAME ..."))
+    <$> some (strArgument (metavar "PKGNAME ..."))
 cmdRemovePkgCmd = command "rm" (info (helper <*> cmdRemovePkgOpts)
     (fullDesc <> progDesc "Remove packages"))
 
