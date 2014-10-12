@@ -116,15 +116,36 @@ distroPkgArgReader = do
         Nothing -> fail $ "Failed to parse version in " ++ s
         Just v -> return (pkgName, v, revStr)
 
+readFlag :: ReadP (FlagName, Bool)
+readFlag = readNegFlag <++ readPosFlag
+    where
+        readNegFlag = do
+            char '-'
+            n <- many (satisfy (/= ','))
+            return (FlagName n, False)
+
+        readPosFlag = do
+            n0 <- get
+            n <- many (satisfy (/= ','))
+            return (FlagName (n0 : n), True)
+
 strCblFileArg :: ReadM (FilePath, FlagAssignment)
-strCblFileArg = do
-    s <- readerAsk
-    let
-        flagReader ('-':cs) = (FlagName cs, False)
-        flagReader cs = (FlagName cs, True)
-        (fn:fs) = splitOnElem ':' s
-        fa = if null fs then [] else map flagReader (splitOnElem ',' $ head fs)
-    return (fn, fa)
+strCblFileArg = let
+        readWithFlags = do
+            fn <- many $ satisfy (/= ':')
+            char ':'
+            fas <- sepBy readFlag (char ',')
+            return (fn, fas)
+
+        readWithoutFlags = do
+            fn <- many $ satisfy (/= ':')
+            return (fn, [])
+
+    in do
+        s <-readerAsk
+        case lastMay (readP_to_S (readWithFlags <++ readWithoutFlags) s) of
+            Just (r, "") -> return r
+            _ -> fail $ "Cannot parse '" ++ s ++ "' as FILE[:FLAG,-FLAG,..]"
 
 strCblPkgArg :: ReadM (String, Version, FlagAssignment)
 strCblPkgArg = let
@@ -134,18 +155,6 @@ strCblPkgArg = let
             char ','
             v <- parseVersion
             return (n, v)
-
-        readFlag = readNegFlag <++ readPosFlag
-            where
-                readNegFlag = do
-                    char '-'
-                    n <- many (satisfy (/= ','))
-                    return (FlagName n, False)
-
-        readPosFlag = do
-            n0 <- get
-            n <- many (satisfy (/= ','))
-            return (FlagName (n0 : n), True)
 
         readWithFlags = do
             (n, v) <- readPkgNVersion
