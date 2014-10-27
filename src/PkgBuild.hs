@@ -40,10 +40,10 @@ pkgBuild = do
     void $ mapM (runErrorT . generatePkgBuild ghcVersion ghcRelease db aD pD) pkgs >>= exitOnErrors
 
 generatePkgBuild ghcVer ghcRel db appDir patchDir pkg = let
-        appendPkgVer = pkg ++ "," ++ display (pkgVersion $ fromJust $ lookupPkg db pkg)
+        ver = pkgVersion $ fromJust $ lookupPkg db pkg
     in do
         fa <- maybe (throwError $ "Unknown package: " ++ pkg) (\(CP _ x) -> return $ PkgDB.flags x) (lookupPkg db pkg)
-        genericPkgDesc <- withTempDirErrT "/tmp/cblrepo." (readCabal appDir patchDir appendPkgVer)
+        genericPkgDesc <- withTempDirErrT "/tmp/cblrepo." (readCabalFromIdx appDir patchDir (pkg, ver))
         pkgDescAndFlags <- either (const $ throwError ("Failed to finalize package: " ++ pkg)) return (finalizePkg ghcVer db fa genericPkgDesc)
         let archPkg = translate ghcVer ghcRel db (snd pkgDescAndFlags) (fst pkgDescAndFlags)
         archPkgWPatches <- liftIO $ addPatches patchDir archPkg

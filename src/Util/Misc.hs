@@ -220,63 +220,50 @@ readIndexFile indexLocation = exitOnException
 
 -- {{{1 package descriptions
 -- {{{2 readCabal
-data LocType = Idx | File
+readCabalFromFile :: FilePath -> FilePath -> FilePath -> FilePath -> ErrorT String IO GenericPackageDescription
+readCabalFromFile _ patchDir loc destDir = liftIO copyCabal >>= readPatchedCabal patchDir
+    where
+        copyCabal = copyFile loc fn >> return fn
+        fn = destDir </> takeFileName loc
 
--- | Read in a Cabal file.
-readCabalFromFile = readCabal
-readCabalFromIdx ad pd (p, v) = readCabal ad pd (p ++ "," ++ v')
-    where v' = display v
 
-readCabal :: FilePath -> FilePath -> String -> FilePath -> ErrorT String IO GenericPackageDescription
-readCabal appDir patchDir loc tmpDir = let
-        locType
-            | ',' `elem` loc = Idx
-            | otherwise = File
+readCabalFromIdx :: FilePath -> FilePath -> (String, Version) -> FilePath -> ErrorT String IO GenericPackageDescription
+readCabalFromIdx appDir patchDir (pkgN, pkgVer) destDir = extractCabal >>= readPatchedCabal patchDir
+    where
+        verStr = display pkgVer
+        pathInIdx = pkgN </> verStr </> pkgN ++ ".cabal"
+        pkgWithStr = pkgN ++ " " ++ verStr
+        fn = destDir </> (pkgN ++ ".cabal")
 
-        copyCabal tmpDir loc = copyFile loc fn >> return fn
-            where fn = tmpDir </> takeFileName loc
+        esFindEntry (Next e es) = if pathInIdx == entryPath e then Just e else esFindEntry es
+        esFindEntry _ = Nothing
 
-        extractCabal tmpDir loc = let
-                (p, _: v) = span (/= ',') loc
-                path = p </> v </> p ++ ".cabal"
-                pkgStr = p ++ " " ++ v
-                fn = tmpDir </> (p ++ ".cabal")
+        eGetContent e =
+            case entryContent e of
+                NormalFile c _ -> Just $ BS.unpack c
+                _ -> Nothing
 
-                esFindEntry p (Next e es) = if p == entryPath e
-                    then Just e
-                    else esFindEntry p es
-                esFindEntry _ _ = Nothing
+        extractCabal = do
+            es <- liftM (Tar.read . GZip.decompress) (liftIO $ readIndexFile appDir)
+            e <- maybe (throwError $ "No entry for " ++ pkgWithStr)
+                return
+                (esFindEntry es)
+            cbl <- maybe (throwError $ "Failed to extract contents for " ++ pkgWithStr)
+                return
+                (eGetContent e)
+            liftIO $ writeFile fn cbl
+            return fn
 
-                eGetContent e = let
-                        ec = entryContent e
-                    in case ec of
-                        NormalFile c _ -> Just $ BS.unpack c
-                        _ -> Nothing
+readPatchedCabal :: FilePath -> FilePath -> ErrorT String IO GenericPackageDescription
+readPatchedCabal patchDir cblFn = do
+    pn <- liftIO $ extractName cblFn
+    let patchFn = patchDir </> pn <.> "cabal"
+    applyPatchIfExist cblFn patchFn
+    liftIO $ readPackageDescription silent cblFn
 
-            in do
-                es <- liftM (Tar.read . GZip.decompress) (liftIO $ readIndexFile appDir)
-                e <- maybe (throwError $ "No entry for " ++ pkgStr)
-                    return
-                    (esFindEntry path es)
-                cbl <- maybe (throwError $ "Failed to extract contents for " ++ pkgStr)
-                    return
-                    (eGetContent e)
-                liftIO $ writeFile fn cbl
-                return fn
-
+    where
         extractName fn = liftM name $ readPackageDescription silent fn
-            where
-                packageName (PackageName s) = s
-                name = packageName . pkgName . package . packageDescription
-
-    in do
-        cblFn <- case locType of
-            File -> liftIO $ copyCabal tmpDir loc
-            Idx -> extractCabal tmpDir loc
-        pn <- liftIO $ extractName cblFn
-        let patchFn = patchDir </> pn <.> "cabal"
-        applyPatchIfExist cblFn patchFn
-        liftIO $ readPackageDescription silent cblFn
+        name = display . pkgName . package . packageDescription
 
 -- {{{2 finalising
 finalizePkg ghcVersion db fa gpd = let
