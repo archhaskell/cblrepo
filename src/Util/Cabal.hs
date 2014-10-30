@@ -15,5 +15,66 @@
  -}
 
 module Util.Cabal
-    (
-    ) where
+    where
+
+import Control.Monad.Error
+import Control.Monad.Reader
+import Distribution.Package
+import Distribution.PackageDescription
+import Distribution.PackageDescription.Parse
+import Distribution.Text
+import Distribution.Verbosity
+import System.Directory
+import System.Exit
+import System.FilePath
+import System.Posix
+import System.Process
+
+data CabalParseEnv = CabalParseEnv
+    { cpeAppDir :: FilePath
+    , cpePatchDir :: FilePath
+    , cpeDestDir :: FilePath
+    } deriving (Eq, Show)
+
+-- | Type used for reading Cabal files
+type CabalParse a = ReaderT CabalParseEnv (ErrorT String IO) a
+
+-- | Run a Cabal parse action in the provided environment.
+runCabalParse :: CabalParseEnv -> CabalParse a -> IO (Either String a)
+runCabalParse cpe f = runErrorT $ runReaderT f cpe
+
+readFromFile :: FilePath -- ^ file name
+    -> CabalParse GenericPackageDescription
+readFromFile fn = do
+    destDir <- asks cpeDestDir
+    let destFn = destDir </> takeFileName fn
+    liftIO $ copyFile fn destFn
+    patch destFn
+    liftIO $ readPackageDescription silent destFn
+
+-- |  Patch a Cabal file.
+--
+-- The name of the patch file is based on the name of the Cabal package: @<cabal
+-- pkg name>.patch@.  The file is patched only if a patch with the correct name
+-- is found in the patch directory (provided via 'CabalParseEnv').
+patch :: FilePath -- ^ file to patch
+    -> CabalParse ()
+patch fn = do
+    pkgName <- liftIO $ extractName fn
+    patchDir <- asks cpePatchDir
+    let patchFn = patchDir </> pkgName <.> "cabal"
+    applyPatchIfExist fn patchFn
+
+    where
+        extractName fn = liftM name $ readPackageDescription silent fn
+        name = display . pkgName . package . packageDescription
+
+        applyPatchIfExist origFn patchFn =
+            liftIO (fileExist patchFn) >>= flip when (applyPatch origFn patchFn)
+
+        applyPatch origFn patchFn = do
+            (ec, _, _) <- liftIO $ readProcessWithExitCode "patch" [origFn, patchFn] ""
+            case ec of
+                ExitSuccess -> return ()
+                ExitFailure _ ->
+                    throwError ("Failed patching " ++ origFn ++ " with " ++ patchFn)
