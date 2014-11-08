@@ -19,9 +19,11 @@ module Add where
 -- {{{1 imports
 -- {{{2 local
 import PkgDB
+import qualified Util.Cabal as Cbl
 import Util.Misc
 
 -- {{{2 system
+import Control.Monad.Reader
 import Control.Monad.Error
 import Data.List
 import Data.Maybe
@@ -31,6 +33,7 @@ import qualified Distribution.Package as P
 import Control.Arrow
 import Data.Monoid
 import Data.Either
+import System.Unix.Directory
 
 -- {{{1 types
 data PkgType
@@ -53,7 +56,7 @@ add = do
     --
     ghcPkgs <- optGet  $ map (uncurry GhcType) . cmdAddGhcPkgs . optsCmd
     distroPkgs <- optGet $ map (\ (n, v, r) -> DistroType n v r) . cmdAddDistroPkgs . optsCmd
-    genFilePkgs <- mapM ((runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromFile ad pd) . fst) filePkgs
+    genFilePkgs <- mapM (runCabalParseWithTempDir . Cbl.readFromFile . fst) filePkgs
     genIdxPkgs <- mapM ((runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromIdx ad pd) . (\ (a, b, _) -> (a, b))) idxPkgs
     genPkgs <- liftM (map RepoType) $ exitOnErrors (genFilePkgs ++ genIdxPkgs)
     --
@@ -61,12 +64,21 @@ add = do
         pkgNames = map getName pkgs
         tmpDb = foldl delPkg db pkgNames
         oldFlags = map (maybe ([], []) (pkgName &&& pkgFlags) . lookupPkg db . getName) pkgs
-        fileFlags = map (\ (pkg, (_, fa)) -> ((\ (P.PackageName n) -> n) $ P.packageName pkg, fa)) (zip (rights genFilePkgs) filePkgs)
+        fileFlags = map (\ (pkg, (_, fa)) -> ((\ (P.PackageName n) -> n) $ P.packageName pkg, fa))
+            (zip (rights genFilePkgs) filePkgs)
         idxFlags = map (\ (a, _, b) -> (a, b)) idxPkgs
         flags = fileFlags `combineFlags` idxFlags `combineFlags` oldFlags
     case addPkgs ghcVersion tmpDb flags pkgs of
         Left (unsatisfiables, breaksOthers) -> liftIO (mapM_ printUnSat unsatisfiables >> mapM_ printBrksOth breaksOthers)
         Right newDb -> liftIO $ unless dr $ saveDb newDb dbFn
+
+runCabalParseWithTempDir :: Cbl.CabalParse a -> Command (Either String a)
+runCabalParseWithTempDir f = do
+    aD <- asks appDir
+    pD <- asks $ patchDir . optsCmd
+    liftIO $ withTemporaryDirectory "/tmp/cblrepo." $ \ destDir -> do
+        let cpe = Cbl.CabalParseEnv aD pD destDir
+        Cbl.runCabalParse cpe f
 
 getName (GhcType n _) = n
 getName (DistroType n _ _) = n

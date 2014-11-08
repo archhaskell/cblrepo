@@ -220,13 +220,6 @@ readIndexFile indexLocation = exitOnException
 
 -- {{{1 package descriptions
 -- {{{2 readCabal
-readCabalFromFile :: FilePath -> FilePath -> FilePath -> FilePath -> ErrorT String IO GenericPackageDescription
-readCabalFromFile _ patchDir loc destDir = liftIO copyCabal >>= readPatchedCabal patchDir
-    where
-        copyCabal = copyFile loc fn >> return fn
-        fn = destDir </> takeFileName loc
-
-
 readCabalFromIdx :: FilePath -> FilePath -> (String, Version) -> FilePath -> ErrorT String IO GenericPackageDescription
 readCabalFromIdx appDir patchDir (pkgN, pkgVer) destDir = extractCabal >>= readPatchedCabal patchDir
     where
