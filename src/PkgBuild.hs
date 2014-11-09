@@ -19,10 +19,11 @@ module PkgBuild where
 import PkgDB
 import Util.Misc
 import Util.Translation
+import qualified Util.Cabal as Cbl
 
+import Control.Arrow
+import Control.Monad.Reader
 import Control.Monad.Error
-import Data.Maybe
-import Distribution.Text
 import System.Directory
 import System.FilePath
 import System.IO
@@ -31,20 +32,20 @@ import Text.PrettyPrint.ANSI.Leijen
 
 pkgBuild :: Command ()
 pkgBuild = do
-    db <- optGet dbFile >>= liftIO . readDb
-    aD <- optGet appDir
-    pD <- optGet  $ patchDir . optsCmd
-    pkgs <- optGet  $ pkgs . optsCmd
-    ghcVersion <- optGet $ ghcVer . optsCmd
-    ghcRelease <- optGet $ ghcRel . optsCmd
-    void $ mapM (runErrorT . generatePkgBuild ghcVersion ghcRelease db aD pD) pkgs >>= exitOnErrors
+    pkgs <- asks  $ pkgs . optsCmd
+    void $ mapM (runErrorT . generatePkgBuild) pkgs >>= exitOnErrors
 
-generatePkgBuild ghcVer ghcRel db appDir patchDir pkg = let
-        ver = pkgVersion $ fromJust $ lookupPkg db pkg
-    in do
-        fa <- maybe (throwError $ "Unknown package: " ++ pkg) (\(CP _ x) -> return $ PkgDB.flags x) (lookupPkg db pkg)
-        genericPkgDesc <- withTempDirErrT "/tmp/cblrepo." (readCabalFromIdx appDir patchDir (pkg, ver))
-        pkgDescAndFlags <- either (const $ throwError ("Failed to finalize package: " ++ pkg)) return (finalizePkg ghcVer db fa genericPkgDesc)
+generatePkgBuild :: String -> ErrorT String Command ()
+generatePkgBuild pkg = do
+        db <- optGet dbFile >>= liftIO . readDb
+        patchDir <- asks  $ patchDir . optsCmd
+        ghcVer <- optGet $ ghcVer . optsCmd
+        ghcRel <- optGet $ ghcRel . optsCmd
+        (ver, fa) <- maybe (throwError $ "Unknown package: " ++ pkg) (return . (pkgVersion &&& pkgFlags)) $ lookupPkg db pkg
+        --
+        genericPkgDesc <- runCabalParseWithTempDir $ Cbl.readFromIdx (pkg, ver)
+        pkgDescAndFlags <- either (const $ throwError ("Failed to finalize package: " ++ pkg)) return
+            (finalizePkg ghcVer db fa genericPkgDesc)
         let archPkg = translate ghcVer ghcRel db (snd pkgDescAndFlags) (fst pkgDescAndFlags)
         archPkgWPatches <- liftIO $ addPatches patchDir archPkg
         archPkgWHash <- withTempDirErrT "/tmp/cblrepo." (addHashes archPkgWPatches)
@@ -54,10 +55,25 @@ generatePkgBuild ghcVer ghcRel db appDir patchDir pkg = let
             hPKGBUILD <- openFile "PKGBUILD" WriteMode
             hPutDoc hPKGBUILD $ pretty archPkgWHash
             hClose hPKGBUILD
-            maybe (return ()) (void . runErrorT . applyPatch "PKGBUILD") (apPkgbuildPatch archPkgWHash)
+            maybe (return ()) (void . runErrorT . applyPatch "PKGBUILD")
+                (apPkgbuildPatch archPkgWHash)
             when (apHasLibrary archPkgWHash) $ do
                 hInstall <- openFile (apPkgName archPkgWHash <.> "install") WriteMode
                 let archInstall = aiFromAP archPkgWHash
                 hPutDoc hInstall $ pretty archInstall
                 hClose hInstall
-                maybe (return ()) (void . runErrorT . applyPatch (apPkgName archPkgWHash <.> "install") ) (apInstallPatch archPkgWHash)
+                maybe (return ()) (void . runErrorT . applyPatch (apPkgName archPkgWHash <.> "install"))
+                    (apInstallPatch archPkgWHash)
+
+runCabalParseWithTempDir :: Cbl.CabalParse a -> ErrorT String Command a
+runCabalParseWithTempDir f = do
+    aD <- asks appDir
+    pD <- asks $ patchDir . optsCmd
+    r <- liftIO $ withTemporaryDirectory "/tmp/cblrepo." $ \ destDir -> do
+        let cpe = Cbl.CabalParseEnv aD pD destDir
+        Cbl.runCabalParse cpe f
+    reWrapErrT r
+
+    where
+        reWrapErrT (Left e) = throwError e
+        reWrapErrT (Right v) = return v

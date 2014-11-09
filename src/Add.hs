@@ -47,8 +47,6 @@ add :: Command ()
 add = do
     dbFn <- optGet  dbFile
     db <- liftIO $ readDb dbFn
-    ad <- optGet appDir
-    pd <- optGet  $ patchDir . optsCmd
     dr <- optGet  dryRun
     ghcVersion <- optGet $ ghcVer . optsCmd
     filePkgs <- optGet $ cmdAddFileCbls . optsCmd
@@ -57,7 +55,7 @@ add = do
     ghcPkgs <- optGet  $ map (uncurry GhcType) . cmdAddGhcPkgs . optsCmd
     distroPkgs <- optGet $ map (\ (n, v, r) -> DistroType n v r) . cmdAddDistroPkgs . optsCmd
     genFilePkgs <- mapM (runCabalParseWithTempDir . Cbl.readFromFile . fst) filePkgs
-    genIdxPkgs <- mapM ((runErrorT . withTempDirErrT "/tmp/cblrepo." . readCabalFromIdx ad pd) . (\ (a, b, _) -> (a, b))) idxPkgs
+    genIdxPkgs <- mapM ((runCabalParseWithTempDir . Cbl.readFromIdx) . (\ (a, b, _) -> (a, b))) idxPkgs
     genPkgs <- liftM (map RepoType) $ exitOnErrors (genFilePkgs ++ genIdxPkgs)
     --
     let pkgs = ghcPkgs ++ distroPkgs ++ genPkgs

@@ -17,13 +17,19 @@
 module Util.Cabal
     where
 
+import Util.Misc (readIndexFile)
+
+import Codec.Archive.Tar as Tar
+import Codec.Compression.GZip as GZip
 import Control.Monad.Error
 import Control.Monad.Reader
+import qualified Data.ByteString.Lazy.Char8 as BSLC
 import Distribution.Package
 import Distribution.PackageDescription
 import Distribution.PackageDescription.Parse
 import Distribution.Text
 import Distribution.Verbosity
+import Distribution.Version
 import System.Directory
 import System.Exit
 import System.FilePath
@@ -43,6 +49,9 @@ type CabalParse a = ReaderT CabalParseEnv (ErrorT String IO) a
 runCabalParse :: CabalParseEnv -> CabalParse a -> IO (Either String a)
 runCabalParse cpe f = runErrorT $ runReaderT f cpe
 
+runCabalParseE :: CabalParseEnv -> CabalParse a -> (ErrorT String IO) a
+runCabalParseE cpe f = runReaderT f cpe
+
 readFromFile :: FilePath -- ^ file name
     -> CabalParse GenericPackageDescription
 readFromFile fn = do
@@ -51,6 +60,39 @@ readFromFile fn = do
     liftIO $ copyFile fn destFn
     patch destFn
     liftIO $ readPackageDescription silent destFn
+
+readFromIdx :: (String, Version) -- ^ package name and version
+    -> CabalParse GenericPackageDescription
+readFromIdx (pN, pV) = do
+    destDir <- asks cpeDestDir
+    appDir <- asks cpeAppDir
+    let destFn = destDir </> pN <.> ".cabal"
+    extractCabal appDir destFn
+    patch destFn
+    liftIO $ readPackageDescription silent destFn
+
+    where
+        verStr = display pV
+        pathInIdx = pN </> verStr </> pN ++ ".cabal"
+        pkgWithStr = pN ++ " " ++ verStr
+
+        extractCabal appDir fn = do
+            es <- liftM (Tar.read . GZip.decompress) (liftIO $ readIndexFile appDir)
+            e <- maybe (throwError $ "No entry for " ++ pkgWithStr)
+                return
+                (esFindEntry es)
+            cbl <- maybe (throwError $ "Failed to extract contents for " ++ pkgWithStr)
+                return
+                (eGetContent e)
+            liftIO $ writeFile fn cbl
+
+        esFindEntry (Tar.Next e es) = if pathInIdx == entryPath e then Just e else esFindEntry es
+        esFindEntry _ = Nothing
+
+        eGetContent e =
+            case entryContent e of
+                NormalFile c _ -> Just $ BSLC.unpack c
+                _ -> Nothing
 
 -- |  Patch a Cabal file.
 --

@@ -39,7 +39,6 @@ import Distribution.Version
 import Options.Applicative
 import Options.Applicative.Types
 import Safe (lastMay)
-import System.Directory
 import System.Exit
 import System.FilePath
 import System.IO
@@ -218,47 +217,7 @@ readIndexFile indexLocation = exitOnException
     "Cannot open index file, have you run the 'sync' command?"
     (BS.readFile $ indexLocation </> indexFileName)
 
--- {{{1 package descriptions
--- {{{2 readCabal
-readCabalFromIdx :: FilePath -> FilePath -> (String, Version) -> FilePath -> ErrorT String IO GenericPackageDescription
-readCabalFromIdx appDir patchDir (pkgN, pkgVer) destDir = extractCabal >>= readPatchedCabal patchDir
-    where
-        verStr = display pkgVer
-        pathInIdx = pkgN </> verStr </> pkgN ++ ".cabal"
-        pkgWithStr = pkgN ++ " " ++ verStr
-        fn = destDir </> (pkgN ++ ".cabal")
-
-        esFindEntry (Next e es) = if pathInIdx == entryPath e then Just e else esFindEntry es
-        esFindEntry _ = Nothing
-
-        eGetContent e =
-            case entryContent e of
-                NormalFile c _ -> Just $ BS.unpack c
-                _ -> Nothing
-
-        extractCabal = do
-            es <- liftM (Tar.read . GZip.decompress) (liftIO $ readIndexFile appDir)
-            e <- maybe (throwError $ "No entry for " ++ pkgWithStr)
-                return
-                (esFindEntry es)
-            cbl <- maybe (throwError $ "Failed to extract contents for " ++ pkgWithStr)
-                return
-                (eGetContent e)
-            liftIO $ writeFile fn cbl
-            return fn
-
-readPatchedCabal :: FilePath -> FilePath -> ErrorT String IO GenericPackageDescription
-readPatchedCabal patchDir cblFn = do
-    pn <- liftIO $ extractName cblFn
-    let patchFn = patchDir </> pn <.> "cabal"
-    applyPatchIfExist cblFn patchFn
-    liftIO $ readPackageDescription silent cblFn
-
-    where
-        extractName fn = liftM name $ readPackageDescription silent fn
-        name = display . pkgName . package . packageDescription
-
--- {{{2 finalising
+-- {{{1 finalising package descriptions
 finalizePkg ghcVersion db fa gpd = let
         n = ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) gpd
     in finalizePackageDescription
@@ -278,11 +237,12 @@ checkAgainstDb db name dep = let
                 Just (DB.CP _ p) -> withinRange (DB.version p) dVR)
 
 -- {{{1 Command type
-type Command a = ReaderT Opts IO a
+type Command = ReaderT Opts IO
 
 runCommand cmds func = runReaderT func cmds
 
 -- {{{1 ErrorT
+withTempDirErrT :: (MonadError e m, MonadIO m) => FilePath -> (FilePath -> ErrorT e IO b) -> m b
 withTempDirErrT fp func = let
         reWrapErrT (Left e) = throwError e
         reWrapErrT (Right v) = return v
