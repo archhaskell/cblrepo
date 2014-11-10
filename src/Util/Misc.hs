@@ -242,13 +242,13 @@ type Command = ReaderT Opts IO
 runCommand cmds func = runReaderT func cmds
 
 -- {{{1 ErrorT
+reThrowError :: MonadError a m => Either a b -> m b
+reThrowError = either throwError return
+
 withTempDirErrT :: (MonadError e m, MonadIO m) => FilePath -> (FilePath -> ErrorT e IO b) -> m b
-withTempDirErrT fp func = let
-        reWrapErrT (Left e) = throwError e
-        reWrapErrT (Right v) = return v
-    in do
-        r <- liftIO $ withTemporaryDirectory fp (runErrorT . func)
-        reWrapErrT r
+withTempDirErrT fp func = do
+    r <- liftIO $ withTemporaryDirectory fp (runErrorT . func)
+    reThrowError r
 
 exitOnErrors vs = let
         es = lefts vs

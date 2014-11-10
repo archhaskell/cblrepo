@@ -72,8 +72,4 @@ runCabalParseWithTempDir f = do
     r <- liftIO $ withTemporaryDirectory "/tmp/cblrepo." $ \ destDir -> do
         let cpe = Cbl.CabalParseEnv aD pD destDir
         Cbl.runCabalParse cpe f
-    reWrapErrT r
-
-    where
-        reWrapErrT (Left e) = throwError e
-        reWrapErrT (Right v) = return v
+    reThrowError r
