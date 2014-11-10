@@ -19,15 +19,11 @@ module Versions where
 import Util.HackageIndex
 import Util.Misc
 
-import Codec.Archive.Tar as Tar
-import Codec.Compression.GZip as GZip
-import Control.Monad
+import Control.Applicative
 import Control.Monad.Reader
-import Data.List
-import Data.Maybe
+import Data.Map as M
 import Distribution.Text
 import Distribution.Version
-import System.FilePath
 
 versions :: Command ()
 versions = do
@@ -36,28 +32,15 @@ versions = do
     pkgs <- optGet $ pkgs . optsCmd
     let printFunc = if l then printLatestVersion else printAllVersions
     liftIO $ do
-        es <- liftM (Tar.read . GZip.decompress) (readIndexFile aD)
-        mapM_ (printFunc . findVersions es) pkgs
+        pkgsNVers <- buildPkgVersions <$> readIndexFile aD
+        mapM_ (\ pkg -> printFunc (pkg, M.lookup pkg pkgsNVers)) pkgs
 
-findVersions es p = (p, findV p es [])
+printAllVersions :: (String, Maybe [Version]) -> IO ()
+printAllVersions (p, Nothing) = putStrLn $ p ++ ": No such package"
+printAllVersions (p, Just vs) = putStrLn $ p ++ ": " ++ versions
     where
-        findV pkgName (Next e es) acc = let
-                eP = entryPath e
-                (ePkg:v:_) = splitDirectories eP
-            in findV pkgName es
-                (if ('/' `elem` eP) && (pkgName == ePkg) then v:acc else acc)
+        versions = unwords $ display <$> vs
 
-        findV _ Done acc = let
-                vs :: [Version]
-                vs = map (fromJust . simpleParse) acc
-            in map display $ sort vs
-
-        findV _ (Fail _) _ = error "Failure to read index file"
-
-printAllVersions (p, vs) = do
-    putStr $ p ++ " : "
-    putStrLn $ unwords vs
-
-printLatestVersion (p, vs) = do
-    putStr $ p ++ ","
-    putStrLn $ last vs
+printLatestVersion :: (String, Maybe [Version]) -> IO ()
+printLatestVersion (p, Nothing) = putStrLn $ p ++ ": No such package"
+printLatestVersion (p, Just vs) = putStrLn $ p ++ "," ++ display (last vs)

@@ -19,10 +19,32 @@ module Util.HackageIndex
 
 import Util.Misc
 
+import qualified Codec.Archive.Tar as Tar
+import qualified Codec.Compression.GZip as GZip
 import qualified Data.ByteString.Lazy as BSL
+import Data.Map as M
+import Data.Maybe
+import Data.Version
+import Distribution.Text
 import System.FilePath
 
 readIndexFile :: FilePath -> IO BSL.ByteString
 readIndexFile indexLocation = exitOnException
     "Cannot open index file, have you run the 'sync' command?"
     (BSL.readFile $ indexLocation </> indexFileName)
+
+type PkgVersions = M.Map String [Version]
+
+buildPkgVersions :: BSL.ByteString -- ^ the index
+    -> PkgVersions
+buildPkgVersions idx = createPkgVerMap M.empty entries
+    where
+        entries = Tar.read $ GZip.decompress idx
+
+        createPkgVerMap acc (Tar.Next e es) = createPkgVerMap (insertWith (++) (parts !! 0) [ver] acc) es
+            where
+                parts = splitDirectories (Tar.entryPath e)
+                ver = fromJust . simpleParse $ parts !! 1
+
+        createPkgVerMap acc Tar.Done = acc
+        createPkgVerMap _ (Tar.Fail _) = undefined
