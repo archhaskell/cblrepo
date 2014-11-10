@@ -1,5 +1,5 @@
 {-
- - Copyright 2011-2013 Per Magnus Therning
+ - Copyright 2011-2014 Per Magnus Therning
  -
  - Licensed under the Apache License, Version 2.0 (the "License");
  - you may not use this file except in compliance with the License.
@@ -14,67 +14,43 @@
  - limitations under the License.
  -}
 
-module Updates where
+module Updates
+    ( updates
+    ) where
 
 import PkgDB
 import Util.Misc
 import Util.HackageIndex
 
-import Codec.Archive.Tar as Tar
-import Codec.Compression.GZip as GZip
+import Control.Applicative
 import Control.Arrow
-import Control.Monad
 import Control.Monad.Reader
 import Data.Maybe
 import Distribution.Text
 import Distribution.Version
-import System.FilePath
 
 updates :: Command ()
 updates = do
     db <- optGet dbFile >>= liftIO . readDb
     aD <- optGet appDir
     aCS <- optGet $ idxStyle .optsCmd
-    entries <- liftIO $ liftM (Tar.read . GZip.decompress) (readIndexFile aD)
+    availPkgsNVers <- liftIO $ buildPkgVersions <$> readIndexFile aD
     let nonBasePkgs = filter (not . isBasePkg) db
-    let pkgsNVers = map (pkgName &&& pkgVersion) nonBasePkgs
-    let availPkgs = catMaybes $ eMap extractPkgVer entries
-    let outdated = filter
-            (\ (p, v) -> maybe False (> v) (latestVer p availPkgs))
+        pkgsNVers = map (pkgName &&& pkgVersion) nonBasePkgs
+        outdated = filter
+            (\ (p, v) -> maybe False (> v) (latestVersion availPkgsNVers p))
             pkgsNVers
-    let printer = if aCS
-            then printOutdatedIdx
+        printer = if aCS
+            then printOutdatedShort
             else printOutdated
-    liftIO $ mapM_ (`printer` availPkgs) outdated
+    liftIO $ mapM_ (printer availPkgsNVers) outdated
 
-type PkgVer = (String, Version)
+printOutdated :: PkgVersions -> (String, Version) -> IO ()
+printOutdated avail (p, v) = putStrLn $ p ++ ": " ++ display v ++ " (" ++ display l ++ ")"
+    where
+        l = fromJust $ latestVersion avail p
 
-extractPkgVer :: Entry -> Maybe PkgVer
-extractPkgVer e = let
-        ep = entryPath e
-        isCabal = '/' `elem` ep
-        (pkg:ver':_) = map dropTrailingPathSeparator $ splitPath ep
-        ver = simpleParse ver'
-    in if isCabal && isJust ver
-        then Just (pkg, fromJust ver)
-        else Nothing
-
-latestVer p pvs = let
-        vs = map snd $ filter ((== p) . fst) pvs
-    in if null vs
-        then Nothing
-        else Just $ maximum vs
-
-eMap _ Done = []
-eMap f (Next e es) = f e:eMap f es
-eMap _ (Fail _) = error "Failure to read index"
-
-printOutdated (p, v) avail = let
-        l = fromJust $ latestVer p avail
-    in
-        putStrLn $ p ++ ": " ++ display v ++ " (" ++ display l ++ ")"
-
-printOutdatedIdx (p, _) avail = let
-        l = fromJust $ latestVer p avail
-    in
-        putStrLn $ p ++ "," ++ display l
+printOutdatedShort :: PkgVersions -> (String, Version) -> IO ()
+printOutdatedShort avail (p, _) = putStrLn $ p ++ "," ++ display l
+    where
+        l = fromJust $ latestVersion avail p

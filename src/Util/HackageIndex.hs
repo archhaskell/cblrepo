@@ -21,7 +21,9 @@ import Util.Misc
 
 import qualified Codec.Archive.Tar as Tar
 import qualified Codec.Compression.GZip as GZip
+import Control.Applicative
 import qualified Data.ByteString.Lazy as BSL
+import Data.List
 import Data.Map as M
 import Data.Maybe
 import Data.Version
@@ -48,3 +50,8 @@ buildPkgVersions idx = createPkgVerMap M.empty entries
 
         createPkgVerMap acc Tar.Done = acc
         createPkgVerMap _ (Tar.Fail _) = undefined
+
+latestVersion :: PkgVersions
+    -> String -- ^ package name
+    -> Maybe Version
+latestVersion pnv pkg = last . sort <$> M.lookup  pkg pnv
