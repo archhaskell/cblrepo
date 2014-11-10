@@ -46,7 +46,7 @@ bar  1.2-1
 cblrepo add dataenc,0.13.1
 >>>
 >>>2
-No entry for dataenc 0.13.1
+Failed to extract contents for dataenc 0.13.1
 >>>= 1
 
 # add a package from hackage (without its deps)

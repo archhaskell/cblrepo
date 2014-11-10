@@ -55,3 +55,21 @@ latestVersion :: PkgVersions
     -> String -- ^ package name
     -> Maybe Version
 latestVersion pnv pkg = last . sort <$> M.lookup  pkg pnv
+
+extractCabal :: BSL.ByteString  -- ^ the index
+    -> String                   -- ^ package name
+    -> Version                  -- ^ package version
+    -> Maybe BSL.ByteString
+extractCabal idx pkg ver = getContent entries
+    where
+        entries = Tar.read $ GZip.decompress idx
+        pkgPath = pkg </> display ver </> pkg <.> "cabal"
+
+        getContent (Tar.Next e es)
+            | pkgPath == Tar.entryPath e =
+                case Tar.entryContent e of
+                    Tar.NormalFile c _ -> Just c
+                    _ -> Nothing
+            | otherwise = getContent es
+
+        getContent _ = Nothing

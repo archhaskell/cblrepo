@@ -17,13 +17,11 @@
 module Util.Cabal
     where
 
-import Util.HackageIndex (readIndexFile)
+import Util.HackageIndex
 
-import Codec.Archive.Tar as Tar
-import Codec.Compression.GZip as GZip
 import Control.Monad.Error
 import Control.Monad.Reader
-import qualified Data.ByteString.Lazy.Char8 as BSLC
+import qualified Data.ByteString.Lazy as BSL
 import Distribution.Package
 import Distribution.PackageDescription
 import Distribution.PackageDescription.Parse
@@ -67,32 +65,16 @@ readFromIdx (pN, pV) = do
     destDir <- asks cpeDestDir
     appDir <- asks cpeAppDir
     let destFn = destDir </> pN <.> ".cabal"
-    extractCabal appDir destFn
+    copyCabal appDir destFn
     patch destFn
     liftIO $ readPackageDescription silent destFn
 
     where
-        verStr = display pV
-        pathInIdx = pN </> verStr </> pN ++ ".cabal"
-        pkgWithStr = pN ++ " " ++ verStr
-
-        extractCabal appDir fn = do
-            es <- liftM (Tar.read . GZip.decompress) (liftIO $ readIndexFile appDir)
-            e <- maybe (throwError $ "No entry for " ++ pkgWithStr)
-                return
-                (esFindEntry es)
-            cbl <- maybe (throwError $ "Failed to extract contents for " ++ pkgWithStr)
-                return
-                (eGetContent e)
-            liftIO $ writeFile fn cbl
-
-        esFindEntry (Tar.Next e es) = if pathInIdx == entryPath e then Just e else esFindEntry es
-        esFindEntry _ = Nothing
-
-        eGetContent e =
-            case entryContent e of
-                NormalFile c _ -> Just $ BSLC.unpack c
-                _ -> Nothing
+        copyCabal appDir destFn = do
+            idx <- liftIO $ readIndexFile appDir
+            cbl <- maybe (throwError $ "Failed to extract contents for " ++ pN ++ " " ++ display pV) return
+                (extractCabal idx pN pV)
+            liftIO $ BSL.writeFile destFn cbl
 
 -- |  Patch a Cabal file.
 --
