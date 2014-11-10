@@ -19,8 +19,6 @@ module Util.Misc where
 -- {{{1 imports
 import qualified PkgDB as DB
 
-import Codec.Archive.Tar as Tar
-import Codec.Compression.GZip as GZip
 import Control.Exception (onException)
 import Control.Monad
 import Control.Monad.Error
@@ -31,22 +29,18 @@ import Distribution.Compiler
 import Distribution.Package as P
 import Distribution.PackageDescription
 import Distribution.PackageDescription.Configuration
-import Distribution.PackageDescription.Parse
 import Distribution.System
 import Distribution.Text
-import Distribution.Verbosity
 import Distribution.Version
 import Options.Applicative
 import Options.Applicative.Types
 import Safe (lastMay)
 import System.Exit
-import System.FilePath
 import System.IO
 import System.Posix.Files
 import System.Process
 import System.Unix.Directory
 import Text.ParserCombinators.ReadP hiding (many)
-import qualified Data.ByteString.Lazy.Char8 as BS
 
 -- {{{1 dependency
 depName (Dependency (PackageName n) _) = n
@@ -211,11 +205,6 @@ applyPatch origFilename patchFilename = do
 
 applyPatchIfExist origFilename patchFilename =
     liftIO (fileExist patchFilename) >>= flip when (applyPatch origFilename patchFilename)
-
--- {{{1 index functions
-readIndexFile indexLocation = exitOnException
-    "Cannot open index file, have you run the 'sync' command?"
-    (BS.readFile $ indexLocation </> indexFileName)
 
 -- {{{1 finalising package descriptions
 finalizePkg ghcVersion db fa gpd = let

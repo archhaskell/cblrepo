@@ -16,6 +16,7 @@
 
 module Versions where
 
+import Util.HackageIndex
 import Util.Misc
 
 import Codec.Archive.Tar as Tar

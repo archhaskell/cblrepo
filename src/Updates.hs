@@ -18,6 +18,7 @@ module Updates where
 
 import PkgDB
 import Util.Misc
+import Util.HackageIndex
 
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip

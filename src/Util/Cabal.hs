@@ -17,7 +17,7 @@
 module Util.Cabal
     where
 
-import Util.Misc (readIndexFile)
+import Util.HackageIndex (readIndexFile)
 
 import Codec.Archive.Tar as Tar
 import Codec.Compression.GZip as GZip
