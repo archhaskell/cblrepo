@@ -25,7 +25,6 @@ import Versions
 import ListPkgs
 import Updates
 import Util.Misc
-import Urls
 import PkgBuild
 import ConvertDB
 import Remove
@@ -87,11 +86,6 @@ cmdListPkgsOpts = CmdListPkgs
 cmdListPkgsCmd = command "list" (info (helper <*> cmdListPkgsOpts)
     (fullDesc <> progDesc "List packages in repo"))
 
-cmdUrlsOpts = CmdUrls
-    <$> some (option pkgNVersionArgReader (metavar "PKGNAME,VERSION ..."))
-cmdUrlsCmd = command "urls" (info (helper <*> cmdUrlsOpts)
-    (fullDesc <> progDesc "List urls of CABAL files for the given packages"))
-
 cmdPkgBuildOpts = CmdPkgBuild
     <$> option ghcVersionArgReader (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use in PKGBUILD")
     <*> option auto (long "ghc-release" <> value 1 <> help "GHC release to use in PKGBUILD")
@@ -116,7 +110,7 @@ argParser = info (helper <*> opts) (fullDesc <> header (progName ++ " v" ++ disp
         opts = Opts <$> argAppDir <*> argDbFile <*> argDryRun
             <*> subparser (
                 cmdAddPkgCmd <> cmdBumpPkgsCmd <> cmdBuildPkgsCmd <> cmdSyncCmd <> cmdVersionsCmd <>
-                cmdUpdatesCmd <> cmdListPkgsCmd <> cmdUrlsCmd <> cmdPkgBuildCmd <> cmdConvertDbCmd <> cmdRemovePkgCmd)
+                cmdUpdatesCmd <> cmdListPkgsCmd <> cmdPkgBuildCmd <> cmdConvertDbCmd <> cmdRemovePkgCmd)
 
 -- {{{1 main
 main :: IO ()
@@ -134,7 +128,6 @@ main = do
             CmdVersions {} -> runCommand o' versions
             CmdListPkgs {} -> runCommand o' listPkgs
             CmdUpdates {} -> runCommand o' updates
-            CmdUrls {} -> runCommand o' urls
             CmdPkgBuild {} -> runCommand o' pkgBuild
             CmdConvertDb {} -> runCommand o' convertDb
             CmdRemovePkg {} -> runCommand o' remove
