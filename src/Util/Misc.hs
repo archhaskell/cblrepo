@@ -175,6 +175,7 @@ data Cmds
     | CmdPkgBuild { ghcVer :: Version, ghcRel :: Int, patchDir :: FilePath, pkgs :: [String] }
     | CmdConvertDb { inDbFile :: FilePath, outDbFile :: FilePath }
     | CmdRemovePkg { pkgs :: [String] }
+    | CmdExtract { cmdExtractPkgs :: [(String, Version)] }
     deriving (Show)
 
 data Opts = Opts

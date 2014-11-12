@@ -1,0 +1,29 @@
+# a few tests to verify the extract command, run with `shelltestrunner -w`
+
+  rm -fr ,,test_appdir
+>>>= 0
+  mkdir ,,test_appdir
+>>>= 0
+
+cblrepo --appdir=,,test_appdir sync
+>>>= 0
+
+cblrepo --appdir=,,test_appdir extract dataenc,0.14.0.7
+>>>= 0
+
+  md5sum dataenc.cabal
+>>>
+2f606651e462a0f0b0b8ac61ff29861b  dataenc.cabal
+>>>= 0
+
+cblrepo --appdir=,,test_appdir extract dataenc,0.13.1
+>>>
+>>>2
+Failed to extract Cabal for dataenc 0.13.1
+>>>= 1
+
+  rm -f dataenc.cabal
+>>>= 0
+
+  rm -fr ,,test_appdir
+>>>= 0

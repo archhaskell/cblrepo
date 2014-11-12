@@ -28,6 +28,7 @@ import Util.Misc
 import PkgBuild
 import ConvertDB
 import Remove
+import Extract
 
 import Paths_cblrepo
 
@@ -105,12 +106,17 @@ cmdRemovePkgOpts = CmdRemovePkg
 cmdRemovePkgCmd = command "rm" (info (helper <*> cmdRemovePkgOpts)
     (fullDesc <> progDesc "Remove packages"))
 
+cmdExtractOpts = CmdExtract
+    <$> many (argument pkgNVersionArgReader (metavar "PKGNAME,VERSION"))
+cmdExtractCmd = command "extract" (info (helper <*> cmdExtractOpts) (fullDesc <> progDesc "Extract Cabal file from index"))
+
 argParser = info (helper <*> opts) (fullDesc <> header (progName ++ " v" ++ display version) <> progDesc "Maintain a datatbase of dependencies of CABAL packages")
     where
         opts = Opts <$> argAppDir <*> argDbFile <*> argDryRun
-            <*> subparser (
-                cmdAddPkgCmd <> cmdBumpPkgsCmd <> cmdBuildPkgsCmd <> cmdSyncCmd <> cmdVersionsCmd <>
-                cmdUpdatesCmd <> cmdListPkgsCmd <> cmdPkgBuildCmd <> cmdConvertDbCmd <> cmdRemovePkgCmd)
+            <*> subparser ( cmdAddPkgCmd
+                <> cmdBumpPkgsCmd <> cmdBuildPkgsCmd <> cmdSyncCmd <> cmdVersionsCmd <> cmdUpdatesCmd
+                <> cmdListPkgsCmd <> cmdPkgBuildCmd <> cmdConvertDbCmd <> cmdRemovePkgCmd <> cmdExtractCmd
+                )
 
 -- {{{1 main
 main :: IO ()
@@ -131,3 +137,4 @@ main = do
             CmdPkgBuild {} -> runCommand o' pkgBuild
             CmdConvertDb {} -> runCommand o' convertDb
             CmdRemovePkg {} -> runCommand o' remove
+            CmdExtract {} -> runCommand o' extract
