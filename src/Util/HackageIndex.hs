@@ -23,10 +23,13 @@ import qualified Codec.Archive.Tar as Tar
 import qualified Codec.Compression.GZip as GZip
 import Control.Applicative
 import qualified Data.ByteString.Lazy as BSL
+import qualified Data.ByteString.Lazy.UTF8 as BSLU
 import Data.List
-import Data.Map as M
+import qualified Data.Map as M
 import Data.Maybe
 import Data.Version
+import Distribution.PackageDescription
+import Distribution.PackageDescription.Parse
 import Distribution.Text
 import System.FilePath
 
@@ -43,7 +46,7 @@ buildPkgVersions idx = createPkgVerMap M.empty entries
     where
         entries = Tar.read $ GZip.decompress idx
 
-        createPkgVerMap acc (Tar.Next e es) = createPkgVerMap (insertWith (++) (parts !! 0) [ver] acc) es
+        createPkgVerMap acc (Tar.Next e es) = createPkgVerMap (M.insertWith (++) (parts !! 0) [ver] acc) es
             where
                 parts = splitDirectories (Tar.entryPath e)
                 ver = fromJust . simpleParse $ parts !! 1
@@ -73,3 +76,13 @@ extractCabal idx pkg ver = getContent entries
             | otherwise = getContent es
 
         getContent _ = Nothing
+
+getRevision :: BSL.ByteString -- ^ the index
+    -> String                 -- ^ package name
+    -> Version                -- ^ package version
+    -> Maybe Int
+getRevision idx pkg ver = do
+    cblStr <- BSLU.toString <$> extractCabal idx pkg ver
+    case parsePackageDescription cblStr of
+        ParseOk _ gpd -> maybe (return 0) (return . read) $ lookup "x-revision" (customFieldsPD $ packageDescription gpd)
+        _ -> fail "no good"
