@@ -38,7 +38,7 @@ readIndexFile indexLocation = exitOnException
     "Cannot open index file, have you run the 'sync' command?"
     (BSL.readFile $ indexLocation </> indexFileName)
 
-type PkgVersions = M.Map String [Version]
+type PkgVersions = M.Map String [(Version, Int)]
 
 buildPkgVersions :: BSL.ByteString -- ^ the index
     -> PkgVersions
@@ -46,17 +46,18 @@ buildPkgVersions idx = createPkgVerMap M.empty entries
     where
         entries = Tar.read $ GZip.decompress idx
 
-        createPkgVerMap acc (Tar.Next e es) = createPkgVerMap (M.insertWith (++) (parts !! 0) [ver] acc) es
+        createPkgVerMap acc (Tar.Next e es) = createPkgVerMap (M.insertWith (++) (parts !! 0) [(ver, xrev)] acc) es
             where
                 parts = splitDirectories (Tar.entryPath e)
                 ver = fromJust . simpleParse $ parts !! 1
+                xrev = 0
 
         createPkgVerMap acc Tar.Done = acc
         createPkgVerMap _ (Tar.Fail _) = undefined
 
 latestVersion :: PkgVersions
     -> String -- ^ package name
-    -> Maybe Version
+    -> Maybe (Version, Int)
 latestVersion pnv pkg = last . sort <$> M.lookup  pkg pnv
 
 extractCabal :: BSL.ByteString  -- ^ the index

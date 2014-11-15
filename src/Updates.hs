@@ -38,7 +38,7 @@ updates = do
     let nonBasePkgs = filter (not . isBasePkg) db
         pkgsNVers = map (pkgName &&& pkgVersion) nonBasePkgs
         outdated = filter
-            (\ (p, v) -> maybe False (> v) (latestVersion availPkgsNVers p))
+            (\ (p, v) -> maybe False (> v) (fst <$> latestVersion availPkgsNVers p))
             pkgsNVers
         printer = if aCS
             then printOutdatedShort
@@ -48,9 +48,9 @@ updates = do
 printOutdated :: PkgVersions -> (String, Version) -> IO ()
 printOutdated avail (p, v) = putStrLn $ p ++ ": " ++ display v ++ " (" ++ display l ++ ")"
     where
-        l = fromJust $ latestVersion avail p
+        l = fst $ fromJust $ latestVersion avail p
 
 printOutdatedShort :: PkgVersions -> (String, Version) -> IO ()
 printOutdatedShort avail (p, _) = putStrLn $ p ++ "," ++ display l
     where
-        l = fromJust $ latestVersion avail p
+        l = fst $ fromJust $ latestVersion avail p

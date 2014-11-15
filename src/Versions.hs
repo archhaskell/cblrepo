@@ -35,12 +35,12 @@ versions = do
         pkgsNVers <- buildPkgVersions <$> readIndexFile aD
         mapM_ (\ pkg -> printFunc (pkg, M.lookup pkg pkgsNVers)) pkgs
 
-printAllVersions :: (String, Maybe [Version]) -> IO ()
+printAllVersions :: (String, Maybe [(Version, Int)]) -> IO ()
 printAllVersions (p, Nothing) = putStrLn $ p ++ ": No such package"
 printAllVersions (p, Just vs) = putStrLn $ p ++ ": " ++ versions
     where
-        versions = unwords $ display <$> vs
+        versions = unwords $ display . fst <$> vs
 
-printLatestVersion :: (String, Maybe [Version]) -> IO ()
+printLatestVersion :: (String, Maybe [(Version, Int)]) -> IO ()
 printLatestVersion (p, Nothing) = putStrLn $ p ++ ": No such package"
-printLatestVersion (p, Just vs) = putStrLn $ p ++ "," ++ display (last vs)
+printLatestVersion (p, Just vs) = putStrLn $ p ++ "," ++ display (fst $ last vs)
