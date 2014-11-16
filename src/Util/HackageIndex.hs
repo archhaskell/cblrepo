@@ -50,7 +50,12 @@ buildPkgVersions idx = createPkgVerMap M.empty entries
             where
                 parts = splitDirectories (Tar.entryPath e)
                 ver = fromJust . simpleParse $ parts !! 1
-                xrev = 0
+                content = case Tar.entryContent e of
+                    Tar.NormalFile c _ -> Just $ BSLU.toString c
+                    _ -> Nothing
+                xrev = case (parsePackageDescription <$> content) of
+                    Just (ParseOk _ gpd) -> maybe 0 read $ lookup "x-revision" (customFieldsPD $ packageDescription gpd)
+                    _ -> 0
 
         createPkgVerMap acc Tar.Done = acc
         createPkgVerMap _ (Tar.Fail _) = undefined
