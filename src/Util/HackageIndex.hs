@@ -40,6 +40,8 @@ readIndexFile indexLocation = exitOnException
 
 type PkgVersions = M.Map String [(Version, Int)]
 
+-- | Build up a map of packages and their versions.  The versions are listed in
+-- descending order, i.e. `head` contains the latest version.
 buildPkgVersions :: BSL.ByteString -- ^ the index
     -> PkgVersions
 buildPkgVersions idx = createPkgVerMap M.empty entries

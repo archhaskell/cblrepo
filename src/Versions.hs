@@ -43,4 +43,4 @@ printAllVersions (p, Just vs) = putStrLn $ p ++ ": " ++ versions
 
 printLatestVersion :: (String, Maybe [(Version, Int)]) -> IO ()
 printLatestVersion (p, Nothing) = putStrLn $ p ++ ": No such package"
-printLatestVersion (p, Just vs) = putStrLn $ p ++ "," ++ display (fst $ last vs)
+printLatestVersion (p, Just vs) = putStrLn $ p ++ "," ++ display (fst $ head vs)
