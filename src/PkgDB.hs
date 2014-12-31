@@ -36,6 +36,7 @@ import qualified Data.ByteString.Lazy.Char8 as C
 -- {{{1 temporary
 _depName (P.Dependency (P.PackageName n) _) = n
 _depVersionRange (P.Dependency _ vr) = vr
+_pkgXRev p = maybe 0 read $ lookup "x-revision" (customFieldsPD p)
 
 -- {{{1 types
 data Pkg
@@ -105,7 +106,7 @@ createCblPkg pd fa = createRepoPkg name version xrev deps fa "1"
     where
         name = (\ (P.PackageName n) -> n) (P.pkgName $ package pd)
         version = P.pkgVersion $ package pd
-        xrev = 0
+        xrev = _pkgXRev pd
         deps = buildDepends pd
 
 getDependencyOn :: String -> CblPkg -> Maybe P.Dependency
