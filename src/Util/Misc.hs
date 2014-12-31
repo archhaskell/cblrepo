@@ -31,7 +31,6 @@ import Distribution.PackageDescription
 import Distribution.PackageDescription.Configuration
 import Distribution.System
 import Distribution.Text
-import Distribution.Version
 import Options.Applicative
 import Options.Applicative.Types
 import Safe (lastMay)
@@ -211,19 +210,11 @@ finalizePkg ghcVersion db fa gpd = let
         n = ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) gpd
     in finalizePackageDescription
         fa
-        (checkAgainstDb db n)
+        (DB.checkAgainstDb db n)
         (Platform X86_64 buildOS) -- platform
         (CompilerId GHC ghcVersion)  -- compiler version
         [] -- no additional constraints
         gpd
-
-checkAgainstDb db name dep = let
-        dN = depName dep
-        dVR = depVersionRange dep
-    in (dN == name) ||
-            (case DB.lookupPkg db dN of
-                Nothing -> False
-                Just (DB.CP _ p) -> withinRange (DB.version p) dVR)
 
 -- {{{1 Command type
 type Command = ReaderT Opts IO

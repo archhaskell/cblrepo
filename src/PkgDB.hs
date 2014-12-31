@@ -179,6 +179,14 @@ checkDependants db n v = let
         fails = filter (not . V.withinRange v . _depVersionRange . fromJust . snd) d2
     in fails
 
+checkAgainstDb db name dep = let
+        dN = _depName dep
+        dVR = _depVersionRange dep
+    in (dN == name) ||
+            (case lookupPkg db dN of
+                Nothing -> False
+                Just (CP _ p) -> V.withinRange (version p) dVR)
+
 readDb :: FilePath -> IO CblDB
 readDb fp = handle
     (\ e -> if isDoesNotExistError e
