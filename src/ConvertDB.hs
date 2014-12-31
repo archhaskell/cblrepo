@@ -30,6 +30,15 @@ convertDb = do
     liftIO $ NDB.saveDb newDb outDbFn
 
 doConvert :: ODB.CblPkg -> NDB.CblPkg
-doConvert (ODB.CP n (ODB.GhcPkg v)) = NDB.CP n (NDB.GhcPkg v)
-doConvert (ODB.CP n (ODB.DistroPkg v r)) = NDB.CP n (NDB.DistroPkg v r)
-doConvert (ODB.CP n (ODB.RepoPkg v d f r)) = NDB.CP n (NDB.RepoPkg v 0 d f r)
+doConvert o
+    | ODB.isGhcPkg o = NDB.createGhcPkg n v
+    | ODB.isDistroPkg o = NDB.createDistroPkg n v r
+    | ODB.isRepoPkg o = NDB.createRepoPkg n v x d f r
+    | otherwise = error ""
+    where
+        n = ODB.pkgName o
+        v = ODB.pkgVersion o
+        x = 0
+        d = ODB.pkgDeps o
+        f = ODB.pkgFlags o
+        r = ODB.pkgRelease o
