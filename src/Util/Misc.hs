@@ -18,6 +18,7 @@ module Util.Misc where
 
 -- {{{1 imports
 import qualified PkgDB as DB
+import Util.Dist
 
 import Control.Exception (onException)
 import Control.Monad
@@ -26,7 +27,6 @@ import Control.Monad.Reader
 import Data.Either
 import Data.Version
 import Distribution.Compiler
-import Distribution.Package as P
 import Distribution.PackageDescription
 import Distribution.PackageDescription.Configuration
 import Distribution.System
@@ -40,10 +40,6 @@ import System.Posix.Files
 import System.Process
 import System.Unix.Directory
 import Text.ParserCombinators.ReadP hiding (many)
-
--- {{{1 dependency
-depName (Dependency (PackageName n) _) = n
-depVersionRange (Dependency _ vr) = vr
 
 -- {{{ print functions
 printUnSat (n, ds) = do
@@ -206,15 +202,15 @@ applyPatchIfExist origFilename patchFilename =
     liftIO (fileExist patchFilename) >>= flip when (applyPatch origFilename patchFilename)
 
 -- {{{1 finalising package descriptions
-finalizePkg ghcVersion db fa gpd = let
-        n = ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) gpd
-    in finalizePackageDescription
+finalizePkg ghcVersion db fa gpd = finalizePackageDescription
         fa
         (DB.checkAgainstDb db n)
         (Platform X86_64 buildOS) -- platform
         (CompilerId GHC ghcVersion)  -- compiler version
         [] -- no additional constraints
         gpd
+    where
+        n = pkgNameStr gpd
 
 -- {{{1 Command type
 type Command = ReaderT Opts IO

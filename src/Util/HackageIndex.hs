@@ -18,6 +18,7 @@ module Util.HackageIndex
     where
 
 import Util.Misc
+import Util.Dist
 
 import qualified Codec.Archive.Tar as Tar
 import qualified Codec.Compression.GZip as GZip
@@ -56,7 +57,7 @@ buildPkgVersions idx = createPkgVerMap M.empty entries
                     Tar.NormalFile c _ -> Just $ BSLU.toString c
                     _ -> Nothing
                 xrev = case (parsePackageDescription <$> content) of
-                    Just (ParseOk _ gpd) -> maybe 0 read $ lookup "x-revision" (customFieldsPD $ packageDescription gpd)
+                    Just (ParseOk _ gpd) -> pkgXRev (packageDescription gpd)
                     _ -> 0
 
         createPkgVerMap acc Tar.Done = acc

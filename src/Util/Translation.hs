@@ -19,6 +19,7 @@ module Util.Translation where
 
 import PkgDB as DB
 import Util.Misc
+import Util.Dist
 
 import Control.Monad
 import Control.Monad.Error
@@ -329,7 +330,7 @@ translate ghcVer ghcRel db fa pd = let
 --  • this is most likely too simplistic to create the Arch package names
 --  correctly for all possible dependencies
 calcExactDeps db pd = let
-        n = (\ (P.PackageName n) -> n ) (P.packageName pd)
+        n = pkgNameStr pd
         remPkgs = map DB.pkgName (filter isGhcPkg db) ++ [n]
         deps = filter (not . (`elem` remPkgs)) (map depName (buildDepends pd))
         depString n = let

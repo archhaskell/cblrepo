@@ -33,10 +33,7 @@ import Data.Aeson (decode, encode)
 import Data.Aeson.TH (deriveJSON, defaultOptions, Options(..), SumEncoding(..))
 import qualified Data.ByteString.Lazy.Char8 as C
 
--- {{{1 temporary
-_depName (P.Dependency (P.PackageName n) _) = n
-_depVersionRange (P.Dependency _ vr) = vr
-_pkgXRev p = maybe 0 read $ lookup "x-revision" (customFieldsPD p)
+import Util.Dist
 
 -- {{{1 types
 data Pkg
@@ -104,13 +101,13 @@ createRepoPkg n v x d fa r = CP n (RepoPkg v x d fa r)
 createCblPkg :: PackageDescription -> FlagAssignment -> CblPkg
 createCblPkg pd fa = createRepoPkg name version xrev deps fa "1"
     where
-        name = (\ (P.PackageName n) -> n) (P.pkgName $ package pd)
+        name = pkgNameStr pd
         version = P.pkgVersion $ package pd
-        xrev = _pkgXRev pd
+        xrev = Util.Dist.pkgXRev pd
         deps = buildDepends pd
 
 getDependencyOn :: String -> CblPkg -> Maybe P.Dependency
-getDependencyOn n p = find (\ d -> _depName d == n) (pkgDeps p)
+getDependencyOn n p = find (\ d -> depName d == n) (pkgDeps p)
 
 isGhcPkg (CP _ GhcPkg {}) = True
 isGhcPkg _ = False
@@ -162,7 +159,7 @@ lookupPkg (p:db) n
 
 lookupDependants db n = filter (/= n) $ map pkgName $ filter (`doesDependOn` n) db
     where
-        doesDependOn p n = n `elem` map _depName (pkgDeps p)
+        doesDependOn p n = n `elem` map depName (pkgDeps p)
 
 transitiveDependants :: CblDB -> [String] -> [String]
 transitiveDependants db names = keepLast $ concatMap transUsersOfOne names
@@ -176,12 +173,12 @@ checkDependants db n v = let
         d1 = mapMaybe (lookupPkg db) (lookupDependants db n)
         -- d2 = map (\ p -> (pkgName p, getDependencyOn n p)) d1
         d2 = map (pkgName &&& getDependencyOn n ) d1
-        fails = filter (not . V.withinRange v . _depVersionRange . fromJust . snd) d2
+        fails = filter (not . V.withinRange v . depVersionRange . fromJust . snd) d2
     in fails
 
 checkAgainstDb db name dep = let
-        dN = _depName dep
-        dVR = _depVersionRange dep
+        dN = depName dep
+        dVR = depVersionRange dep
     in (dN == name) ||
             (case lookupPkg db dN of
                 Nothing -> False

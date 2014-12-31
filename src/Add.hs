@@ -21,10 +21,11 @@ module Add where
 import PkgDB
 import qualified Util.Cabal as Cbl
 import Util.Misc
+import Util.Dist
 
 -- {{{2 system
 import Control.Monad.Reader
-import Control.Monad.Error
+-- import Control.Monad.Error
 import Data.List
 import Data.Maybe
 import Distribution.PackageDescription
@@ -62,7 +63,7 @@ add = do
         pkgNames = map getName pkgs
         tmpDb = foldl delPkg db pkgNames
         oldFlags = map (maybe ([], []) (pkgName &&& pkgFlags) . lookupPkg db . getName) pkgs
-        fileFlags = map (\ (pkg, (_, fa)) -> ((\ (P.PackageName n) -> n) $ P.packageName pkg, fa))
+        fileFlags = map (\ (pkg, (_, fa)) -> (pkgNameStr pkg, fa))
             (zip (rights genFilePkgs) filePkgs)
         idxFlags = map (\ (a, _, b) -> (a, b)) idxPkgs
         flags = fileFlags `combineFlags` idxFlags `combineFlags` oldFlags
@@ -80,7 +81,7 @@ runCabalParseWithTempDir f = do
 
 getName (GhcType n _) = n
 getName (DistroType n _ _) = n
-getName (RepoType gpd) = (\ (P.PackageName n) -> n) $ P.pkgName $ package $ packageDescription gpd
+getName (RepoType gpd) = pkgNameStr $ packageDescription gpd
 
 -- {{{1 addPkgs
 addPkgs :: Version -> CblDB -> [(String, FlagAssignment)] -> [PkgType] -> Either ([(String, [P.Dependency])], [((String, Version), [(String, Maybe P.Dependency)])]) CblDB
@@ -101,7 +102,7 @@ canBeAdded ghcVer db flags pkg@(RepoType gpd) =  finable && depsOK
     where
         fa = fromMaybe [] $ lookup (getName pkg) flags
         finable = either (const False) (const True) (finalizePkg ghcVer db fa gpd)
-        n = ((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) gpd
+        n = pkgNameStr (packageDescription gpd)
         v = P.pkgVersion $ package $ packageDescription gpd
         depsOK = null $ checkDependants db n v
 
@@ -116,7 +117,7 @@ pkgTypeToCblPkg ghcVer db flags pkg@(RepoType gpd) =
 finalizeToUnsatisfiableDeps ghcVer db flags pkg@(RepoType gpd) =
     let fa = fromMaybe [] $ lookup (getName pkg) flags
     in case finalizePkg ghcVer db fa gpd of
-       Left ds -> Just (((\ (P.PackageName n) -> n ) . P.pkgName . package . packageDescription) gpd, ds)
+       Left ds -> Just (pkgNameStr (packageDescription gpd), ds)
        _ -> Nothing
 
 finalizeToUnsatisfiableDeps _ _ _ _ = Nothing
@@ -132,7 +133,7 @@ findBreaking db (DistroType n v _) = let
         then Nothing
         else Just ((n, v), d)
 findBreaking db (RepoType gpd) = let
-        n = (\ (P.PackageName n) -> n) $ P.pkgName $ package $ packageDescription gpd
+        n = pkgNameStr (packageDescription gpd)
         v = P.pkgVersion $ package $ packageDescription gpd
         d = checkDependants db n v
     in if null d
