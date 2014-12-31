@@ -33,7 +33,7 @@ import Data.Aeson (decode, encode)
 import Data.Aeson.TH (deriveJSON, defaultOptions, Options(..), SumEncoding(..))
 import qualified Data.ByteString.Lazy.Char8 as C
 
--- {{{ temporary
+-- {{{1 temporary
 _depName (P.Dependency (P.PackageName n) _) = n
 _depVersionRange (P.Dependency _ vr) = vr
 
@@ -41,7 +41,7 @@ _depVersionRange (P.Dependency _ vr) = vr
 data Pkg
     = GhcPkg { version :: V.Version }
     | DistroPkg { version :: V.Version, release :: String }
-    | RepoPkg { version :: V.Version, deps :: [P.Dependency], flags :: FlagAssignment, release :: String }
+    | RepoPkg { version :: V.Version, xrev :: Int, deps :: [P.Dependency], flags :: FlagAssignment, release :: String }
     deriving (Eq, Show)
 
 data CblPkg = CP String Pkg
@@ -79,6 +79,10 @@ pkgPkg (CP _ p) = p
 pkgVersion :: CblPkg -> V.Version
 pkgVersion (CP _ p) = version p
 
+pkgXRev :: CblPkg -> Int
+pkgXRev (CP _ RepoPkg { xrev = x }) = x
+pkgXRev _ = 0
+
 pkgDeps :: CblPkg -> [P.Dependency]
 pkgDeps (CP _ RepoPkg { deps = d}) = d
 pkgDeps _ = []
@@ -94,13 +98,14 @@ pkgRelease (CP _ RepoPkg { release = r }) = r
 
 createGhcPkg n v = CP n (GhcPkg v)
 createDistroPkg n v r = CP n (DistroPkg v r)
-createRepoPkg n v d fa r = CP n (RepoPkg v d fa r)
+createRepoPkg n v x d fa r = CP n (RepoPkg v x d fa r)
 
 createCblPkg :: PackageDescription -> FlagAssignment -> CblPkg
-createCblPkg pd fa = createRepoPkg name version deps fa "1"
+createCblPkg pd fa = createRepoPkg name version xrev deps fa "1"
     where
         name = (\ (P.PackageName n) -> n) (P.pkgName $ package pd)
         version = P.pkgVersion $ package pd
+        xrev = 0
         deps = buildDepends pd
 
 getDependencyOn :: String -> CblPkg -> Maybe P.Dependency
