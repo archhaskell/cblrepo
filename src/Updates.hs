@@ -36,21 +36,21 @@ updates = do
     aCS <- optGet $ idxStyle .optsCmd
     availPkgsNVers <- liftIO $ buildPkgVersions <$> readIndexFile aD
     let nonBasePkgs = filter (not . isBasePkg) db
-        pkgsNVers = map (pkgName &&& pkgVersion) nonBasePkgs
+        pkgsNVers = map (pkgName &&& pkgVersion &&& pkgXRev) nonBasePkgs
         outdated = filter
-            (\ (p, v) -> maybe False (> v) (latestVersion availPkgsNVers p))
+            (\ (p, vx) -> maybe False (> vx) (latestVersion availPkgsNVers p))
             pkgsNVers
         printer = if aCS
             then printOutdatedShort
             else printOutdated
     liftIO $ mapM_ (printer availPkgsNVers) outdated
 
-printOutdated :: PkgVersions -> (String, Version) -> IO ()
-printOutdated avail (p, v) = putStrLn $ p ++ ": " ++ display v ++ " (" ++ display l ++ ")"
+printOutdated :: PkgVersions -> (String, (Version, Int)) -> IO ()
+printOutdated avail (p, (v, x)) = putStrLn $ p ++ ": " ++ display v ++ ":x" ++ show x ++ " (" ++ display lv ++ ":x" ++ show lx ++ ")"
     where
-        l = fromJust $ latestVersion avail p
+        (lv, lx) = fromJust $ latestVersion avail p
 
-printOutdatedShort :: PkgVersions -> (String, Version) -> IO ()
+printOutdatedShort :: PkgVersions -> (String, (Version, Int)) -> IO ()
 printOutdatedShort avail (p, _) = putStrLn $ p ++ "," ++ display l
     where
-        l = fromJust $ latestVersion avail p
+        l = fst $ fromJust $ latestVersion avail p

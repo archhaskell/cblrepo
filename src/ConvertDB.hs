@@ -1,5 +1,5 @@
 {-
- - Copyright 2011 Per Magnus Therning
+ - Copyright 2011-2014 Per Magnus Therning
  -
  - Licensed under the Apache License, Version 2.0 (the "License");
  - you may not use this file except in compliance with the License.
@@ -16,13 +16,10 @@
 
 module ConvertDB where
 
--- {{{1 imports
--- {{{2 local
 import Util.Misc
 import qualified OldPkgDB as ODB
 import qualified PkgDB as NDB
 
--- {{{2 system
 import Control.Monad.Reader
 
 convertDb :: Command ()
@@ -35,4 +32,4 @@ convertDb = do
 doConvert :: ODB.CblPkg -> NDB.CblPkg
 doConvert (ODB.CP n (ODB.GhcPkg v)) = NDB.CP n (NDB.GhcPkg v)
 doConvert (ODB.CP n (ODB.DistroPkg v r)) = NDB.CP n (NDB.DistroPkg v r)
-doConvert (ODB.CP n (ODB.RepoPkg v d f r)) = NDB.CP n (NDB.RepoPkg v d f r)
+doConvert (ODB.CP n (ODB.RepoPkg v d f r)) = NDB.CP n (NDB.RepoPkg v 0 d f r)
