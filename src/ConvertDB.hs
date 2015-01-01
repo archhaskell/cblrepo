@@ -26,19 +26,21 @@ convertDb :: Command ()
 convertDb = do
     inDbFn <- optGet $ inDbFile . optsCmd
     outDbFn <- optGet $ outDbFile . optsCmd
-    newDb <- liftIO $ liftM (map doConvert) (ODB.readDb inDbFn)
+    newDb <- fmap doConvertDB (liftIO $ ODB.readDb inDbFn)
     liftIO $ NDB.saveDb newDb outDbFn
 
-doConvert :: ODB.CblPkg -> NDB.CblPkg
-doConvert o
-    | ODB.isGhcPkg o = NDB.createGhcPkg n v
-    | ODB.isDistroPkg o = NDB.createDistroPkg n v r
-    | ODB.isRepoPkg o = NDB.createRepoPkg n v x d f r
-    | otherwise = error ""
+doConvertDB :: ODB.CblDB -> NDB.CblDB
+doConvertDB = map doConvert
     where
-        n = ODB.pkgName o
-        v = ODB.pkgVersion o
-        x = 0
-        d = ODB.pkgDeps o
-        f = ODB.pkgFlags o
-        r = ODB.pkgRelease o
+        doConvert o
+            | ODB.isGhcPkg o = NDB.createGhcPkg n v
+            | ODB.isDistroPkg o = NDB.createDistroPkg n v r
+            | ODB.isRepoPkg o = NDB.createRepoPkg n v x d f r
+            | otherwise = error ""
+            where
+                n = ODB.pkgName o
+                v = ODB.pkgVersion o
+                x = 0
+                d = ODB.pkgDeps o
+                f = ODB.pkgFlags o
+                r = ODB.pkgRelease o
