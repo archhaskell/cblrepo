@@ -21,13 +21,16 @@ import qualified OldPkgDB as ODB
 import qualified PkgDB as NDB
 
 import Control.Monad.Reader
+import System.Directory
 
 convertDb :: Command ()
 convertDb = do
     inDbFn <- optGet $ inDbFile . optsCmd
     outDbFn <- optGet $ outDbFile . optsCmd
-    newDb <- fmap doConvertDB (liftIO $ ODB.readDb inDbFn)
-    liftIO $ NDB.saveDb newDb outDbFn
+    dbExist <- liftIO $ doesFileExist inDbFn
+    when dbExist $ do
+        newDb <- fmap doConvertDB (liftIO $ ODB.readDb inDbFn)
+        liftIO $ NDB.saveDb newDb outDbFn
 
 doConvertDB :: ODB.CblDB -> NDB.CblDB
 doConvertDB = map doConvert
