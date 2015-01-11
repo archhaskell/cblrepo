@@ -52,23 +52,25 @@ runCabalParseE :: CabalParseEnv -> CabalParse a -> (ExceptT String IO) a
 runCabalParseE cpe f = runReaderT f cpe
 
 readFromFile :: FilePath -- ^ file name
-    -> CabalParse GenericPackageDescription
+    -> CabalParse (BSL.ByteString, GenericPackageDescription)
 readFromFile fn = do
     destDir <- asks cpeDestDir
     let destFn = destDir </> takeFileName fn
     liftIO $ copyFile fn destFn
-    patch destFn
-    liftIO $ readPackageDescription silent destFn
+    cblFile <- patch destFn
+    gpd <- liftIO $ readPackageDescription silent destFn
+    return (cblFile, gpd)
 
 readFromIdx :: (String, Version) -- ^ package name and version
-    -> CabalParse GenericPackageDescription
+    -> CabalParse (BSL.ByteString, GenericPackageDescription)
 readFromIdx (pN, pV) = do
     destDir <- asks cpeDestDir
     appDir <- asks cpeAppDir
     let destFn = destDir </> pN <.> ".cabal"
     lift $ copyCabal appDir destFn
-    patch destFn
-    liftIO $ readPackageDescription silent destFn
+    cblFile <- patch destFn
+    gpd <- liftIO $ readPackageDescription silent destFn
+    return (cblFile, gpd)
 
     where
         copyCabal appDir destFn = do
@@ -83,12 +85,13 @@ readFromIdx (pN, pV) = do
 -- pkg name>.patch@.  The file is patched only if a patch with the correct name
 -- is found in the patch directory (provided via 'CabalParseEnv').
 patch :: FilePath -- ^ file to patch
-    -> CabalParse ()
+    -> CabalParse BSL.ByteString
 patch fn = do
     pkgName <- liftIO $ extractName fn
     patchDir <- asks cpePatchDir
     let patchFn = patchDir </> pkgName <.> "cabal"
     lift $ applyPatchIfExist fn patchFn
+    liftIO $ BSL.readFile fn
 
     where
         extractName fn = liftM name $ readPackageDescription silent fn

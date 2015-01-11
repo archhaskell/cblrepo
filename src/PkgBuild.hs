@@ -43,7 +43,7 @@ generatePkgBuild pkg = do
         ghcRel <- asks $ ghcRel . optsCmd
         (ver, fa) <- maybe (throwE $ "Unknown package: " ++ pkg) (return . (pkgVersion &&& pkgFlags)) $ lookupPkg db pkg
         --
-        genericPkgDesc <- runCabalParseWithTempDir $ Cbl.readFromIdx (pkg, ver)
+        (_, genericPkgDesc) <- runCabalParseWithTempDir $ Cbl.readFromIdx (pkg, ver)
         pkgDescAndFlags <- either (const $ throwE ("Failed to finalize package: " ++ pkg)) return
             (finalizePkg ghcVer db fa genericPkgDesc)
         let archPkg = translate ghcVer ghcRel db (snd pkgDescAndFlags) (fst pkgDescAndFlags)
