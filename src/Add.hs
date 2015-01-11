@@ -46,15 +46,15 @@ data PkgType
 -- {{{1 add
 add :: Command ()
 add = do
-    dbFn <- optGet  dbFile
+    dbFn <- asks  dbFile
     db <- liftIO $ readDb dbFn
-    dr <- optGet  dryRun
-    ghcVersion <- optGet $ ghcVer . optsCmd
-    filePkgs <- optGet $ cmdAddFileCbls . optsCmd
-    idxPkgs <- optGet $ cmdAddCbls . optsCmd
+    dr <- asks  dryRun
+    ghcVersion <- asks $ ghcVer . optsCmd
+    filePkgs <- asks $ cmdAddFileCbls . optsCmd
+    idxPkgs <- asks $ cmdAddCbls . optsCmd
     --
-    ghcPkgs <- optGet  $ map (uncurry GhcType) . cmdAddGhcPkgs . optsCmd
-    distroPkgs <- optGet $ map (\ (n, v, r) -> DistroType n v r) . cmdAddDistroPkgs . optsCmd
+    ghcPkgs <- asks  $ map (uncurry GhcType) . cmdAddGhcPkgs . optsCmd
+    distroPkgs <- asks $ map (\ (n, v, r) -> DistroType n v r) . cmdAddDistroPkgs . optsCmd
     genFilePkgs <- mapM (runCabalParseWithTempDir . Cbl.readFromFile . fst) filePkgs
     genIdxPkgs <- mapM ((runCabalParseWithTempDir . Cbl.readFromIdx) . (\ (a, b, _) -> (a, b))) idxPkgs
     genPkgs <- liftM (map RepoType) $ exitOnErrors (genFilePkgs ++ genIdxPkgs)

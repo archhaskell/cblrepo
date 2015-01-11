@@ -1,5 +1,5 @@
 {-
- - Copyright 2011-2013 Per Magnus Therning
+ - Copyright 2011-2014 Per Magnus Therning
  -
  - Licensed under the Apache License, Version 2.0 (the "License");
  - you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ printBrksOth  ((n, v), brks) = do
 progName = "cblrepo"
 dbName = progName ++ ".db"
 
-ghcDefVersion = Version [7, 8, 3] []
+ghcDefVersion = Version [7, 8, 4] []
 ghcVersionDep :: Version -> Int -> String
 ghcVersionDep ghcVer ghcRel = "ghc=" ++ display ghcVer ++ "-" ++ show ghcRel
 
@@ -148,10 +148,6 @@ strCblPkgArgReader = let
         case lastMay (readP_to_S (readWithFlags <++ readWithoutFlags) s) of
             Just (r, "") -> return r
             _ -> fail $ "Cannot parse: " ++ s
-
--- Helper for grabbing things out of the options
-optGet :: MonadReader o m => (o -> s) -> m s
-optGet f = liftM f ask
 
 -- {{{1 command line argument type
 data Cmds

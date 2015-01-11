@@ -23,15 +23,16 @@ import Util.Misc
 
 -- {{{1 system
 import Control.Monad.Error
+import Control.Monad.Reader (asks)
 import System.Exit
 
 -- {{{1 remove
 remove :: Command ()
 remove = do
-    dbFn <- optGet dbFile
+    dbFn <- asks dbFile
     db <- liftIO $ readDb dbFn
-    pkgs <- optGet $ pkgs . optsCmd
-    dR <- optGet dryRun
+    pkgs <- asks $ pkgs . optsCmd
+    dR <- asks dryRun
     liftIO $ either
         (\ s -> putStrLn s >> exitFailure)
         (\ newDb -> unless dR $ saveDb newDb dbFn)

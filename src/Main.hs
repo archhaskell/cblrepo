@@ -37,10 +37,13 @@ import System.Directory
 import Options.Applicative as OA
 
 -- -- {{{1 command line arguments
+argAppDir, argDbFile :: Parser String
 argAppDir = strOption (long "appdir" <> value "" <> help "Path to application data directory")
 argDbFile = strOption (long "db" <> value "cblrepo.db" <> help "Path to package database")
+argDryRun :: Parser Bool
 argDryRun = switch (short 'n' <> help "Make no changes, (dry run)")
 
+cmdAddPkgOpts :: Parser Cmds
 cmdAddPkgOpts = CmdAdd
     <$> strOption (long "patchdir" <> value "patches" <> help "Location of patches (patches)")
     <*> option ghcVersionArgReader (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use")

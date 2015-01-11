@@ -23,5 +23,5 @@ import System.FilePath
 
 sync :: Command ()
 sync = do
-    aD <- optGet appDir
+    aD <- asks appDir
     liftIO $ getFromURL indexUrl (aD </> indexFileName)

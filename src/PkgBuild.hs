@@ -37,10 +37,10 @@ pkgBuild = do
 
 generatePkgBuild :: String -> ErrorT String Command ()
 generatePkgBuild pkg = do
-        db <- optGet dbFile >>= liftIO . readDb
+        db <- asks dbFile >>= liftIO . readDb
         patchDir <- asks  $ patchDir . optsCmd
-        ghcVer <- optGet $ ghcVer . optsCmd
-        ghcRel <- optGet $ ghcRel . optsCmd
+        ghcVer <- asks $ ghcVer . optsCmd
+        ghcRel <- asks $ ghcRel . optsCmd
         (ver, fa) <- maybe (throwError $ "Unknown package: " ++ pkg) (return . (pkgVersion &&& pkgFlags)) $ lookupPkg db pkg
         --
         genericPkgDesc <- runCabalParseWithTempDir $ Cbl.readFromIdx (pkg, ver)
