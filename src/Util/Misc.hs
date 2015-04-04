@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-
  - Copyright 2011-2014 Per Magnus Therning
  -
@@ -202,7 +203,7 @@ finalizePkg ghcVersion db fa gpd = finalizePackageDescription
         fa
         (DB.checkAgainstDb db n)
         (Platform X86_64 buildOS) -- platform
-        (CompilerId GHC ghcVersion)  -- compiler version
+        (unknownCompilerInfo (CompilerId GHC ghcVersion) NoAbiTag)  -- compiler version
         [] -- no additional constraints
         gpd
     where

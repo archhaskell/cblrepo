@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-
  - Copyright 2014 Per Magnus Therning
  -

@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, OverlappingInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-
  - Copyright 2011 Per Magnus Therning
  -
@@ -21,6 +21,7 @@ import PkgDB as DB
 import Util.Misc
 import Util.Dist
 
+import Prelude hiding ( (<$>) )
 import Control.Monad
 import Control.Monad.Error
 import Data.Char
@@ -208,7 +209,7 @@ instance Pretty ArchPkg where
                 confFlags = if null flags
                     then empty
                     else text " \\" <>
-                        nest 4 (empty <$> (hsep . map (uncurry (<>)) $ zip (repeat $ text "-f") (map pretty flags)))
+                        nest 4 (empty <$> (hsep . map (uncurry (<>)) $ zip (repeat $ text "-f") (map prettyFlag flags)))
 
                 libPackageFunction = text "package() {" <>
                     nest 4 (empty <$>
@@ -283,9 +284,8 @@ instance Pretty ArchInstall where
 instance Pretty Version where
     pretty (Version b _) = encloseSep empty empty (char '.') (map pretty b)
 
-instance Pretty (FlagName, Bool) where
-    pretty (FlagName n, True) = text n
-    pretty (FlagName n, False) = text $ '-' : n
+prettyFlag (FlagName n, True) = text n
+prettyFlag (FlagName n, False) = text $ '-' : n
 
 -- {{{1 translate
 -- TODO:
@@ -296,7 +296,7 @@ translate ghcVer ghcRel db fa pd = let
         pkgVer = packageVersion pd
         pkgRel = maybe "1" pkgRelease (lookupPkg db hkgName)
         hasLib = isJust (library pd)
-        licFn = let l = licenseFile pd in if null l then Nothing else Just l
+        licFn = let l = licenseFiles pd in if null l then Nothing else Just (head l)
         archName = (if hasLib then "haskell-" else "") ++ map toLower hkgName
         pkgDesc = synopsis pd
         url = if null (homepage pd) then "http://hackage.haskell.org/package/${_hkgname}" else homepage pd
