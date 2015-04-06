@@ -60,7 +60,7 @@ import System.IO.Error
 import qualified Distribution.Package as P
 import qualified Distribution.Version as V
 
-import Data.Aeson (decode, encode)
+import Data.Aeson
 import Data.Aeson.TH (deriveJSON, defaultOptions, Options(..), SumEncoding(..))
 import qualified Data.ByteString.Lazy.Char8 as C
 
@@ -243,8 +243,14 @@ saveDb db fp = C.writeFile fp s
 -- {{{1 JSON instances
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''V.Version)
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''V.VersionRange)
-$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''P.Dependency)
-$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''P.PackageName)
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''FlagName)
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''Pkg)
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''CblPkg)
+
+instance ToJSON P.Dependency where
+    toJSON (P.Dependency pn vr) = toJSON (P.unPackageName pn, vr)
+
+instance FromJSON P.Dependency where
+    parseJSON v = do
+        (pn, vr) <- parseJSON v
+        return $ P.Dependency (P.PackageName pn) vr
