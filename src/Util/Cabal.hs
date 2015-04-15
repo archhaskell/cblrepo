@@ -20,7 +20,7 @@ module Util.Cabal
 
 import Util.HackageIndex
 
-import Control.Monad.Error
+import Control.Monad.Trans.Except
 import Control.Monad.Reader
 import qualified Data.ByteString.Lazy as BSL
 import Distribution.Package
@@ -42,13 +42,13 @@ data CabalParseEnv = CabalParseEnv
     } deriving (Eq, Show)
 
 -- | Type used for reading Cabal files
-type CabalParse a = ReaderT CabalParseEnv (ErrorT String IO) a
+type CabalParse a = ReaderT CabalParseEnv (ExceptT String IO) a
 
 -- | Run a Cabal parse action in the provided environment.
 runCabalParse :: CabalParseEnv -> CabalParse a -> IO (Either String a)
-runCabalParse cpe f = runErrorT $ runReaderT f cpe
+runCabalParse cpe f = runExceptT $ runReaderT f cpe
 
-runCabalParseE :: CabalParseEnv -> CabalParse a -> (ErrorT String IO) a
+runCabalParseE :: CabalParseEnv -> CabalParse a -> (ExceptT String IO) a
 runCabalParseE cpe f = runReaderT f cpe
 
 readFromFile :: FilePath -- ^ file name
@@ -66,14 +66,14 @@ readFromIdx (pN, pV) = do
     destDir <- asks cpeDestDir
     appDir <- asks cpeAppDir
     let destFn = destDir </> pN <.> ".cabal"
-    copyCabal appDir destFn
+    lift $ copyCabal appDir destFn
     patch destFn
     liftIO $ readPackageDescription silent destFn
 
     where
         copyCabal appDir destFn = do
             idx <- liftIO $ readIndexFile appDir
-            cbl <- maybe (throwError $ "Failed to extract contents for " ++ pN ++ " " ++ display pV) return
+            cbl <- maybe (throwE $ "Failed to extract contents for " ++ pN ++ " " ++ display pV) return
                 (extractCabal idx pN pV)
             liftIO $ BSL.writeFile destFn cbl
 
@@ -88,7 +88,7 @@ patch fn = do
     pkgName <- liftIO $ extractName fn
     patchDir <- asks cpePatchDir
     let patchFn = patchDir </> pkgName <.> "cabal"
-    applyPatchIfExist fn patchFn
+    lift $ applyPatchIfExist fn patchFn
 
     where
         extractName fn = liftM name $ readPackageDescription silent fn
@@ -102,4 +102,4 @@ patch fn = do
             case ec of
                 ExitSuccess -> return ()
                 ExitFailure _ ->
-                    throwError ("Failed patching " ++ origFn ++ " with " ++ patchFn)
+                    throwE ("Failed patching " ++ origFn ++ " with " ++ patchFn)

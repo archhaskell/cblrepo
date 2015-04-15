@@ -22,7 +22,8 @@ import PkgDB
 import Util.Misc
 
 -- {{{1 system
-import Control.Monad.Error
+import Control.Monad
+import Control.Monad.Trans
 import Control.Monad.Reader (asks)
 import System.Exit
 
@@ -44,4 +45,4 @@ removeOne db pkg = let
         depsString = foldr (\ s t -> "  " ++ s ++ "\n" ++ t) "" deps
     in if null deps
         then return (delPkg db pkg)
-        else throwError ("Can't delete package " ++ pkg ++ ", dependants:\n" ++ depsString)
+        else fail ("Can't delete package " ++ pkg ++ ", dependants:\n" ++ depsString)

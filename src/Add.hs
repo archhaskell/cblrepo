@@ -25,7 +25,6 @@ import Util.Dist
 
 -- {{{2 system
 import Control.Monad.Reader
--- import Control.Monad.Error
 import Data.List
 import Data.Maybe
 import Distribution.PackageDescription
@@ -57,7 +56,7 @@ add = do
     distroPkgs <- asks $ map (\ (n, v, r) -> DistroType n v r) . cmdAddDistroPkgs . optsCmd
     genFilePkgs <- mapM (runCabalParseWithTempDir . Cbl.readFromFile . fst) filePkgs
     genIdxPkgs <- mapM ((runCabalParseWithTempDir . Cbl.readFromIdx) . (\ (a, b, _) -> (a, b))) idxPkgs
-    genPkgs <- liftM (map RepoType) $ exitOnErrors (genFilePkgs ++ genIdxPkgs)
+    genPkgs <- liftM (map RepoType) $ exitOnAnyLefts (genFilePkgs ++ genIdxPkgs)
     --
     let pkgs = ghcPkgs ++ distroPkgs ++ genPkgs
         pkgNames = map getName pkgs

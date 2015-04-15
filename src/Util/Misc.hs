@@ -23,7 +23,7 @@ import Util.Dist
 
 import Control.Exception (onException)
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Trans.Except
 import Control.Monad.Reader
 import Data.Either
 import Data.Version
@@ -193,7 +193,7 @@ applyPatch origFilename patchFilename = do
     case ec of
         ExitSuccess -> return ()
         ExitFailure _ ->
-            throwError ("Failed patching " ++ origFilename ++ " with " ++ patchFilename)
+            throwE ("Failed patching " ++ origFilename ++ " with " ++ patchFilename)
 
 applyPatchIfExist origFilename patchFilename =
     liftIO (fileExist patchFilename) >>= flip when (applyPatch origFilename patchFilename)
@@ -214,16 +214,16 @@ type Command = ReaderT Opts IO
 
 runCommand cmds func = runReaderT func cmds
 
--- {{{1 ErrorT
-reThrowError :: MonadError a m => Either a b -> m b
-reThrowError = either throwError return
+-- {{{1 ExceptT
+reThrowE :: Monad m => Either a b -> ExceptT a m b
+reThrowE = either throwE return
 
-withTempDirErrT :: (MonadError e m, MonadIO m) => FilePath -> (FilePath -> ErrorT e IO b) -> m b
-withTempDirErrT fp func = do
-    r <- liftIO $ withTemporaryDirectory fp (runErrorT . func)
-    reThrowError r
+withTempDirExceptT :: MonadIO m => FilePath -> (FilePath -> ExceptT e IO b) -> ExceptT e m b
+withTempDirExceptT fp func = do
+    r <- liftIO $ withTemporaryDirectory fp (runExceptT . func)
+    reThrowE r
 
-exitOnErrors vs = let
+exitOnAnyLefts vs = let
         es = lefts vs
     in
         if not $ null $ lefts vs

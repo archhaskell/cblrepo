@@ -23,7 +23,8 @@ import Util.Dist
 
 import Prelude hiding ( (<$>) )
 import Control.Monad
-import Control.Monad.Error
+import Control.Monad.Trans
+import Control.Monad.Trans.Except
 import Data.Char
 import Data.List
 import Data.Maybe
@@ -386,7 +387,7 @@ addHashes ap tmpDir = let
         (ec, out, _) <- liftIO $ withWorkingDirectory tmpDir (readProcessWithExitCode "makepkg" ["-g"] "")
         case ec of
             ExitFailure _ ->
-                throwError $ "makepkg: error while calculating the source hashes for " ++ apHkgName ap
+                throwE $ "makepkg: error while calculating the source hashes for " ++ apHkgName ap
             ExitSuccess ->
                 return (if "sha256sums=(" `isPrefixOf` out then replaced else ap)
                     where
