@@ -264,18 +264,18 @@ instance Pretty ArchInstall where
             ]
             where
                 postInstallFunction = text "post_install() {" <>
-                    nest 4 (empty <$> text "${HS_DIR}/register.sh" <$>
+                    nest 4 (empty <$> text "${HS_DIR}/register.sh --verbose=0" <$>
                         text "/usr/share/doc/ghc/html/libraries/arch-gen-contents-index") <$>
                     char '}'
                 preUpgradeFunction = text "pre_upgrade() {" <>
-                    nest 4 (empty <$> text "${HS_DIR}/unregister.sh") <$>
+                    nest 4 (empty <$> text "${HS_DIR}/unregister.sh --verbose=0") <$>
                     char '}'
                 postUpgradeFunction = text "post_upgrade() {" <>
-                    nest 4 (empty <$> text "${HS_DIR}/register.sh" <$>
+                    nest 4 (empty <$> text "${HS_DIR}/register.sh --verbose=0" <$>
                         text "/usr/share/doc/ghc/html/libraries/arch-gen-contents-index") <$>
                     char '}'
                 preRemoveFunction = text "pre_remove() {" <>
-                    nest 4 (empty <$> text "${HS_DIR}/unregister.sh") <$>
+                    nest 4 (empty <$> text "${HS_DIR}/unregister.sh --verbose=0") <$>
                     char '}'
                 postRemoveFunction = text "post_remove() {" <>
                     nest 4 (empty <$> text "/usr/share/doc/ghc/html/libraries/arch-gen-contents-index") <$>
