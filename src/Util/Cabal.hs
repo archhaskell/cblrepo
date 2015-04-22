@@ -22,7 +22,6 @@ import Util.HackageIndex
 
 import Control.Monad.Trans.Except
 import Control.Monad.Reader
-import qualified Data.ByteString.Lazy as BSL
 import Distribution.Package
 import Distribution.PackageDescription
 import Distribution.PackageDescription.Parse
@@ -34,6 +33,8 @@ import System.Exit
 import System.FilePath
 import System.Posix
 import System.Process
+
+import qualified Data.ByteString.Lazy as BSL
 
 data CabalParseEnv = CabalParseEnv
     { cpeAppDir :: FilePath

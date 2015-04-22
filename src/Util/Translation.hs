@@ -40,6 +40,8 @@ import System.Process
 import System.Unix.Directory
 import Text.PrettyPrint.ANSI.Leijen hiding((</>))
 
+import qualified Data.ByteString.Lazy as BSL (writeFile)
+
 -- {{{1 ShQuotedString
 newtype ShQuotedString = ShQuotedString String
     deriving (Eq, Show)
@@ -115,7 +117,7 @@ baseArchPkg = ArchPkg
     , apShLicence = ShVar "license" (ShArray [])
     , apShMakeDepends = ShVar "makedepends" (ShArray [])
     , apShDepends = ShVar "depends" (ShArray [])
-    , apShSource = ShVar "source" (ShArray ["http://hackage.haskell.org/packages/archive/${_hkgname}/${pkgver}/${_hkgname}-${pkgver}.tar.gz"])
+    , apShSource = ShVar "source" (ShArray ["http://hackage.haskell.org/packages/archive/${_hkgname}/${pkgver}/${_hkgname}-${pkgver}.tar.gz", "original.cabal"])
     , apShInstall = Just $ ShVar "install" (ShQuotedString "${pkgname}.install")
     -- this is a trick to make sure that the user's setting for integrity
     -- checking in makepkg.conf isn't used, as long as this array contains
@@ -175,6 +177,7 @@ instance Pretty ArchPkg where
                 prepareFunction = text "prepare() {" <>
                     nest 4 (empty <$>
                         text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
+                        text "cp \"${srcdir}/original.cabal\" \"${srcdir}/${_hkgname}-${pkgver}/${_hkgname}.cabal\"" <$>
                         empty <$>
                         maybe (text "# no cabal patch") (\ _ ->
                             text $ "patch " ++ shVarValue hkgName ++ ".cabal \"${srcdir}/cabal.patch\" ")
@@ -376,14 +379,16 @@ copyPatches destDir ap = let
         maybe (return ()) (\ fn -> copyFile fn (destDir </> "source.patch")) buildPatch
 
 -- {{{1 addHashes
-addHashes ap tmpDir = let
+addHashes ap cbl tmpDir = let
         hashes = map (filter (`elem` "1234567890abcdef")) . lines . drop 11
         pkgbuildFn = tmpDir </> "PKGBUILD"
+        cblFn = tmpDir </> "original.cabal"
         pkgbuildPatch = apPkgbuildPatch ap
     in do
         liftIO $ copyPatches tmpDir ap
         liftIO $ writeFile pkgbuildFn (show $ pretty ap)
         maybe (return ()) (void . applyPatch pkgbuildFn) pkgbuildPatch
+        liftIO $ BSL.writeFile cblFn cbl
         (ec, out, _) <- liftIO $ withWorkingDirectory tmpDir (readProcessWithExitCode "makepkg" ["-g"] "")
         case ec of
             ExitFailure _ ->

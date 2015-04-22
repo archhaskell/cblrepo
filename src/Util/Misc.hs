@@ -42,6 +42,10 @@ import System.Process
 import System.Unix.Directory
 import Text.ParserCombinators.ReadP hiding (many)
 
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BSL
+import qualified Data.ByteString.Lazy.Search as BSLS
+
 -- {{{ print functions
 printUnSat (n, ds) = do
     putStrLn $ "Failed to satisfy the following dependencies for " ++ n ++ ":"
@@ -231,3 +235,7 @@ exitOnAnyLefts vs = let
             else return (rights vs)
 
 exitOnException msg a = onException a $ hPutStrLn stderr msg >> exitFailure
+
+-- {{{1 ByteString
+dosToUnix :: BSL.ByteString -> BSL.ByteString
+dosToUnix bs = BSLS.replace (BS.pack [0xd, 0xa]) (BSL.pack [0xa]) bs

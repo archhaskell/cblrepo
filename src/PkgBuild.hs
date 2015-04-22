@@ -30,6 +30,8 @@ import System.IO
 import System.Unix.Directory
 import Text.PrettyPrint.ANSI.Leijen
 
+import qualified Data.ByteString.Lazy as BSL (writeFile)
+
 pkgBuild :: Command ()
 pkgBuild = do
     pkgs <- asks  $ pkgs . optsCmd
@@ -42,13 +44,14 @@ generatePkgBuild pkg = do
         ghcVer <- asks $ ghcVer . optsCmd
         ghcRel <- asks $ ghcRel . optsCmd
         (ver, fa) <- maybe (throwE $ "Unknown package: " ++ pkg) (return . (pkgVersion &&& pkgFlags)) $ lookupPkg db pkg
-        --
-        (_, genericPkgDesc) <- runCabalParseWithTempDir $ Cbl.readFromIdx (pkg, ver)
+        ---
+        (cblFileRaw, genericPkgDesc) <- runCabalParseWithTempDir $ Cbl.readFromIdx (pkg, ver)
+        let cblFile = dosToUnix cblFileRaw
         pkgDescAndFlags <- either (const $ throwE ("Failed to finalize package: " ++ pkg)) return
             (finalizePkg ghcVer db fa genericPkgDesc)
         let archPkg = translate ghcVer ghcRel db (snd pkgDescAndFlags) (fst pkgDescAndFlags)
         archPkgWPatches <- liftIO $ addPatches patchDir archPkg
-        archPkgWHash <- withTempDirExceptT "/tmp/cblrepo." (addHashes archPkgWPatches)
+        archPkgWHash <- withTempDirExceptT "/tmp/cblrepo." (addHashes archPkgWPatches cblFile)
         liftIO $ createDirectoryIfMissing False (apPkgName archPkgWHash)
         liftIO $ withWorkingDirectory (apPkgName archPkgWHash) $ do
             copyPatches "." archPkgWHash
@@ -64,6 +67,7 @@ generatePkgBuild pkg = do
                 hClose hInstall
                 maybe (return ()) (void . runExceptT . applyPatch (apPkgName archPkgWHash <.> "install"))
                     (apInstallPatch archPkgWHash)
+            BSL.writeFile ("original.cabal") cblFile
 
 runCabalParseWithTempDir :: Cbl.CabalParse a -> ExceptT String Command a
 runCabalParseWithTempDir f = do
