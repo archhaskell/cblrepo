@@ -23,7 +23,9 @@ import Util.Dist
 import qualified Codec.Archive.Tar as Tar
 import qualified Codec.Compression.GZip as GZip
 import Control.Applicative
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BSL
+import qualified Data.ByteString.Lazy.Search as BSLS
 import qualified Data.ByteString.Lazy.UTF8 as BSLU
 import Data.List
 import qualified Data.Map as M
@@ -72,10 +74,12 @@ extractCabal :: BSL.ByteString  -- ^ the index
     -> String                   -- ^ package name
     -> Version                  -- ^ package version
     -> Maybe BSL.ByteString
-extractCabal idx pkg ver = getContent entries
+extractCabal idx pkg ver = fmap dosToUnix $ getContent entries
     where
         entries = Tar.read $ GZip.decompress idx
         pkgPath = pkg </> display ver </> pkg <.> "cabal"
+
+        dosToUnix bs = BSLS.replace (BS.pack [0xd, 0xa]) (BSL.pack [0xa]) bs
 
         getContent (Tar.Next e es)
             | pkgPath == Tar.entryPath e =

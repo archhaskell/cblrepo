@@ -24,13 +24,12 @@ import qualified Util.Cabal as Cbl
 import Control.Arrow
 import Control.Monad.Reader
 import Control.Monad.Trans.Except
+import qualified Data.ByteString.Lazy as BSL (writeFile)
 import System.Directory
 import System.FilePath
 import System.IO
 import System.Unix.Directory
 import Text.PrettyPrint.ANSI.Leijen
-
-import qualified Data.ByteString.Lazy as BSL (writeFile)
 
 pkgBuild :: Command ()
 pkgBuild = do
@@ -45,8 +44,7 @@ generatePkgBuild pkg = do
         ghcRel <- asks $ ghcRel . optsCmd
         (ver, fa) <- maybe (throwE $ "Unknown package: " ++ pkg) (return . (pkgVersion &&& pkgFlags)) $ lookupPkg db pkg
         ---
-        (cblFileRaw, genericPkgDesc) <- runCabalParseWithTempDir $ Cbl.readFromIdx (pkg, ver)
-        let cblFile = dosToUnix cblFileRaw
+        (cblFile, genericPkgDesc) <- runCabalParseWithTempDir $ Cbl.readFromIdx (pkg, ver)
         pkgDescAndFlags <- either (const $ throwE ("Failed to finalize package: " ++ pkg)) return
             (finalizePkg ghcVer db fa genericPkgDesc)
         let archPkg = translate ghcVer ghcRel db (snd pkgDescAndFlags) (fst pkgDescAndFlags)
