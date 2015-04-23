@@ -179,9 +179,6 @@ instance Pretty ArchPkg where
                         text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
                         text "cp \"${srcdir}/original.cabal\" \"${srcdir}/${_hkgname}-${pkgver}/${_hkgname}.cabal\"" <$>
                         empty <$>
-                        maybe (text "# no cabal patch") (\ _ ->
-                            text $ "patch " ++ shVarValue hkgName ++ ".cabal \"${srcdir}/cabal.patch\" ")
-                            cabalPatchFile <$>
                         maybe (text "# no source patch") (\ _ ->
                             text "patch -p4 < \"${srcdir}/source.patch\"")
                             buildPatchFile
@@ -361,7 +358,7 @@ addPatches patchDir ap = let
         installPatch <- doesFileExist installPatchFn >>= fi (liftM Just $ canonicalizePath installPatchFn) (return Nothing)
         buildPatch <- doesFileExist buildPatchFn >>= fi (liftM Just $ canonicalizePath buildPatchFn) (return Nothing)
         let sources' = shVarAppendValue sources
-                (ShArray $ catMaybes [maybe Nothing (const $ Just "cabal.patch") cabalPatch, maybe Nothing (const $ Just "source.patch") buildPatch])
+                (ShArray $ catMaybes [maybe Nothing (const $ Just "source.patch") buildPatch])
         return ap
             { apCabalPatch = cabalPatch
             , apPkgbuildPatch = pkgBuildPatch
