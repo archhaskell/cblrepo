@@ -69,10 +69,23 @@ import qualified Util.Dist
 
 -- {{{1 types
 data Pkg
-    = GhcPkg { version :: V.Version }
-    | DistroPkg { version :: V.Version, release :: Int }
-    | RepoPkg { version :: V.Version, xrev :: Int, deps :: [P.Dependency], flags :: FlagAssignment, release :: Int }
+    = GhcPkg GhcPkgD
+    | DistroPkg DistroPkgD
+    | RepoPkg RepoPkgD
     deriving (Eq, Show)
+
+data GhcPkgD = GhcPkgD { gpVersion :: V.Version }
+    deriving (Eq, Show)
+
+data DistroPkgD = DistroPkgD { dpVersion :: V.Version , dpRelease :: Int }
+    deriving (Eq, Show)
+
+data RepoPkgD = RepoPkgD
+    { rpVersion :: V.Version
+    , rpXrev :: Int
+    , rpDeps :: [P.Dependency]
+    , rpFlags :: FlagAssignment, rpRelease :: Int
+    } deriving (Eq, Show)
 
 data CblPkg = CP String Pkg
     deriving (Eq, Show)
@@ -80,24 +93,18 @@ data CblPkg = CP String Pkg
 type CblDB = [CblPkg]
 
 instance Ord CblPkg where
-    compare
-        (CP n1 GhcPkg { version = v1 })
-        (CP n2 GhcPkg { version = v2 }) =
-            compare (n1, v1) (n2, v2)
+    compare (CP n1 (GhcPkg d1)) (CP n2 (GhcPkg d2)) =
+            compare (n1, gpVersion d1) (n2, gpVersion d2)
     compare (CP _ GhcPkg {}) _ = LT
     compare _ (CP _ GhcPkg {}) = GT
 
-    compare
-        (CP n1 DistroPkg { version = v1, release = r1 })
-        (CP n2 DistroPkg { version = v2, release = r2 }) =
-            compare (n1, v1, r1) (n2, v2, r2)
+    compare (CP n1 (DistroPkg d1)) (CP n2 (DistroPkg d2)) =
+            compare (n1, dpVersion d1, dpRelease d1) (n2, dpVersion d2, dpRelease d2)
     compare (CP _ DistroPkg {}) _ = LT
     compare _ (CP _ DistroPkg {}) = GT
 
-    compare
-        (CP n1 RepoPkg { version = v1, release = r1 })
-        (CP n2 RepoPkg { version = v2, release = r2 }) =
-            compare (n1, v1, r1) (n2, v2, r2)
+    compare (CP n1 (RepoPkg d1)) (CP n2 (RepoPkg d2)) =
+            compare (n1, rpVersion d1, rpRelease d1) (n2, rpVersion d2, rpRelease d2)
 
 -- {{{1 packages
 pkgName :: CblPkg -> String
@@ -107,38 +114,40 @@ pkgPkg :: CblPkg -> Pkg
 pkgPkg (CP _ p) = p
 
 pkgVersion :: CblPkg -> V.Version
-pkgVersion (CP _ p) = version p
+pkgVersion (CP _ (GhcPkg d)) = gpVersion d
+pkgVersion (CP _ (DistroPkg d)) = dpVersion d
+pkgVersion (CP _ (RepoPkg d)) = rpVersion d
 
 pkgXRev :: CblPkg -> Int
-pkgXRev (CP _ RepoPkg { xrev = x }) = x
+pkgXRev (CP _ (RepoPkg d)) = rpXrev d
 pkgXRev _ = 0
 
 pkgDeps :: CblPkg -> [P.Dependency]
-pkgDeps (CP _ RepoPkg { deps = d}) = d
+pkgDeps (CP _ (RepoPkg d)) = rpDeps d
 pkgDeps _ = []
 
 pkgFlags :: CblPkg -> FlagAssignment
-pkgFlags (CP _ RepoPkg { flags = fa}) = fa
+pkgFlags (CP _ (RepoPkg d)) = rpFlags d
 pkgFlags _ = []
 
 pkgRelease :: CblPkg -> Int
-pkgRelease (CP _ GhcPkg {}) = (-1)
-pkgRelease (CP _ DistroPkg { release = r }) = r
-pkgRelease (CP _ RepoPkg { release = r }) = r
+pkgRelease (CP _ (GhcPkg _)) = (-1)
+pkgRelease (CP _ (DistroPkg d)) = dpRelease d
+pkgRelease (CP _ (RepoPkg d)) = rpRelease d
 
 pkgReleaseAsStr :: CblPkg -> String
-pkgReleaseAsStr (CP _ GhcPkg {}) = "xx"
-pkgReleaseAsStr (CP _ DistroPkg { release = r }) = show r
-pkgReleaseAsStr (CP _ RepoPkg { release = r }) = show r
+pkgReleaseAsStr (CP _ (GhcPkg _)) = "xx"
+pkgReleaseAsStr (CP _ (DistroPkg d)) = show $ dpRelease d
+pkgReleaseAsStr (CP _ (RepoPkg d)) = show $ rpRelease d
 
 createGhcPkg :: String -> V.Version -> CblPkg
-createGhcPkg n v = CP n (GhcPkg v)
+createGhcPkg n v = CP n (GhcPkg $ GhcPkgD v)
 
 createDistroPkg :: String -> V.Version -> Int -> CblPkg
-createDistroPkg n v r = CP n (DistroPkg v r)
+createDistroPkg n v r = CP n (DistroPkg (DistroPkgD v r))
 
 createRepoPkg :: String -> V.Version -> Int -> [P.Dependency] -> FlagAssignment -> Int -> CblPkg
-createRepoPkg n v x d fa r = CP n (RepoPkg v x d fa r)
+createRepoPkg n v x d fa r = CP n (RepoPkg $ RepoPkgD v x d fa r)
 
 createCblPkg :: PackageDescription -> FlagAssignment -> CblPkg
 createCblPkg pd fa = createRepoPkg name version xrev deps fa 1
@@ -191,7 +200,7 @@ delPkg db n = filter (\ p -> n /= pkgName p) db
 bumpRelease :: CblDB -> String -> CblDB
 bumpRelease db n = maybe db (addPkg2 db . doBump) (lookupPkg db n)
     where
-        doBump (CP n' p@RepoPkg { release = r }) = CP n' (p { release = r + 1 })
+        doBump (CP n' (RepoPkg d)) = CP n' (RepoPkg d { rpRelease = (rpRelease d + 1) })
         doBump p = p
 
 lookupPkg :: CblDB -> String -> Maybe CblPkg
@@ -226,7 +235,7 @@ checkAgainstDb db name dep = let
     in (dN == name) ||
             (case lookupPkg db dN of
                 Nothing -> False
-                Just (CP _ p) -> V.withinRange (version p) dVR)
+                Just p -> V.withinRange (pkgVersion p) dVR)
 
 readDb :: FilePath -> IO CblDB
 readDb fp = handle
@@ -249,6 +258,9 @@ $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToS
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''V.VersionRange)
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''FlagName)
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''Pkg)
+$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''GhcPkgD)
+$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''DistroPkgD)
+$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''RepoPkgD)
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''CblPkg)
 
 instance ToJSON P.Dependency where
