@@ -8,7 +8,7 @@ cblrepo list
 >>>
 >>>= 0
 
-# {{{ 1 adding ghc and distro packages
+# {{{1 adding ghc and distro packages
 cblrepo add -g foo,1.1
 >>>= 0
 
