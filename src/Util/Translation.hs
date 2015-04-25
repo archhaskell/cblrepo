@@ -295,7 +295,7 @@ translate ghcVer ghcRel db fa pd = let
         ap = baseArchPkg
         (PackageName hkgName) = packageName pd
         pkgVer = packageVersion pd
-        pkgRel = maybe "1" pkgRelease (lookupPkg db hkgName)
+        pkgRel = show $ maybe 1 pkgRelease (lookupPkg db hkgName)
         hasLib = isJust (library pd)
         licFn = let l = licenseFiles pd in if null l then Nothing else Just (head l)
         archName = (if hasLib then "haskell-" else "") ++ map toLower hkgName
@@ -338,7 +338,7 @@ calcExactDeps db pd = let
                 pkg = fromJust $ lookupPkg db n
                 name = map toLower $ DB.pkgName pkg
                 ver = display $ DB.pkgVersion pkg
-                rel = pkgRelease pkg
+                rel = show $ pkgRelease pkg
             in "haskell-" ++ name ++ "=" ++ ver ++ "-" ++ rel
     in map depString deps
 

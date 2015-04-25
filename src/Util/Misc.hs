@@ -100,13 +100,13 @@ pkgNVersionArgReader = do
 ghcPkgArgReader :: ReadM (String, Version)
 ghcPkgArgReader = pkgNVersionArgReader
 
-distroPkgArgReader :: ReadM (String, Version, String)
+distroPkgArgReader :: ReadM (String, Version, Int)
 distroPkgArgReader = let
         readDistroPkg = do
             (n, v) <- readPkgNVersion
             char ','
             r <- many (satisfy (/= ','))
-            return (n, v, r)
+            return (n, v, read r)
 
     in do
         s <- readerAsk
@@ -154,7 +154,7 @@ strCblPkgArgReader = let
 data Cmds
     = CmdAdd
         { patchDir :: FilePath, ghcVer :: Version, cmdAddGhcPkgs :: [(String, Version)]
-        , cmdAddDistroPkgs :: [(String, Version, String)], cmdAddFileCbls :: [(FilePath, FlagAssignment)]
+        , cmdAddDistroPkgs :: [(String, Version, Int)], cmdAddFileCbls :: [(FilePath, FlagAssignment)]
         , cmdAddCbls :: [(String, Version, FlagAssignment)] }
     | CmdBuildPkgs { pkgs :: [String] }
     | CmdBumpPkgs { inclusive :: Bool, pkgs :: [String] }

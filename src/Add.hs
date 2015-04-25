@@ -38,7 +38,7 @@ import System.Unix.Directory
 -- {{{1 types
 data PkgType
     = GhcType String Version
-    | DistroType String Version String
+    | DistroType String Version Int
     | RepoType GenericPackageDescription
     deriving (Eq, Show)
 

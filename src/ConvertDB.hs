@@ -46,4 +46,4 @@ doConvertDB = map doConvert
                 x = 0
                 d = ODB.pkgDeps o
                 f = ODB.pkgFlags o
-                r = ODB.pkgRelease o
+                r = read $ ODB.pkgRelease o

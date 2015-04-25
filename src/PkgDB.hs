@@ -25,6 +25,7 @@ module PkgDB
     , pkgDeps
     , pkgFlags
     , pkgRelease
+    , pkgReleaseAsStr
     --
     , isGhcPkg
     , isDistroPkg
@@ -69,8 +70,8 @@ import qualified Util.Dist
 -- {{{1 types
 data Pkg
     = GhcPkg { version :: V.Version }
-    | DistroPkg { version :: V.Version, release :: String }
-    | RepoPkg { version :: V.Version, xrev :: Int, deps :: [P.Dependency], flags :: FlagAssignment, release :: String }
+    | DistroPkg { version :: V.Version, release :: Int }
+    | RepoPkg { version :: V.Version, xrev :: Int, deps :: [P.Dependency], flags :: FlagAssignment, release :: Int }
     deriving (Eq, Show)
 
 data CblPkg = CP String Pkg
@@ -120,22 +121,27 @@ pkgFlags :: CblPkg -> FlagAssignment
 pkgFlags (CP _ RepoPkg { flags = fa}) = fa
 pkgFlags _ = []
 
-pkgRelease :: CblPkg -> String
-pkgRelease (CP _ GhcPkg {}) = "xx"
+pkgRelease :: CblPkg -> Int
+pkgRelease (CP _ GhcPkg {}) = (-1)
 pkgRelease (CP _ DistroPkg { release = r }) = r
 pkgRelease (CP _ RepoPkg { release = r }) = r
+
+pkgReleaseAsStr :: CblPkg -> String
+pkgReleaseAsStr (CP _ GhcPkg {}) = "xx"
+pkgReleaseAsStr (CP _ DistroPkg { release = r }) = show r
+pkgReleaseAsStr (CP _ RepoPkg { release = r }) = show r
 
 createGhcPkg :: String -> V.Version -> CblPkg
 createGhcPkg n v = CP n (GhcPkg v)
 
-createDistroPkg :: String -> V.Version -> String -> CblPkg
+createDistroPkg :: String -> V.Version -> Int -> CblPkg
 createDistroPkg n v r = CP n (DistroPkg v r)
 
-createRepoPkg :: String -> V.Version -> Int -> [P.Dependency] -> FlagAssignment -> String -> CblPkg
+createRepoPkg :: String -> V.Version -> Int -> [P.Dependency] -> FlagAssignment -> Int -> CblPkg
 createRepoPkg n v x d fa r = CP n (RepoPkg v x d fa r)
 
 createCblPkg :: PackageDescription -> FlagAssignment -> CblPkg
-createCblPkg pd fa = createRepoPkg name version xrev deps fa "1"
+createCblPkg pd fa = createRepoPkg name version xrev deps fa 1
     where
         name = Util.Dist.pkgNameStr pd
         version = P.pkgVersion $ package pd
@@ -176,7 +182,7 @@ addPkg2 db (CP n p) = addPkg db n p
 addGhcPkg :: CblDB -> String -> V.Version -> CblDB
 addGhcPkg db n v = addPkg2 db (createGhcPkg n v)
 
-addDistroPkg :: CblDB -> String -> V.Version -> String -> CblDB
+addDistroPkg :: CblDB -> String -> V.Version -> Int -> CblDB
 addDistroPkg db n v r = addPkg2 db (createDistroPkg n v r)
 
 delPkg :: CblDB -> String -> CblDB
@@ -185,9 +191,7 @@ delPkg db n = filter (\ p -> n /= pkgName p) db
 bumpRelease :: CblDB -> String -> CblDB
 bumpRelease db n = maybe db (addPkg2 db . doBump) (lookupPkg db n)
     where
-        doBump (CP n' p@RepoPkg { release = r }) = CP n' (p { release = nr })
-            where
-                nr = show $ read r + (1 :: Int)
+        doBump (CP n' p@RepoPkg { release = r }) = CP n' (p { release = r + 1 })
         doBump p = p
 
 lookupPkg :: CblDB -> String -> Maybe CblPkg

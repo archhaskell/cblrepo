@@ -46,7 +46,7 @@ pkgFilter g d r p = (g && isGhcPkg p) || (d && isDistroPkg p) || (not r && isRep
 
 printCblPkgShort :: CblPkg -> IO ()
 printCblPkgShort p =
-    putStrLn $ pkgName p ++ "  " ++ display (pkgVersion p) ++ "-" ++ pkgRelease p ++ showFlagsIfPresent p
+    putStrLn $ pkgName p ++ "  " ++ display (pkgVersion p) ++ "-" ++ pkgReleaseAsStr p ++ showFlagsIfPresent p
         where
             showFlagsIfPresent _p
                 | [] <- pkgFlags _p = ""
