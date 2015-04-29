@@ -25,7 +25,6 @@ module PkgDB
     , pkgDeps
     , pkgFlags
     , pkgRelease
-    , pkgReleaseAsStr
     --
     , isGhcPkg
     , isDistroPkg
@@ -56,6 +55,7 @@ import Control.Exception as CE
 import Control.Monad
 import Data.List
 import Data.Maybe
+import Data.Monoid
 import Distribution.PackageDescription
 import System.IO.Error
 import qualified Distribution.Package as P
@@ -134,11 +134,6 @@ pkgRelease :: CblPkg -> Int
 pkgRelease (CP _ (GhcPkg _)) = (-1)
 pkgRelease (CP _ (DistroPkg d)) = dpRelease d
 pkgRelease (CP _ (RepoPkg d)) = rpRelease d
-
-pkgReleaseAsStr :: CblPkg -> String
-pkgReleaseAsStr (CP _ (GhcPkg _)) = "xx"
-pkgReleaseAsStr (CP _ (DistroPkg d)) = show $ dpRelease d
-pkgReleaseAsStr (CP _ (RepoPkg d)) = show $ rpRelease d
 
 createGhcPkg :: String -> V.Version -> CblPkg
 createGhcPkg n v = CP n (GhcPkg $ GhcPkgD v)
