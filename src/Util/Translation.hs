@@ -68,6 +68,8 @@ data ShVar a = ShVar String a
 shVarNewValue (ShVar n _) v = ShVar n v
 shVarAppendValue (ShVar n v1) v2 = ShVar n (v1 `mappend` v2)
 shVarValue (ShVar _ v) = v
+shVarName (ShVar n _) = n
+shVarRefName (ShVar n _) = "${" ++ n ++ "}"
 
 instance Pretty a => Pretty (ShVar a) where
     pretty (ShVar n v) = text n <> char '=' <> pretty v
@@ -87,6 +89,7 @@ data ArchPkg = ArchPkg
     , apShPkgName :: ShVar String
     , apShPkgVer :: ShVar Version
     , apShPkgRel :: ShVar String
+    , apShXRev :: ShVar String
     , apShPkgDesc :: ShVar ShQuotedString
     , apShUrl :: ShVar ShQuotedString
     , apShLicence :: ShVar ShArray
@@ -110,14 +113,15 @@ baseArchPkg = ArchPkg
     , apBuildPatch = Nothing
     , apShHkgName = ShVar "_hkgname" ""
     , apShPkgName = ShVar "pkgname" ""
-    , apShPkgVer = ShVar "pkgver" (Version [] [])
+    , apShPkgVer = ShVar "_ver" (Version [] [])
     , apShPkgRel = ShVar "pkgrel" "0"
+    , apShXRev = ShVar "_xrev" "0"
     , apShPkgDesc = ShVar "pkgdesc" (ShQuotedString "")
     , apShUrl = ShVar "url" (ShQuotedString "http://hackage.haskell.org/package/${_hkgname}")
     , apShLicence = ShVar "license" (ShArray [])
     , apShMakeDepends = ShVar "makedepends" (ShArray [])
     , apShDepends = ShVar "depends" (ShArray [])
-    , apShSource = ShVar "source" (ShArray ["http://hackage.haskell.org/packages/archive/${_hkgname}/${pkgver}/${_hkgname}-${pkgver}.tar.gz", "original.cabal"])
+    , apShSource = ShVar "source" (ShArray ["http://hackage.haskell.org/packages/archive/${_hkgname}/${_ver}/${_hkgname}-${_ver}.tar.gz", "original.cabal"])
     , apShInstall = Just $ ShVar "install" (ShQuotedString "${pkgname}.install")
     -- this is a trick to make sure that the user's setting for integrity
     -- checking in makepkg.conf isn't used, as long as this array contains
@@ -137,6 +141,7 @@ instance Pretty ArchPkg where
         , apShPkgName = pkgName
         , apShPkgVer = pkgVer
         , apShPkgRel = pkgRel
+        , apShXRev = xrev
         , apShPkgDesc = pkgDesc
         , apShUrl = url
         , apShLicence = pkgLicense
@@ -150,9 +155,11 @@ instance Pretty ArchPkg where
             [ text "# custom variables"
             , pretty hkgName
             , maybe empty (pretty . ShVar "_licensefile") licenseFile
+            , pretty pkgVer
+            , pretty xrev
             , empty, text "# PKGBUILD options/directives"
             , pretty pkgName
-            , pretty pkgVer
+            , text "pkgver=${_ver}_${_xrev}"
             , pretty pkgRel
             , pretty pkgDesc
             , pretty url
@@ -176,8 +183,8 @@ instance Pretty ArchPkg where
             where
                 prepareFunction = text "prepare() {" <>
                     nest 4 (empty <$>
-                        text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
-                        text "cp \"${srcdir}/original.cabal\" \"${srcdir}/${_hkgname}-${pkgver}/${_hkgname}.cabal\"" <$>
+                        text "cd \"${srcdir}/${_hkgname}-${_ver}\"" <$>
+                        text "cp \"${srcdir}/original.cabal\" \"${srcdir}/${_hkgname}-${_ver}/${_hkgname}.cabal\"" <$>
                         empty <$>
                         maybe (text "# no source patch") (\ _ ->
                             text "patch -p4 < \"${srcdir}/source.patch\"")
@@ -186,7 +193,7 @@ instance Pretty ArchPkg where
                     char '}'
                 libBuildFunction = text "build() {" <>
                     nest 4 (empty <$>
-                        text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
+                        text "cd \"${srcdir}/${_hkgname}-${_ver}\"" <$>
                         empty <$>
                         nest 4 (text "runhaskell Setup configure -O --enable-library-profiling --enable-shared \\" <$>
                             text "--prefix=/usr --docdir=\"/usr/share/doc/${pkgname}\" \\" <$>
@@ -200,7 +207,7 @@ instance Pretty ArchPkg where
                     char '}'
 
                 exeBuildFunction = text "build() {" <>
-                    nest 4 (empty <$> text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
+                    nest 4 (empty <$> text "cd \"${srcdir}/${_hkgname}-${_ver}\"" <$>
                         empty <$>
                         text "runhaskell Setup configure -O --prefix=/usr --docdir=\"/usr/share/doc/${pkgname}\"" <> confFlags <$>
                         text "runhaskell Setup build"
@@ -214,7 +221,7 @@ instance Pretty ArchPkg where
 
                 libPackageFunction = text "package() {" <>
                     nest 4 (empty <$>
-                        text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
+                        text "cd \"${srcdir}/${_hkgname}-${_ver}\"" <$>
                         empty <$>
                         text "install -D -m744 register.sh   \"${pkgdir}/usr/share/haskell/${pkgname}/register.sh\"" <$>
                         text "install    -m744 unregister.sh \"${pkgdir}/usr/share/haskell/${pkgname}/unregister.sh\"" <$>
@@ -227,7 +234,7 @@ instance Pretty ArchPkg where
                     char '}'
 
                 exePackageFunction = text "package() {" <>
-                    nest 4 (empty <$> text "cd \"${srcdir}/${_hkgname}-${pkgver}\"" <$>
+                    nest 4 (empty <$> text "cd \"${srcdir}/${_hkgname}-${_ver}\"" <$>
                         text "runhaskell Setup copy --destdir=\"${pkgdir}\""
                         ) <$>
                     char '}'
@@ -291,11 +298,13 @@ prettyFlag (FlagName n, False) = text $ '-' : n
 -- {{{1 translate
 -- TODO:
 --  • translation of extraLibDepends-libs to Arch packages
+translate :: Version -> Int -> CblDB -> FlagAssignment -> PackageDescription -> ArchPkg
 translate ghcVer ghcRel db fa pd = let
         ap = baseArchPkg
         (PackageName hkgName) = packageName pd
         pkgVer = packageVersion pd
         pkgRel = show $ maybe 1 pkgRelease (lookupPkg db hkgName)
+        xrev = show $ Util.Dist.pkgXRev pd
         hasLib = isJust (library pd)
         licFn = let l = licenseFiles pd in if null l then Nothing else Just (head l)
         archName = (if hasLib then "haskell-" else "") ++ map toLower hkgName
@@ -315,6 +324,7 @@ translate ghcVer ghcRel db fa pd = let
         , apShPkgName = shVarNewValue (apShPkgName ap) archName
         , apShPkgVer = shVarNewValue (apShPkgVer ap) pkgVer
         , apShPkgRel = shVarNewValue (apShPkgRel ap) pkgRel
+        , apShXRev = shVarNewValue (apShXRev ap) xrev
         , apShPkgDesc = shVarNewValue (apShPkgDesc ap) (ShQuotedString pkgDesc)
         , apShUrl = shVarNewValue (apShUrl ap) (ShQuotedString url)
         , apShLicence = shVarNewValue (apShLicence ap) (ShArray [lic])
@@ -330,17 +340,18 @@ translate ghcVer ghcRel db fa pd = let
 -- TODO:
 --  • this is most likely too simplistic to create the Arch package names
 --  correctly for all possible dependencies
-calcExactDeps db pd = let
-        n = pkgNameStr pd
-        remPkgs = map DB.pkgName (filter isGhcPkg db) ++ [n]
+calcExactDeps db pd = map depString deps
+    where
+        remPkgs = map DB.pkgName (filter isGhcPkg db) ++ [pkgNameStr pd]
         deps = filter (not . (`elem` remPkgs)) (map depName (buildDepends pd))
-        depString n = let
+
+        depString n = "haskell-" ++ name ++ "=" ++ ver ++ "_" ++ xrev ++ "-" ++ rel
+            where
                 pkg = fromJust $ lookupPkg db n
                 name = map toLower $ DB.pkgName pkg
                 ver = display $ DB.pkgVersion pkg
+                xrev = show $ DB.pkgXRev pkg
                 rel = show $ pkgRelease pkg
-            in "haskell-" ++ name ++ "=" ++ ver ++ "-" ++ rel
-    in map depString deps
 
 -- {{{1 stuff with patches
 -- {{{2 addPatches
