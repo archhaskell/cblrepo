@@ -88,7 +88,7 @@ data ArchPkg = ArchPkg
     , apShHkgName :: ShVar String
     , apShPkgName :: ShVar String
     , apShPkgVer :: ShVar Version
-    , apShPkgRel :: ShVar String
+    , apShPkgRel :: ShVar Int
     , apShXRev :: ShVar String
     , apShPkgDesc :: ShVar ShQuotedString
     , apShUrl :: ShVar ShQuotedString
@@ -114,7 +114,7 @@ baseArchPkg = ArchPkg
     , apShHkgName = ShVar "_hkgname" ""
     , apShPkgName = ShVar "pkgname" ""
     , apShPkgVer = ShVar "_ver" (Version [] [])
-    , apShPkgRel = ShVar "pkgrel" "0"
+    , apShPkgRel = ShVar "pkgrel" 0
     , apShXRev = ShVar "_xrev" "0"
     , apShPkgDesc = ShVar "pkgdesc" (ShQuotedString "")
     , apShUrl = ShVar "url" (ShQuotedString "http://hackage.haskell.org/package/${_hkgname}")
@@ -303,7 +303,7 @@ translate ghcVer ghcRel db fa pd = let
         ap = baseArchPkg
         (PackageName hkgName) = packageName pd
         pkgVer = packageVersion pd
-        pkgRel = show $ maybe 1 pkgRelease (lookupPkg db hkgName)
+        pkgRel = maybe 1 pkgRelease (lookupPkg db hkgName)
         xrev = show $ Util.Dist.pkgXRev pd
         hasLib = isJust (library pd)
         licFn = let l = licenseFiles pd in if null l then Nothing else Just (head l)
