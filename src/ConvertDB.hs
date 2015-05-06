@@ -37,7 +37,7 @@ doConvertDB = map doConvert
     where
         doConvert o
             | ODB.isGhcPkg o = NDB.createGhcPkg n v
-            | ODB.isDistroPkg o = NDB.createDistroPkg n v r
+            | ODB.isDistroPkg o = NDB.createDistroPkg n v x r
             | ODB.isRepoPkg o = NDB.createRepoPkg n v x d f r
             | otherwise = error ""
             where
@@ -46,4 +46,4 @@ doConvertDB = map doConvert
                 x = 0
                 d = ODB.pkgDeps o
                 f = ODB.pkgFlags o
-                r = read $ ODB.pkgRelease o
+                r = ODB.pkgRelease o

@@ -38,7 +38,7 @@ import System.Unix.Directory
 -- {{{1 types
 data PkgType
     = GhcType String Version
-    | DistroType String Version Int
+    | DistroType String Version Int Int
     | RepoType GenericPackageDescription
     deriving (Eq, Show)
 
@@ -53,7 +53,7 @@ add = do
     idxPkgs <- asks $ cmdAddCbls . optsCmd
     --
     ghcPkgs <- asks  $ map (uncurry GhcType) . cmdAddGhcPkgs . optsCmd
-    distroPkgs <- asks $ map (\ (n, v, r) -> DistroType n v r) . cmdAddDistroPkgs . optsCmd
+    distroPkgs <- asks $ map (\ (n, v, x, r) -> DistroType n v x r) . cmdAddDistroPkgs . optsCmd
     genFilePkgs <- mapM (runCabalParseWithTempDir . fmap snd . Cbl.readFromFile . fst) filePkgs
     genIdxPkgs <- mapM ((runCabalParseWithTempDir . fmap snd . Cbl.readFromIdx) . (\ (a, b, _) -> (a, b))) idxPkgs
     genPkgs <- liftM (map RepoType) $ exitOnAnyLefts (genFilePkgs ++ genIdxPkgs)
@@ -79,7 +79,7 @@ runCabalParseWithTempDir f = do
         Cbl.runCabalParse cpe f
 
 getName (GhcType n _) = n
-getName (DistroType n _ _) = n
+getName (DistroType n _ _ _) = n
 getName (RepoType gpd) = pkgNameStr $ packageDescription gpd
 
 -- {{{1 addPkgs
@@ -96,7 +96,7 @@ addPkgs ghcVer db flags pkgs = let
 
 canBeAdded :: Version -> CblDB -> [(String, FlagAssignment)] -> PkgType -> Bool
 canBeAdded _ db _ (GhcType n v) = null $ checkDependants db n v
-canBeAdded _ db _ (DistroType n v _) = null $ checkDependants db n v
+canBeAdded _ db _ (DistroType n v _ _) = null $ checkDependants db n v
 canBeAdded ghcVer db flags pkg@(RepoType gpd) =  finable && depsOK
     where
         fa = fromMaybe [] $ lookup (getName pkg) flags
@@ -106,7 +106,7 @@ canBeAdded ghcVer db flags pkg@(RepoType gpd) =  finable && depsOK
         depsOK = null $ checkDependants db n v
 
 pkgTypeToCblPkg _ _ _ (GhcType n v) = createGhcPkg n v
-pkgTypeToCblPkg _ _ _ (DistroType n v r) = createDistroPkg n v r
+pkgTypeToCblPkg _ _ _ (DistroType n v x r) = createDistroPkg n v x r
 pkgTypeToCblPkg ghcVer db flags pkg@(RepoType gpd) =
     let fa = fromMaybe [] $ lookup (getName pkg) flags
     in fromJust $ case finalizePkg ghcVer db fa gpd of
@@ -126,7 +126,7 @@ findBreaking db (GhcType n v) = let
     in if null d
         then Nothing
         else Just ((n, v), d)
-findBreaking db (DistroType n v _) = let
+findBreaking db (DistroType n v _ _) = let
         d = checkDependants db n v
     in if null d
         then Nothing

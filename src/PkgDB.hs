@@ -77,8 +77,11 @@ data Pkg
 data GhcPkgD = GhcPkgD { gpVersion :: V.Version }
     deriving (Eq, Show)
 
-data DistroPkgD = DistroPkgD { dpVersion :: V.Version , dpRelease :: Int }
-    deriving (Eq, Show)
+data DistroPkgD = DistroPkgD
+    { dpVersion :: V.Version
+    , dpXrev :: Int
+    , dpRelease :: Int
+    } deriving (Eq, Show)
 
 data RepoPkgD = RepoPkgD
     { rpVersion :: V.Version
@@ -119,6 +122,7 @@ pkgVersion (CP _ (DistroPkg d)) = dpVersion d
 pkgVersion (CP _ (RepoPkg d)) = rpVersion d
 
 pkgXRev :: CblPkg -> Int
+pkgXRev (CP _ (DistroPkg d)) = dpXrev d
 pkgXRev (CP _ (RepoPkg d)) = rpXrev d
 pkgXRev _ = 0
 
@@ -138,8 +142,8 @@ pkgRelease (CP _ (RepoPkg d)) = rpRelease d
 createGhcPkg :: String -> V.Version -> CblPkg
 createGhcPkg n v = CP n (GhcPkg $ GhcPkgD v)
 
-createDistroPkg :: String -> V.Version -> Int -> CblPkg
-createDistroPkg n v r = CP n (DistroPkg (DistroPkgD v r))
+createDistroPkg :: String -> V.Version -> Int -> Int -> CblPkg
+createDistroPkg n v x r = CP n (DistroPkg (DistroPkgD v x r))
 
 createRepoPkg :: String -> V.Version -> Int -> [P.Dependency] -> FlagAssignment -> Int -> CblPkg
 createRepoPkg n v x d fa r = CP n (RepoPkg $ RepoPkgD v x d fa r)
@@ -186,8 +190,8 @@ addPkg2 db (CP n p) = addPkg db n p
 addGhcPkg :: CblDB -> String -> V.Version -> CblDB
 addGhcPkg db n v = addPkg2 db (createGhcPkg n v)
 
-addDistroPkg :: CblDB -> String -> V.Version -> Int -> CblDB
-addDistroPkg db n v r = addPkg2 db (createDistroPkg n v r)
+addDistroPkg :: CblDB -> String -> V.Version -> Int -> Int -> CblDB
+addDistroPkg db n v x r = addPkg2 db (createDistroPkg n v x r)
 
 delPkg :: CblDB -> String -> CblDB
 delPkg db n = filter (\ p -> n /= pkgName p) db

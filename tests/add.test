@@ -27,7 +27,7 @@ cblrepo list -g
 foo  1.1-xx
 >>>= 0
 
-cblrepo add -d bar,1.2,1
+cblrepo add -d bar,1.2,0,1
 >>>
 >>>= 0
 
@@ -38,7 +38,7 @@ cblrepo list
 
 cblrepo list -d
 >>>
-bar  1.2-1
+bar  1.2_0-1
 >>>= 0
 
 # {{{1 add from hackage

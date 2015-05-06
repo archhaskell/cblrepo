@@ -48,7 +48,7 @@ printCblPkgShort :: CblPkg -> IO ()
 printCblPkgShort p =
     putStrLn $ pkgName p ++ "  " ++ v ++ "-" ++ r ++ showFlagsIfPresent p
         where
-            v = display (pkgVersion p) ++ if isRepoPkg p then ("_" ++ show (pkgXRev p)) else ""
+            v = display (pkgVersion p) ++ if (not $ isGhcPkg p) then ("_" ++ show (pkgXRev p)) else ""
             r = if isGhcPkg p then "xx" else show (pkgRelease p)
             showFlagsIfPresent _p
                 | [] <- pkgFlags _p = ""
