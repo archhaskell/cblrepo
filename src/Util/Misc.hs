@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-
- - Copyright 2011-2014 Per Magnus Therning
+ - Copyright 2011-2015 Per Magnus Therning
  -
  - Licensed under the Apache License, Version 2.0 (the "License");
  - you may not use this file except in compliance with the License.
@@ -233,3 +233,12 @@ exitOnAnyLefts vs = let
             else return (rights vs)
 
 exitOnException msg a = onException a $ hPutStrLn stderr msg >> exitFailure
+
+-- {{{1 shell escaping
+shEsc :: String -> String
+shEsc s = concatMap escChar s
+    where
+        escChar '\"' = "\\\""
+        escChar '`' = "\\`"
+        escChar '\'' = "\\\'"
+        escChar c = [c]

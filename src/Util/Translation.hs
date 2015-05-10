@@ -47,7 +47,9 @@ newtype ShQuotedString = ShQuotedString String
     deriving (Eq, Show)
 
 instance Pretty ShQuotedString where
-    pretty (ShQuotedString s) = char '"' <> text s <> char '"'
+    pretty (ShQuotedString s) = char '"' <> text quotStr <> char '"'
+        where
+            quotStr = shEsc $ unwords $ lines s
 
 -- {{{1 ShArray
 newtype ShArray = ShArray [String]
