@@ -15,7 +15,7 @@
  -}
 
 module Upgrades
-    ( updates
+    ( upgrades
     ) where
 
 import PkgDB
@@ -29,8 +29,8 @@ import Data.Maybe
 import Distribution.Text
 import Distribution.Version
 
-updates :: Command ()
-updates = do
+upgrades :: Command ()
+upgrades = do
     db <- asks dbFile >>= liftIO . readDb
     aD <- asks appDir
     aCS <- asks $ idxStyle .optsCmd

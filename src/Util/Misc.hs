@@ -165,7 +165,7 @@ data Cmds
     | CmdListPkgs
         { listGhc :: Bool, listDistro :: Bool, noListRepo :: Bool
         , hackageFmt :: Bool, pkgs :: [String] }
-    | CmdUpdates { idxStyle :: Bool }
+    | CmdUpgrades { idxStyle :: Bool }
     | CmdPkgBuild { ghcVer :: Version, ghcRel :: Int, patchDir :: FilePath, pkgs :: [String] }
     | CmdConvertDb { inDbFile :: FilePath, outDbFile :: FilePath }
     | CmdRemovePkg { pkgs :: [String] }

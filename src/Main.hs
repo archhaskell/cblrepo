@@ -76,10 +76,10 @@ cmdVersionsOpts = CmdVersions
 cmdVersionsCmd = command "versions" (info (helper <*> cmdVersionsOpts)
     (fullDesc <> progDesc "List available versions of packages"))
 
-cmdUpdatesOpts = CmdUpdates
+cmdUpgradesOpts = CmdUpgrades
     <$> switch (short 's' <> help "A shorter output suitable for scripting")
-cmdUpdatesCmd = command "updates" (info (helper <*> cmdUpdatesOpts)
-    (fullDesc <> progDesc "Check for available updates"))
+cmdUpgradesCmd = command "upgrades" (info (helper <*> cmdUpgradesOpts)
+    (fullDesc <> progDesc "Check for packages that can be upgraded"))
 
 cmdListPkgsOpts = CmdListPkgs
     <$> switch (short 'g' <> long "ghc" <> help "List ghc packages")
@@ -117,7 +117,7 @@ argParser = info (helper <*> opts) (fullDesc <> header (progName ++ " v" ++ disp
     where
         opts = Opts <$> argAppDir <*> argDbFile <*> argDryRun
             <*> subparser ( cmdAddPkgCmd
-                <> cmdBumpPkgsCmd <> cmdBuildPkgsCmd <> cmdSyncCmd <> cmdVersionsCmd <> cmdUpdatesCmd
+                <> cmdBumpPkgsCmd <> cmdBuildPkgsCmd <> cmdSyncCmd <> cmdVersionsCmd <> cmdUpgradesCmd
                 <> cmdListPkgsCmd <> cmdPkgBuildCmd <> cmdConvertDbCmd <> cmdRemovePkgCmd <> cmdExtractCmd
                 )
 
@@ -136,7 +136,7 @@ main = do
             CmdSync {} -> runCommand o' sync
             CmdVersions {} -> runCommand o' versions
             CmdListPkgs {} -> runCommand o' listPkgs
-            CmdUpdates {} -> runCommand o' updates
+            CmdUpgrades {} -> runCommand o' upgrades
             CmdPkgBuild {} -> runCommand o' pkgBuild
             CmdConvertDb {} -> runCommand o' convertDb
             CmdRemovePkg {} -> runCommand o' remove
