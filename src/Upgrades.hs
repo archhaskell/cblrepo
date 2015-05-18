@@ -14,7 +14,7 @@
  - limitations under the License.
  -}
 
-module Updates
+module Upgrades
     ( updates
     ) where
 

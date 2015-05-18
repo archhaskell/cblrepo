@@ -23,7 +23,7 @@ import BumpPkgs
 import Sync
 import Versions
 import ListPkgs
-import Updates
+import Upgrades
 import Util.Misc
 import PkgBuild
 import ConvertDB
