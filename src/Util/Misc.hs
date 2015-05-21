@@ -160,7 +160,7 @@ data Cmds
         , cmdAddCbls :: [(String, Version, FlagAssignment)] }
     | CmdBuildPkgs { pkgs :: [String] }
     | CmdBumpPkgs { inclusive :: Bool, pkgs :: [String] }
-    | CmdSync { unused :: Bool }
+    | CmdUpdate { unused :: Bool }
     | CmdVersions { latest :: Bool, pkgs :: [String] }
     | CmdListPkgs
         { listGhc :: Bool, listDistro :: Bool, noListRepo :: Bool

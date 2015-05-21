@@ -21,7 +21,7 @@ import Util.Misc
 import Control.Monad.Reader
 import System.FilePath
 
-sync :: Command ()
-sync = do
+update :: Command ()
+update = do
     aD <- asks appDir
     liftIO $ getFromURL indexUrl (aD </> indexFileName)

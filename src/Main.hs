@@ -66,8 +66,8 @@ cmdBuildPkgsOpts = CmdBuildPkgs
 cmdBuildPkgsCmd = command "build" (info (helper <*> cmdBuildPkgsOpts)
     (fullDesc <> progDesc "Re-order packages into a good build order"))
 
-cmdSyncOpts = CmdSync <$> switch (internal <> hidden)
-cmdSyncCmd = command "sync" (info (helper <*> cmdSyncOpts)
+cmdUpdateOpts = CmdUpdate <$> switch (internal <> hidden)
+cmdUpdateCmd = command "update" (info (helper <*> cmdUpdateOpts)
     (fullDesc <> progDesc "Update the index"))
 
 cmdVersionsOpts = CmdVersions
@@ -117,7 +117,7 @@ argParser = info (helper <*> opts) (fullDesc <> header (progName ++ " v" ++ disp
     where
         opts = Opts <$> argAppDir <*> argDbFile <*> argDryRun
             <*> subparser ( cmdAddPkgCmd
-                <> cmdBumpPkgsCmd <> cmdBuildPkgsCmd <> cmdSyncCmd <> cmdVersionsCmd <> cmdUpgradesCmd
+                <> cmdBumpPkgsCmd <> cmdBuildPkgsCmd <> cmdUpdateCmd <> cmdVersionsCmd <> cmdUpgradesCmd
                 <> cmdListPkgsCmd <> cmdPkgBuildCmd <> cmdConvertDbCmd <> cmdRemovePkgCmd <> cmdExtractCmd
                 )
 
@@ -133,7 +133,7 @@ main = do
             CmdAdd {} -> runCommand o' add
             CmdBuildPkgs {} -> runCommand o' buildPkgs
             CmdBumpPkgs {} -> runCommand o' bumpPkgs
-            CmdSync {} -> runCommand o' sync
+            CmdUpdate {} -> runCommand o' update
             CmdVersions {} -> runCommand o' versions
             CmdListPkgs {} -> runCommand o' listPkgs
             CmdUpgrades {} -> runCommand o' upgrades

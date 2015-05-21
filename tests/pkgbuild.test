@@ -5,7 +5,7 @@
   mkdir ,,test_appdir
 >>>= 0
 
-cblrepo --appdir=,,test_appdir --db=,,test_appdir/testrepo.db sync
+cblrepo --appdir=,,test_appdir --db=,,test_appdir/testrepo.db update
 >>>= 0
 
 cblrepo --appdir=,,test_appdir --db=,,test_appdir/testrepo.db add -g array,0 -g base,4.8 -g containers,0 -g directory,0 -g filepath,0 -g pretty,0 -g process,0 -g random,0

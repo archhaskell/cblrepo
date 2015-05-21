@@ -5,7 +5,7 @@
   mkdir ,,test_appdir
 >>>= 0
 
-cblrepo --appdir=,,test_appdir sync
+cblrepo --appdir=,,test_appdir update
 >>>= 0
 
 cblrepo --appdir=,,test_appdir extract dataenc,0.14.0.7
