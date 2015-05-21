@@ -23,7 +23,7 @@ build-type: Custom
 executable cblrepo
     hs-source-dirs: src
     main-is: Main.hs
-    other-modules: PkgDB Add BumpPkgs BuildPkgs Sync Versions Upgrades ListPkgs PkgBuild OldPkgDB ConvertDB Remove Extract
+    other-modules: PkgDB Add BumpPkgs BuildPkgs Update Versions Upgrades ListPkgs PkgBuild OldPkgDB ConvertDB Remove Extract
         Util.Translation Util.Cabal Util.HackageIndex Util.Misc Util.Dist
     build-depends: base ==4.8.*, filepath ==1.4.*,
         directory ==1.2.*, Cabal ==1.22.*, transformers ==0.4.*,

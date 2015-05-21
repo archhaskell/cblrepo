@@ -14,7 +14,7 @@
  - limitations under the License.
  -}
 
-module Sync where
+module Update where
 
 import Util.Misc
 

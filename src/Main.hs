@@ -20,7 +20,7 @@ module Main where
 import Add
 import BuildPkgs
 import BumpPkgs
-import Sync
+import Update
 import Versions
 import ListPkgs
 import Upgrades
