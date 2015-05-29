@@ -77,7 +77,7 @@ cmdVersionsCmd = command "versions" (info (helper <*> cmdVersionsOpts)
     (fullDesc <> progDesc "List available versions of packages"))
 
 cmdUpdatesOpts = CmdUpdates
-    <$> switch (short 's' <> help "A shorter output suitable for scripting")
+    <$> switch (short 's' <> long "short" <> help "Short output (suitable for scripting)")
 cmdUpdatesCmd = command "updates" (info (helper <*> cmdUpdatesOpts)
     (fullDesc <> progDesc "Check for available updates"))
 
