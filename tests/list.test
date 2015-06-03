@@ -15,8 +15,23 @@ baz  1_0-1
 foo  1.2.3_3-1
 >>>= 0
 
+cblrepo list -f normal
+>>>
+bar  0_0-1
+baz  1_0-1
+foo  1.2.3_3-1
+>>>= 0
+
+# {{{1 short listing
+cblrepo list -f short
+>>>
+bar,0
+baz,1
+foo,1.2.3
+>>>= 0
+
 # {{{1 hackage listing
-cblrepo list --hackage
+cblrepo list --format hackage
 >>>
 ("bar","0",Nothing)
 ("baz","1",Nothing)
@@ -29,12 +44,12 @@ cblrepo list bar
 bar  0_0-1
 >>>= 0
 
-cblrepo list --hackage bar
+cblrepo list --format short bar
 >>>
-("bar","0",Nothing)
+bar,0
 >>>= 0
 
-cblrepo list --hackage bar foo
+cblrepo list --format hackage bar foo
 >>>
 ("bar","0",Nothing)
 ("foo","1.2.3",Nothing)
