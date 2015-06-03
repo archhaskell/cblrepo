@@ -38,14 +38,14 @@ listPkgs = do
             else filter (\p -> pkgName p `elem` ps) allPkgs
     let printer = if lH
             then printCblPkgHackage
-            else printCblPkgShort
+            else printCblPkgNormal
     liftIO $ mapM_ printer pkgsToList
 
 pkgFilter :: Bool -> Bool -> Bool -> CblPkg -> Bool
 pkgFilter g d r p = (g && isGhcPkg p) || (d && isDistroPkg p) || (not r && isRepoPkg p)
 
-printCblPkgShort :: CblPkg -> IO ()
-printCblPkgShort p =
+printCblPkgNormal :: CblPkg -> IO ()
+printCblPkgNormal p =
     putStrLn $ pkgName p ++ "  " ++ v ++ "-" ++ r ++ showFlagsIfPresent p
         where
             v = display (pkgVersion p) ++ if (not $ isGhcPkg p) then ("_" ++ show (pkgXRev p)) else ""
