@@ -29,23 +29,27 @@ listPkgs = do
     lG <- asks $ listGhc . optsCmd
     lD <- asks $ listDistro . optsCmd
     lR <- asks $ noListRepo . optsCmd
-    lH <- asks $ hackageFmt . optsCmd
+    lF <- asks $ listFmt . optsCmd
     ps <- asks $ pkgs . optsCmd
     db <- asks dbFile >>= liftIO . readDb
     let allPkgs = filter (pkgFilter lG lD lR) db
     let pkgsToList = if null ps
             then allPkgs
             else filter (\p -> pkgName p `elem` ps) allPkgs
-    let printer = if lH
-            then printCblPkgHackage
-            else printCblPkgShort
+    let printer = case lF of
+            CmdListShortFmt -> printCblPkgShort
+            CmdListNormalFmt -> printCblPkgNormal
+            CmdListHackageFmt -> printCblPkgHackage
     liftIO $ mapM_ printer pkgsToList
 
 pkgFilter :: Bool -> Bool -> Bool -> CblPkg -> Bool
 pkgFilter g d r p = (g && isGhcPkg p) || (d && isDistroPkg p) || (not r && isRepoPkg p)
 
 printCblPkgShort :: CblPkg -> IO ()
-printCblPkgShort p =
+printCblPkgShort p = putStrLn $ (pkgName p) ++ "," ++ (display $ pkgVersion p)
+
+printCblPkgNormal :: CblPkg -> IO ()
+printCblPkgNormal p =
     putStrLn $ pkgName p ++ "  " ++ v ++ "-" ++ r ++ showFlagsIfPresent p
         where
             v = display (pkgVersion p) ++ if (not $ isGhcPkg p) then ("_" ++ show (pkgXRev p)) else ""

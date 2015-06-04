@@ -152,7 +152,19 @@ strCblPkgArgReader = let
             Just (r, "") -> return r
             _ -> fail $ "Cannot parse: " ++ s
 
+listFormatReader :: ReadM CmdListFormat
+listFormatReader = do
+    s <- readerAsk
+    case s of
+        "normal" -> return CmdListNormalFmt
+        "short" -> return CmdListShortFmt
+        "hackage" -> return CmdListHackageFmt
+        _ -> fail $ "Cannot parse: " ++ s
+
 -- {{{1 command line argument type
+data CmdListFormat = CmdListNormalFmt | CmdListShortFmt | CmdListHackageFmt
+    deriving (Eq, Show)
+
 data Cmds
     = CmdAdd
         { patchDir :: FilePath, ghcVer :: Version, cmdAddGhcPkgs :: [(String, Version)]
@@ -164,7 +176,7 @@ data Cmds
     | CmdVersions { latest :: Bool, pkgs :: [String] }
     | CmdListPkgs
         { listGhc :: Bool, listDistro :: Bool, noListRepo :: Bool
-        , hackageFmt :: Bool, pkgs :: [String] }
+        , listFmt :: CmdListFormat, pkgs :: [String] }
     | CmdUpgrades { idxStyle :: Bool }
     | CmdPkgBuild { ghcVer :: Version, ghcRel :: Int, patchDir :: FilePath, pkgs :: [String] }
     | CmdConvertDb { inDbFile :: FilePath, outDbFile :: FilePath }

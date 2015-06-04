@@ -85,7 +85,8 @@ cmdListPkgsOpts = CmdListPkgs
     <$> switch (short 'g' <> long "ghc" <> help "List ghc packages")
     <*> switch (short 'd' <> long "distro" <> help "List distro packages")
     <*> switch (long "no-repo" <> help "Do not list repo packages")
-    <*> switch (long "hackage" <> help "List in hackage format")
+    <*> option listFormatReader (short 'f' <> long "format" <> value CmdListNormalFmt <>
+            help "Output format: short, normal (default), hackage")
     <*> many (argument str (metavar "PKGNAME ..."))
 cmdListPkgsCmd = command "list" (info (helper <*> cmdListPkgsOpts)
     (fullDesc <> progDesc "List packages in repo"))
