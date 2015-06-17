@@ -59,7 +59,7 @@ ghcDefVersion = Version [7, 10, 1] []
 ghcVersionDep :: Version -> Int -> String
 ghcVersionDep ghcVer ghcRel = "ghc=" ++ display ghcVer ++ "-" ++ show ghcRel
 
-indexUrl = "http://hackage.haskell.org/packages/index.tar.gz"
+indexUrl = "http://hackage.fpcomplete.com/00-index.tar.gz"
 indexFileName = "index.tar.gz"
 
 -- {{{1 command line parser helpers
