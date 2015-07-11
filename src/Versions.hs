@@ -18,6 +18,7 @@ module Versions where
 
 import Util.HackageIndex
 import Util.Misc
+import Util.Cfg
 
 import Control.Applicative
 import Control.Monad.Reader
@@ -30,9 +31,10 @@ versions = do
     aD <- asks (appDir . fst)
     l <- asks $ latest . optsCmd . fst
     pkgs <- asks $ pkgs . optsCmd . fst
+    cfg <- asks snd
     let printFunc = if l then printLatestVersion else printAllVersions
     liftIO $ do
-        pkgsNVers <- buildPkgVersions <$> readIndexFile aD
+        pkgsNVers <- buildPkgVersions <$> readIndexFile aD (getIndexFileName cfg)
         mapM_ (\ pkg -> printFunc (pkg, M.lookup pkg pkgsNVers)) pkgs
 
 printAllVersions :: (String, Maybe [(Version, Int)]) -> IO ()

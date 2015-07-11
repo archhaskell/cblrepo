@@ -21,6 +21,7 @@ module Upgrades
 import PkgDB
 import Util.Misc
 import Util.HackageIndex
+import Util.Cfg
 
 import Control.Applicative
 import Control.Arrow
@@ -34,7 +35,8 @@ upgrades = do
     db <- asks (dbFile . fst) >>= liftIO . readDb
     aD <- asks $ appDir . fst
     aCS <- asks $ idxStyle .optsCmd . fst
-    availPkgsNVers <- liftIO $ buildPkgVersions <$> readIndexFile aD
+    cfg <- asks snd
+    availPkgsNVers <- liftIO $ buildPkgVersions <$> readIndexFile aD (getIndexFileName cfg)
     let nonBasePkgs = filter (not . isBasePkg) db
         pkgsNVers = map (pkgName &&& pkgVersion &&& pkgXRev) nonBasePkgs
         outdated = filter

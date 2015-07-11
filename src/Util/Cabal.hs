@@ -40,6 +40,7 @@ data CabalParseEnv = CabalParseEnv
     { cpeAppDir :: FilePath
     , cpePatchDir :: FilePath
     , cpeDestDir :: FilePath
+    , cpeIdxFn :: FilePath
     } deriving (Eq, Show)
 
 -- | Type used for reading Cabal files
@@ -67,15 +68,16 @@ readFromIdx :: (String, Version) -- ^ package name and version
 readFromIdx (pN, pV) = do
     destDir <- asks cpeDestDir
     appDir <- asks cpeAppDir
+    idxFn <- asks cpeIdxFn
     let destFn = destDir </> pN <.> ".cabal"
-    lift $ copyCabal appDir destFn
+    lift $ copyCabal appDir idxFn destFn
     cblFile <- patch destFn
     gpd <- liftIO $ readPackageDescription silent destFn
     return (cblFile, gpd)
 
     where
-        copyCabal appDir destFn = do
-            idx <- liftIO $ readIndexFile appDir
+        copyCabal appDir idxFn destFn = do
+            idx <- liftIO $ readIndexFile appDir idxFn
             cbl <- maybe (throwE $ "Failed to extract contents for " ++ pN ++ " " ++ display pV) return
                 (extractCabal idx pN pV)
             liftIO $ BSL.writeFile destFn cbl

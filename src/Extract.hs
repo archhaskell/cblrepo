@@ -4,6 +4,7 @@ module Extract
 
 import Util.HackageIndex
 import Util.Misc
+import Util.Cfg
 
 import Control.Monad.Trans.Except
 import Control.Monad.Reader
@@ -16,8 +17,9 @@ extract :: Command ()
 extract = do
     aD <- asks $ appDir . fst
     pkgsNVersions <- asks $ cmdExtractPkgs . optsCmd . fst
+    cfg <- asks snd
     --
-    idx <- liftIO $ readIndexFile aD
+    idx <- liftIO $ readIndexFile aD (getIndexFileName cfg)
     _ <- mapM (runExceptT . extractAndSave idx) pkgsNVersions >>= exitOnAnyLefts
     return ()
 

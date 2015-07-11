@@ -20,6 +20,7 @@ import PkgDB
 import Util.Misc
 import Util.Translation
 import qualified Util.Cabal as Cbl
+import Util.Cfg
 
 import Control.Arrow
 import Control.Monad.Reader
@@ -71,7 +72,8 @@ runCabalParseWithTempDir :: Cbl.CabalParse a -> ExceptT String Command a
 runCabalParseWithTempDir f = do
     aD <- asks (appDir . fst)
     pD <- asks $ patchDir . optsCmd . fst
+    cfg <- asks snd
     r <- liftIO $ withTemporaryDirectory "/tmp/cblrepo." $ \ destDir -> do
-        let cpe = Cbl.CabalParseEnv aD pD destDir
+        let cpe = Cbl.CabalParseEnv aD pD destDir (getIndexFileName cfg)
         Cbl.runCabalParse cpe f
     reThrowE r

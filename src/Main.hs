@@ -130,7 +130,7 @@ main = do
     execParser argParser >>= \ o -> do
         let aD = if null (appDir o) then defAppDir else appDir o
         let o' = o { appDir = aD }
-        let e = (o', defaultCfg)
+            e = (o', defaultCfg)
         createDirectoryIfMissing True aD
         case optsCmd o' of
             CmdAdd {} -> runCommand e add
