@@ -25,4 +25,4 @@ import System.FilePath
 update :: Command ()
 update = do
     aD <- asks appDir
-    liftIO $ getFromURL indexUrl (aD </> indexFileName)
+    liftIO $ getFromURL (cfgIdxUrl defaultCfg) (aD </> getIndexFileName defaultCfg)

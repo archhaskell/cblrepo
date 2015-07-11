@@ -40,7 +40,7 @@ import System.FilePath
 readIndexFile :: FilePath -> IO BSL.ByteString
 readIndexFile indexLocation = exitOnException
     "Cannot open index file, have you run the 'sync' command?"
-    (BSL.readFile $ indexLocation </> indexFileName)
+    (BSL.readFile $ indexLocation </> getIndexFileName defaultCfg)
 
 type PkgVersions = M.Map String [(Version, Int)]
 

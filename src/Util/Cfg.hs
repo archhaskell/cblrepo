@@ -17,5 +17,11 @@
 module Util.Cfg
     where
 
-indexUrl = "http://hackage.fpcomplete.com/00-index.tar.gz"
-indexFileName = "hackage.fpcomplete.com_00-index.tar.gz"
+data Cfg = Cfg { cfgIdxUrl :: String }
+    deriving (Show)
+
+defaultCfg :: Cfg
+defaultCfg = Cfg "http://hackage.fpcomplete.com/00-index.tar.gz"
+
+getIndexFileName :: Cfg -> String
+getIndexFileName = const "hackage.fpcomplete.com_00-index.tar.gz"
