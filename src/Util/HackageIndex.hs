@@ -19,6 +19,7 @@ module Util.HackageIndex
 
 import Util.Misc
 import Util.Dist
+import Util.Cfg
 
 import qualified Codec.Archive.Tar as Tar
 import qualified Codec.Compression.GZip as GZip

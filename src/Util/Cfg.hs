@@ -1,5 +1,5 @@
 {-
- - Copyright 2011-2013 Per Magnus Therning
+ - Copyright 2015 Per Magnus Therning
  -
  - Licensed under the Apache License, Version 2.0 (the "License");
  - you may not use this file except in compliance with the License.
@@ -14,15 +14,8 @@
  - limitations under the License.
  -}
 
-module Update where
+module Util.Cfg
+    where
 
-import Util.Misc
-import Util.Cfg
-
-import Control.Monad.Reader
-import System.FilePath
-
-update :: Command ()
-update = do
-    aD <- asks appDir
-    liftIO $ getFromURL indexUrl (aD </> indexFileName)
+indexUrl = "http://hackage.fpcomplete.com/00-index.tar.gz"
+indexFileName = "index.tar.gz"
