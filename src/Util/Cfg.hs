@@ -24,4 +24,6 @@ defaultCfg :: Cfg
 defaultCfg = Cfg "http://hackage.fpcomplete.com/00-index.tar.gz"
 
 getIndexFileName :: Cfg -> String
-getIndexFileName = const "hackage.fpcomplete.com_00-index.tar.gz"
+getIndexFileName cfg = map repSlash $ drop 7 $ cfgIdxUrl cfg
+    where
+        repSlash c = if c == '/' then '_' else c
