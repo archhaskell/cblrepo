@@ -20,6 +20,7 @@ module Util.Misc where
 -- {{{1 imports
 import qualified PkgDB as DB
 import Util.Dist
+import Util.Cfg
 
 import Control.Exception (onException)
 import Control.Monad
@@ -221,7 +222,7 @@ finalizePkg ghcVersion db fa gpd = finalizePackageDescription
         n = pkgNameStr gpd
 
 -- {{{1 Command type
-type Command = ReaderT Opts IO
+type Command = ReaderT (Opts, Cfg) IO
 
 runCommand cmds func = runReaderT func cmds
 

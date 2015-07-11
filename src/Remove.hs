@@ -30,10 +30,10 @@ import System.Exit
 -- {{{1 remove
 remove :: Command ()
 remove = do
-    dbFn <- asks dbFile
+    dbFn <- asks (dbFile . fst)
     db <- liftIO $ readDb dbFn
-    pkgs <- asks $ pkgs . optsCmd
-    dR <- asks dryRun
+    pkgs <- asks $ pkgs . optsCmd . fst
+    dR <- asks (dryRun . fst)
     liftIO $ either
         (\ s -> putStrLn s >> exitFailure)
         (\ newDb -> unless dR $ saveDb newDb dbFn)

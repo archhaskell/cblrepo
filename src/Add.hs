@@ -45,15 +45,15 @@ data PkgType
 -- {{{1 add
 add :: Command ()
 add = do
-    dbFn <- asks  dbFile
+    dbFn <- asks $ dbFile . fst
     db <- liftIO $ readDb dbFn
-    dr <- asks  dryRun
-    ghcVersion <- asks $ ghcVer . optsCmd
-    filePkgs <- asks $ cmdAddFileCbls . optsCmd
-    idxPkgs <- asks $ cmdAddCbls . optsCmd
+    dr <- asks $ dryRun . fst
+    ghcVersion <- asks $ ghcVer . optsCmd . fst
+    filePkgs <- asks $ cmdAddFileCbls . optsCmd . fst
+    idxPkgs <- asks $ cmdAddCbls . optsCmd . fst
     --
-    ghcPkgs <- asks  $ map (uncurry GhcType) . cmdAddGhcPkgs . optsCmd
-    distroPkgs <- asks $ map (\ (n, v, x, r) -> DistroType n v x r) . cmdAddDistroPkgs . optsCmd
+    ghcPkgs <- asks  $ map (uncurry GhcType) . cmdAddGhcPkgs . optsCmd . fst
+    distroPkgs <- asks $ map (\ (n, v, x, r) -> DistroType n v x r) . cmdAddDistroPkgs . optsCmd . fst
     genFilePkgs <- mapM (runCabalParseWithTempDir . fmap snd . Cbl.readFromFile . fst) filePkgs
     genIdxPkgs <- mapM ((runCabalParseWithTempDir . fmap snd . Cbl.readFromIdx) . (\ (a, b, _) -> (a, b))) idxPkgs
     genPkgs <- liftM (map RepoType) $ exitOnAnyLefts (genFilePkgs ++ genIdxPkgs)
@@ -72,8 +72,8 @@ add = do
 
 runCabalParseWithTempDir :: Cbl.CabalParse a -> Command (Either String a)
 runCabalParseWithTempDir f = do
-    aD <- asks appDir
-    pD <- asks $ patchDir . optsCmd
+    aD <- asks $ appDir . fst
+    pD <- asks $ patchDir . optsCmd . fst
     liftIO $ withTemporaryDirectory "/tmp/cblrepo." $ \ destDir -> do
         let cpe = Cbl.CabalParseEnv aD pD destDir
         Cbl.runCabalParse cpe f

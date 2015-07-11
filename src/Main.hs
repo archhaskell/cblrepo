@@ -29,6 +29,7 @@ import PkgBuild
 import ConvertDB
 import Remove
 import Extract
+import Util.Cfg
 
 import Paths_cblrepo
 
@@ -129,16 +130,17 @@ main = do
     execParser argParser >>= \ o -> do
         let aD = if null (appDir o) then defAppDir else appDir o
         let o' = o { appDir = aD }
+        let e = (o', defaultCfg)
         createDirectoryIfMissing True aD
         case optsCmd o' of
-            CmdAdd {} -> runCommand o' add
-            CmdBuildPkgs {} -> runCommand o' buildPkgs
-            CmdBumpPkgs {} -> runCommand o' bumpPkgs
-            CmdUpdate {} -> runCommand o' update
-            CmdVersions {} -> runCommand o' versions
-            CmdListPkgs {} -> runCommand o' listPkgs
-            CmdUpgrades {} -> runCommand o' upgrades
-            CmdPkgBuild {} -> runCommand o' pkgBuild
-            CmdConvertDb {} -> runCommand o' convertDb
-            CmdRemovePkg {} -> runCommand o' remove
-            CmdExtract {} -> runCommand o' extract
+            CmdAdd {} -> runCommand e add
+            CmdBuildPkgs {} -> runCommand e buildPkgs
+            CmdBumpPkgs {} -> runCommand e bumpPkgs
+            CmdUpdate {} -> runCommand e update
+            CmdVersions {} -> runCommand e versions
+            CmdListPkgs {} -> runCommand e listPkgs
+            CmdUpgrades {} -> runCommand e upgrades
+            CmdPkgBuild {} -> runCommand e pkgBuild
+            CmdConvertDb {} -> runCommand e convertDb
+            CmdRemovePkg {} -> runCommand e remove
+            CmdExtract {} -> runCommand e extract

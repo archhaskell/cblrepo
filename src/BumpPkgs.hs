@@ -23,11 +23,11 @@ import Control.Monad.Reader
 
 bumpPkgs :: Command ()
 bumpPkgs = do
-    dbFn <- asks dbFile
+    dbFn <- asks $ dbFile . fst
     db <- liftIO $ readDb dbFn
-    dR <- asks dryRun
-    pkgs <- asks  $ pkgs . optsCmd
-    incl <- asks  $ inclusive . optsCmd
+    dR <- asks (dryRun . fst)
+    pkgs <- asks  $ pkgs . optsCmd . fst
+    incl <- asks  $ inclusive . optsCmd . fst
     let bpkgs = transDependants db incl pkgs
     let newDb = foldl bumpRelease db bpkgs
     liftIO $ if dR

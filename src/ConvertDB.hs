@@ -25,8 +25,8 @@ import System.Directory
 
 convertDb :: Command ()
 convertDb = do
-    inDbFn <- asks $ inDbFile . optsCmd
-    outDbFn <- asks $ outDbFile . optsCmd
+    inDbFn <- asks $ inDbFile . optsCmd . fst
+    outDbFn <- asks $ outDbFile . optsCmd . fst
     dbExist <- liftIO $ doesFileExist inDbFn
     when dbExist $ do
         newDb <- fmap doConvertDB (liftIO $ ODB.readDb inDbFn)

@@ -31,9 +31,9 @@ import Distribution.Version
 
 upgrades :: Command ()
 upgrades = do
-    db <- asks dbFile >>= liftIO . readDb
-    aD <- asks appDir
-    aCS <- asks $ idxStyle .optsCmd
+    db <- asks (dbFile . fst) >>= liftIO . readDb
+    aD <- asks $ appDir . fst
+    aCS <- asks $ idxStyle .optsCmd . fst
     availPkgsNVers <- liftIO $ buildPkgVersions <$> readIndexFile aD
     let nonBasePkgs = filter (not . isBasePkg) db
         pkgsNVers = map (pkgName &&& pkgVersion &&& pkgXRev) nonBasePkgs

@@ -33,15 +33,15 @@ import Text.PrettyPrint.ANSI.Leijen
 
 pkgBuild :: Command ()
 pkgBuild = do
-    pkgs <- asks  $ pkgs . optsCmd
+    pkgs <- asks  $ pkgs . optsCmd . fst
     void $ mapM (runExceptT . generatePkgBuild) pkgs >>= exitOnAnyLefts
 
 generatePkgBuild :: String -> ExceptT String Command ()
 generatePkgBuild pkg = do
-        db <- asks dbFile >>= liftIO . readDb
-        patchDir <- asks  $ patchDir . optsCmd
-        ghcVer <- asks $ ghcVer . optsCmd
-        ghcRel <- asks $ ghcRel . optsCmd
+        db <- asks (dbFile . fst) >>= liftIO . readDb
+        patchDir <- asks  $ patchDir . optsCmd . fst
+        ghcVer <- asks $ ghcVer . optsCmd . fst
+        ghcRel <- asks $ ghcRel . optsCmd . fst
         (ver, fa) <- maybe (throwE $ "Unknown package: " ++ pkg) (return . (pkgVersion &&& pkgFlags)) $ lookupPkg db pkg
         ---
         (cblFile, genericPkgDesc) <- runCabalParseWithTempDir $ Cbl.readFromIdx (pkg, ver)
@@ -69,8 +69,8 @@ generatePkgBuild pkg = do
 
 runCabalParseWithTempDir :: Cbl.CabalParse a -> ExceptT String Command a
 runCabalParseWithTempDir f = do
-    aD <- asks appDir
-    pD <- asks $ patchDir . optsCmd
+    aD <- asks (appDir . fst)
+    pD <- asks $ patchDir . optsCmd . fst
     r <- liftIO $ withTemporaryDirectory "/tmp/cblrepo." $ \ destDir -> do
         let cpe = Cbl.CabalParseEnv aD pD destDir
         Cbl.runCabalParse cpe f

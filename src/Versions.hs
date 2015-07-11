@@ -27,9 +27,9 @@ import Distribution.Version
 
 versions :: Command ()
 versions = do
-    aD <- asks appDir
-    l <- asks $ latest . optsCmd
-    pkgs <- asks $ pkgs . optsCmd
+    aD <- asks (appDir . fst)
+    l <- asks $ latest . optsCmd . fst
+    pkgs <- asks $ pkgs . optsCmd . fst
     let printFunc = if l then printLatestVersion else printAllVersions
     liftIO $ do
         pkgsNVers <- buildPkgVersions <$> readIndexFile aD

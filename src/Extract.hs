@@ -14,8 +14,8 @@ import System.FilePath
 
 extract :: Command ()
 extract = do
-    aD <- asks appDir
-    pkgsNVersions <- asks $ cmdExtractPkgs . optsCmd
+    aD <- asks $ appDir . fst
+    pkgsNVersions <- asks $ cmdExtractPkgs . optsCmd . fst
     --
     idx <- liftIO $ readIndexFile aD
     _ <- mapM (runExceptT . extractAndSave idx) pkgsNVersions >>= exitOnAnyLefts
