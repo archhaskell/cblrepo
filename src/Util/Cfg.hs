@@ -18,4 +18,4 @@ module Util.Cfg
     where
 
 indexUrl = "http://hackage.fpcomplete.com/00-index.tar.gz"
-indexFileName = "index.tar.gz"
+indexFileName = "hackage.fpcomplete.com_00-index.tar.gz"
