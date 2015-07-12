@@ -15,7 +15,10 @@
  -}
 
 module Util.Cfg
-    where
+    ( Cfg(..)
+    , readCfg
+    , getIndexFileName
+    ) where
 
 data Cfg = Cfg { cfgIdxUrl :: String }
     deriving (Show)
