@@ -20,8 +20,8 @@ module Util.Cfg
 data Cfg = Cfg { cfgIdxUrl :: String }
     deriving (Show)
 
-defaultCfg :: Cfg
-defaultCfg = Cfg "http://hackage.fpcomplete.com/00-index.tar.gz"
+readCfg :: FilePath -> IO Cfg
+readCfg = const (return $ Cfg "http://hackage.fpcomplete.com/00-index.tar.gz")
 
 getIndexFileName :: Cfg -> String
 getIndexFileName cfg = map repSlash $ drop 7 $ cfgIdxUrl cfg

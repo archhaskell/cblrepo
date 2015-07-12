@@ -129,10 +129,10 @@ main = do
     defAppDir <- getAppUserDataDirectory progName
     execParser argParser >>= \ o -> do
         let aD = if null (appDir o) then defAppDir else appDir o
-        let o' = o { appDir = aD }
-            e = (o', defaultCfg)
         createDirectoryIfMissing True aD
-        case optsCmd o' of
+        cfg <- readCfg aD
+        let e = (o { appDir = aD }, cfg)
+        case optsCmd o of
             CmdAdd {} -> runCommand e add
             CmdBuildPkgs {} -> runCommand e buildPkgs
             CmdBumpPkgs {} -> runCommand e bumpPkgs
