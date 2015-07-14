@@ -1,0 +1,20 @@
+# tests for the configuration
+
+ rm -f cblrepo.cfg
+>>>= 0
+
+cblrepo create-config
+>>>= 0
+
+ md5sum cblrepo.cfg
+>>>
+12db6b8b91c0ac81fa1743f7f9ddf3ef  cblrepo.cfg
+>>>= 0
+
+cblrepo create-config
+>>>
+Configuration file already exists
+>>>= 1
+
+ rm cblrepo.cfg
+>>>= 0

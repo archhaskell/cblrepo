@@ -21,7 +21,14 @@ import Util.Cfg
 import Util.Misc
 
 import Data.Aeson
+import Control.Monad
 import Control.Monad.IO.Class
+import System.Exit
+import System.Posix.Files
 
 createConfig :: Command ()
-createConfig = liftIO $ saveDefCfg "cblrepo.cfg"
+createConfig = liftIO $ do
+    exists <- fileExist "cblrepo.cfg"
+    if exists
+        then putStrLn "Configuration file already exists" >> exitFailure
+        else saveDefCfg "cblrepo.cfg"
