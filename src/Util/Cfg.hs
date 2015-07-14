@@ -14,19 +14,40 @@
  - limitations under the License.
  -}
 
+{-# LANGUAGE TemplateHaskell #-}
+
 module Util.Cfg
     ( Cfg(..)
     , readCfg
+    , saveDefCfg
     , getIndexFileName
     ) where
+
+import Control.Monad
+import Data.Aeson
+import Data.Aeson.TH (deriveJSON, defaultOptions, Options(..), SumEncoding(..))
+import qualified Data.ByteString.Lazy as BSL
+import Data.Maybe
+import System.Posix.Files
 
 data Cfg = Cfg { cfgIdxUrl :: String }
     deriving (Show)
 
+defCfg = Cfg "http://hackage.fpcomplete.com/00-index.tar.gz"
+
 readCfg :: FilePath -> IO Cfg
-readCfg = const (return $ Cfg "http://hackage.fpcomplete.com/00-index.tar.gz")
+readCfg fn = do
+    exists <- fileExist fn
+    if exists
+        then (fromMaybe defCfg . decode) `fmap` BSL.readFile fn
+        else return defCfg
+
+saveDefCfg :: FilePath -> IO ()
+saveDefCfg fn = BSL.writeFile fn (encode defCfg)
 
 getIndexFileName :: Cfg -> String
 getIndexFileName cfg = map repSlash $ drop 7 $ cfgIdxUrl cfg
     where
         repSlash c = if c == '/' then '_' else c
+
+$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''Cfg)

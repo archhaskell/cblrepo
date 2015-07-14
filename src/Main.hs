@@ -29,6 +29,7 @@ import PkgBuild
 import ConvertDB
 import Remove
 import Extract
+import CreateConfig
 import Util.Cfg
 
 import Paths_cblrepo
@@ -115,12 +116,16 @@ cmdExtractOpts = CmdExtract
     <$> many (argument pkgNVersionArgReader (metavar "PKGNAME,VERSION"))
 cmdExtractCmd = command "extract" (info (helper <*> cmdExtractOpts) (fullDesc <> progDesc "Extract Cabal file from index"))
 
+cmdCreateConfigOpts = pure CmdCreateConfig
+cmdCreateConfigCmd = command "create-config" (info (helper <*> cmdCreateConfigOpts) (fullDesc <> progDesc "Create configuration file with defaults"))
+
 argParser = info (helper <*> opts) (fullDesc <> header (progName ++ " v" ++ display version) <> progDesc "Maintain a datatbase of dependencies of CABAL packages")
     where
         opts = Opts <$> argAppDir <*> argDbFile <*> argDryRun
             <*> subparser ( cmdAddPkgCmd
                 <> cmdBumpPkgsCmd <> cmdBuildPkgsCmd <> cmdUpdateCmd <> cmdVersionsCmd <> cmdUpgradesCmd
                 <> cmdListPkgsCmd <> cmdPkgBuildCmd <> cmdConvertDbCmd <> cmdRemovePkgCmd <> cmdExtractCmd
+                <> cmdCreateConfigCmd
                 )
 
 -- {{{1 main
@@ -130,7 +135,7 @@ main = do
     execParser argParser >>= \ o -> do
         let aD = if null (appDir o) then defAppDir else appDir o
         createDirectoryIfMissing True aD
-        cfg <- readCfg aD
+        cfg <- readCfg "cblrepo.cfg"
         let e = (o { appDir = aD }, cfg)
         case optsCmd o of
             CmdAdd {} -> runCommand e add
@@ -144,3 +149,4 @@ main = do
             CmdConvertDb {} -> runCommand e convertDb
             CmdRemovePkg {} -> runCommand e remove
             CmdExtract {} -> runCommand e extract
+            CmdCreateConfig -> runCommand e createConfig

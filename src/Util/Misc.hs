@@ -180,6 +180,7 @@ data Cmds
     | CmdConvertDb { inDbFile :: FilePath, outDbFile :: FilePath }
     | CmdRemovePkg { pkgs :: [String] }
     | CmdExtract { cmdExtractPkgs :: [(String, Version)] }
+    | CmdCreateConfig
     deriving (Show)
 
 data Opts = Opts
