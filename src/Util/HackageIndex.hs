@@ -61,7 +61,7 @@ buildPkgVersions idx = createPkgVerMap M.empty entries
                 content = case Tar.entryContent e of
                     Tar.NormalFile c _ -> Just $ BSLU.toString c
                     _ -> Nothing
-                xrev = case (parsePackageDescription <$> content) of
+                xrev = case parsePackageDescription <$> content of
                     Just (ParseOk _ gpd) -> pkgXRev (packageDescription gpd)
                     _ -> 0
 
