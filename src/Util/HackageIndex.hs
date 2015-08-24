@@ -52,10 +52,12 @@ buildPkgVersions idx = createPkgVerMap M.empty entries
     where
         entries = Tar.read $ GZip.decompress idx
 
-        createPkgVerMap acc (Tar.Next e es) = createPkgVerMap (M.insertWith (++) (parts !! 0) [(ver, xrev)] acc) es
+        createPkgVerMap acc (Tar.Next e es) = case ver of
+                Nothing -> createPkgVerMap acc es
+                Just ver -> createPkgVerMap (M.insertWith (++) (head parts) [(ver, xrev)] acc) es
             where
                 parts = splitDirectories (Tar.entryPath e)
-                ver = fromJust . simpleParse $ parts !! 1
+                ver = simpleParse $ parts !! 1
                 content = case Tar.entryContent e of
                     Tar.NormalFile c _ -> Just $ BSLU.toString c
                     _ -> Nothing
