@@ -31,7 +31,7 @@ executable cblrepo
         process ==1.2.*, Unixutils ==1.54.*, unix ==2.7.*,
         ansi-wl-pprint ==0.6.*, aeson ==0.9.*, stringsearch ==0.3.*,
         optparse-applicative ==0.11.*, safe ==0.3.*, containers ==0.5.*,
-        utf8-string ==1
+        utf8-string ==1.0.*
 
 Source-Repository head
     Type:                 git
