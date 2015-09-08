@@ -27,8 +27,8 @@ executable cblrepo
         PkgDB Util.Translation Util.Cabal Util.HackageIndex Util.Misc Util.Dist Util.Cfg
     build-depends: base ==4.8.*, filepath ==1.4.*,
         directory ==1.2.*, Cabal ==1.22.*, transformers ==0.4.*,
-        bytestring ==0.10.*, tar ==0.4.*, zlib ==0.5.*, mtl ==2.2.*,
-        process ==1.2.*, Unixutils ==1.53.*, unix ==2.7.*,
+        bytestring ==0.10.*, tar ==0.4.*, zlib ==0.6.*, mtl ==2.2.*,
+        process ==1.2.*, Unixutils ==1.54.*, unix ==2.7.*,
         ansi-wl-pprint ==0.6.*, aeson ==0.9.*, stringsearch ==0.3.*,
         optparse-applicative ==0.11.*, safe ==0.3.*, containers ==0.5.*,
         utf8-string ==1
