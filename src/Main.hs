@@ -95,7 +95,7 @@ cmdListPkgsCmd = command "list" (info (helper <*> cmdListPkgsOpts)
 
 cmdPkgBuildOpts = CmdPkgBuild
     <$> option ghcVersionArgReader (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use in PKGBUILD")
-    <*> option auto (long "ghc-release" <> value 1 <> help "GHC release to use in PKGBUILD")
+    <*> option auto (long "ghc-release" <> value ghcDefRelease <> help "GHC release to use in PKGBUILD")
     <*> strOption (long "patchdir" <> value "patches" <> help "Location of patches (patches)")
     <*> some (strArgument (metavar "PKGNAME ..."))
 cmdPkgBuildCmd = command "pkgbuild" (info (helper <*> cmdPkgBuildOpts)
