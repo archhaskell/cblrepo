@@ -28,7 +28,7 @@ and the help for an individual command is accessed using
 
 The program can maintain a cache of all the packages on Hackage, this cache is used in some of the commands.  The cache is updated using
 
-    $ cblrepo sync
+    $ cblrepo update
 
 By default the cache is stored in `~/.cblrepo/`, the location can be controlled using `--appdir=`.
 
@@ -56,7 +56,7 @@ The release number after adding is set to 1.
 
 If there are any unsatisfiable dependencies they will be reported by `cblrepo` and no changes will be made to the database.
 
-## Updating packages
+## Upgrading packages
 
 The *add* command is used to update packages as well.
 
@@ -75,6 +75,8 @@ In some, hopefully rare, cases the packages found on Hackage require patching in
 *Pkgbuild patches* -- A patch `<patch dir>/<pkg name>.pkgbuild` is applied to the generated PKGBUILD when executing the `pkgbuild` command.
 
 *Source patches* -- A patch `<patch dir>/<pkg name>.source` is included in the Arch Linux source package created with the `pkgbuild` command.
+
+*Install patches* -- A patch `<patch dir>/<pkg name>.install` is applied to the generated install file when executing the `pkgbuild` command.
 
 The `<pkg name>` value is the exact name of the package as it appears in Hackage; e.g., `http://hackage.haskell.org/package/bindings-GLFW-3.0.3.2/bindings-GLFW.cabal` would have `bindings-GLFW` as the package name.
 The default location for patches is the dir `./patches`, but `cblrepo` can be told to look elsewhere by using the `--patchdir=` flag.
@@ -101,9 +103,9 @@ Knowledge of the tool [`quilt`](http://savannah.nongnu.org/projects/quilt) is ex
 
 *patches/DBus.cabal*
 
-Download the Cabal file for DBus:
+Extract the Cabal file for DBus:
 
-    $ wget $(cblrepo urls DBus,0.4)
+    $ cblrepo extract DBus,0.4
 
 then create a new patch and add the Cabal file:
 
