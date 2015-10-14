@@ -119,7 +119,7 @@ cmdExtractCmd = command "extract" (info (helper <*> cmdExtractOpts) (fullDesc <>
 cmdCreateConfigOpts = pure CmdCreateConfig
 cmdCreateConfigCmd = command "create-config" (info (helper <*> cmdCreateConfigOpts) (fullDesc <> progDesc "Create configuration file with defaults"))
 
-argParser = info (helper <*> opts) (fullDesc <> header (progName ++ " v" ++ display version) <> progDesc "Maintain a datatbase of dependencies of CABAL packages")
+argParser = info (helper <*> opts) (fullDesc <> header (progName ++ " v" ++ display version) <> progDesc "Maintain a database of dependencies of CABAL packages")
     where
         opts = Opts <$> argAppDir <*> argDbFile <*> argDryRun
             <*> subparser ( cmdAddPkgCmd
