@@ -23,14 +23,46 @@ build-type: Custom
 executable cblrepo
     hs-source-dirs: src
     main-is: Main.hs
-    other-modules: Add BumpPkgs BuildPkgs Update Versions Upgrades ListPkgs PkgBuild OldPkgDB ConvertDB Remove Extract CreateConfig
-        PkgDB Util.Translation Util.Cabal Util.HackageIndex Util.Misc Util.Dist Util.Cfg
-    build-depends: base ==4.8.*, filepath ==1.4.*,
-        directory ==1.2.*, Cabal ==1.22.*, transformers ==0.4.*,
-        bytestring ==0.10.*, tar ==0.4.*, zlib ==0.6.*, mtl ==2.2.*,
-        process ==1.2.*, Unixutils ==1.54.*, unix ==2.7.*,
-        ansi-wl-pprint ==0.6.*, aeson ==0.10.*, stringsearch ==0.3.*,
-        optparse-applicative ==0.11.*, safe ==0.3.*, containers ==0.5.*,
+    other-modules:
+        Add
+        BuildPkgs
+        BumpPkgs
+        ConvertDB
+        CreateConfig
+        Extract
+        ListPkgs
+        OldPkgDB
+        PkgBuild
+        PkgDB
+        Remove
+        Update
+        Upgrades
+        Util.Cabal
+        Util.Cfg
+        Util.Dist
+        Util.HackageIndex
+        Util.Misc
+        Util.Translation
+        Versions
+    build-depends:
+        base ==4.8.*,
+        filepath ==1.4.*,
+        directory ==1.2.*,
+        Cabal ==1.22.*,
+        transformers ==0.4.*,
+        bytestring ==0.10.*,
+        tar ==0.4.*,
+        zlib ==0.6.*,
+        mtl ==2.2.*,
+        process ==1.2.*,
+        Unixutils ==1.54.*,
+        unix ==2.7.*,
+        ansi-wl-pprint ==0.6.*,
+        aeson ==0.10.*,
+        stringsearch ==0.3.*,
+        optparse-applicative ==0.11.*,
+        safe ==0.3.*,
+        containers ==0.5.*,
         utf8-string ==1.0.*
 
 Source-Repository head
