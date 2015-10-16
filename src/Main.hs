@@ -40,15 +40,15 @@ import Options.Applicative as OA
 
 -- -- {{{1 command line arguments
 argAppDir, argDbFile :: Parser String
-argAppDir = strOption (long "appdir" <> value "" <> help "Path to application data directory")
-argDbFile = strOption (long "db" <> value "cblrepo.db" <> help "Path to package database")
+argAppDir = strOption (long "appdir" <> value "" <> showDefault  <> help "Path to application data directory")
+argDbFile = strOption (long "db" <> value "cblrepo.db" <> showDefault  <> help "Path to package database")
 argDryRun :: Parser Bool
 argDryRun = switch (short 'n' <> help "Make no changes, (dry run)")
 
 cmdAddPkgOpts :: Parser Cmds
 cmdAddPkgOpts = CmdAdd
-    <$> strOption (long "patchdir" <> value "patches" <> help "Location of patches (patches)")
-    <*> option ghcVersionArgReader (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use")
+    <$> strOption (long "patchdir" <> value "patches" <> showDefault <> help "Location of patches")
+    <*> option ghcVersionArgReader (long "ghc-version" <> value ghcDefVersion <> showDefault <> help "GHC version to use")
     <*> many (option ghcPkgArgReader (short 'g' <> long "ghc-pkg" <> metavar "PKG,VER" <> help "GHC base package (multiple)"))
     <*> many (option distroPkgArgReader (short 'd' <> long "distro-pkg" <> metavar "PKG,VER,REL" <> help "Distro package (multiple)"))
     <*> many (option strCblFileArgReader (short 'f' <> long "cbl-file" <> metavar "FILE[:flag,-flag]" <> help "CABAL file (multiple)"))
@@ -88,22 +88,22 @@ cmdListPkgsOpts = CmdListPkgs
     <*> switch (short 'd' <> long "distro" <> help "List distro packages")
     <*> switch (long "no-repo" <> help "Do not list repo packages")
     <*> option listFormatReader (short 'f' <> long "format" <> value CmdListNormalFmt <>
-            help "Output format: short, normal (default), hackage")
+            help "Output format: short, normal, hackage (default: normal)")
     <*> many (argument str (metavar "PKGNAME ..."))
 cmdListPkgsCmd = command "list" (info (helper <*> cmdListPkgsOpts)
     (fullDesc <> progDesc "List packages in repo"))
 
 cmdPkgBuildOpts = CmdPkgBuild
-    <$> option ghcVersionArgReader (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use in PKGBUILD")
-    <*> option auto (long "ghc-release" <> value ghcDefRelease <> help "GHC release to use in PKGBUILD")
-    <*> strOption (long "patchdir" <> value "patches" <> help "Location of patches (patches)")
+    <$> option ghcVersionArgReader (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use in PKGBUILD (default: 7.10.2)")
+    <*> option auto (long "ghc-release" <> value ghcDefRelease <> showDefault <> help "GHC release to use in PKGBUILD")
+    <*> strOption (long "patchdir" <> value "patches" <> showDefault  <> help "Location of patches")
     <*> some (strArgument (metavar "PKGNAME ..."))
 cmdPkgBuildCmd = command "pkgbuild" (info (helper <*> cmdPkgBuildOpts)
     (fullDesc <> progDesc "Create PKGBUILD other files necessary for an Arch package"))
 
 cmdConvertDbOpts = CmdConvertDb
-    <$> strOption (short 'i' <> long "indb" <> value "cblrepo.db" <> help "Old database")
-    <*> strOption (short 'o' <> long "outdb" <> value "new-cblrepo.db" <> help "New database")
+    <$> strOption (short 'i' <> long "indb" <> value "cblrepo.db" <> showDefault  <> help "Old database")
+    <*> strOption (short 'o' <> long "outdb" <> value "new-cblrepo.db" <> showDefault  <> help "New database")
 cmdConvertDbCmd = command "convertdb" (info (helper <*> cmdConvertDbOpts)
     (fullDesc <> progDesc "Convert an old database to the new format"))
 
