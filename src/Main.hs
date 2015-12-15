@@ -94,7 +94,7 @@ cmdListPkgsCmd = command "list" (info (helper <*> cmdListPkgsOpts) (fullDesc <> 
 cmdPkgBuildCmd = command "pkgbuild" (info (helper <*> cmdPkgBuildOpts) (fullDesc <> progDesc "Create PKGBUILD other files necessary for an Arch package"))
   where
     cmdPkgBuildOpts = CmdPkgBuild
-                      <$> option ghcVersionArgReader (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use in PKGBUILD (default: 7.10.2)")
+                      <$> option ghcVersionArgReader (long "ghc-version" <> value ghcDefVersion <> help "GHC version to use in PKGBUILD (default: 7.10.3)")
                       <*> option auto (long "ghc-release" <> value ghcDefRelease <> showDefault <> help "GHC release to use in PKGBUILD")
                       <*> strOption (long "patchdir" <> value "patches" <> showDefault  <> help "Location of patches")
                       <*> some (strArgument (metavar "PKGNAME ..."))
