@@ -51,7 +51,7 @@ executable cblrepo
         Cabal ==1.22.*,
         transformers ==0.4.*,
         bytestring ==0.10.*,
-        tar ==0.4.*,
+        tar ==0.5.*,
         zlib ==0.6.*,
         mtl ==2.2.*,
         process ==1.2.*,
@@ -60,7 +60,7 @@ executable cblrepo
         ansi-wl-pprint ==0.6.*,
         aeson ==0.10.*,
         stringsearch ==0.3.*,
-        optparse-applicative ==0.11.*,
+        optparse-applicative ==0.12.*,
         safe ==0.3.*,
         containers ==0.5.*,
         utf8-string ==1.0.*
