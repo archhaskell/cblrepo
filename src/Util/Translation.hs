@@ -21,26 +21,26 @@ import PkgDB as DB
 import Util.Misc
 import Util.Dist
 
-import Prelude hiding ( (<$>) )
-import Control.Monad
-import Control.Monad.Trans
-import Control.Monad.Trans.Except
-import Data.Char
-import Data.List
-import Data.Maybe
-import Data.Monoid hiding ((<>))
-import Data.Version
-import Distribution.Package as P
-import Distribution.PackageDescription as PD
-import Distribution.Text
-import System.Directory
-import System.Exit
-import System.FilePath
-import System.Process
-import System.Unix.Directory
-import Text.PrettyPrint.ANSI.Leijen hiding((</>))
-
+import           Control.Monad
+import           Control.Monad.Trans
+import           Control.Monad.Trans.Except
 import qualified Data.ByteString.Lazy as BSL (writeFile)
+import           Data.Char
+import           Data.List
+import           Data.Maybe
+import           Data.Monoid hiding ((<>))
+import           Data.Version
+import           Distribution.Package as P
+import           Distribution.PackageDescription as PD
+import           Distribution.Text
+import           Prelude hiding ( (<$>) )
+import           System.Directory
+import           System.Exit
+import           System.FilePath
+import           System.IO
+import           System.Process
+import           System.Unix.Directory
+import           Text.PrettyPrint.ANSI.Leijen hiding((</>))
 
 -- {{{1 ShQuotedString
 newtype ShQuotedString = ShQuotedString String
