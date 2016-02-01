@@ -392,11 +392,13 @@ copyPatches destDir ap = let
 addHashes ap cbl tmpDir = let
         hashes = map (filter (`elem` "1234567890abcdef")) . lines . drop 11
         pkgbuildFn = tmpDir </> "PKGBUILD"
+        installFn = tmpDir </> apPkgName ap <.> "install"
         cblFn = tmpDir </> "original.cabal"
         pkgbuildPatch = apPkgbuildPatch ap
     in do
         liftIO $ copyPatches tmpDir ap
-        liftIO $ writeFile pkgbuildFn (show $ pretty ap)
+        liftIO $ withFile pkgbuildFn WriteMode (`hPutDoc` pretty ap)
+        liftIO $ withFile installFn WriteMode (`hPutDoc` (pretty $ aiFromAP ap))
         maybe (return ()) (void . applyPatch pkgbuildFn) pkgbuildPatch
         liftIO $ BSL.writeFile cblFn cbl
         (ec, out, _) <- liftIO $ withWorkingDirectory tmpDir (readProcessWithExitCode "makepkg" ["-g"] "")
