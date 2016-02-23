@@ -63,7 +63,8 @@ executable cblrepo
         optparse-applicative ==0.12.*,
         safe ==0.3.*,
         containers ==0.5.*,
-        utf8-string ==1.0.*
+        utf8-string ==1.0.*,
+        text
 
 Source-Repository head
     Type:                 git

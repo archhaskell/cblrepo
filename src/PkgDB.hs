@@ -60,6 +60,9 @@ import Distribution.PackageDescription
 import System.IO.Error
 import qualified Distribution.Package as P
 import qualified Distribution.Version as V
+import qualified Data.Version as DV
+import Text.ParserCombinators.ReadP (readP_to_S)
+import Data.Text (unpack)
 
 import Data.Aeson
 import Data.Aeson.TH (deriveJSON, defaultOptions, Options(..), SumEncoding(..))
@@ -253,7 +256,18 @@ saveDb db fp = C.writeFile fp s
         s = C.unlines $ map encode $ sort db
 
 -- {{{1 JSON instances
-$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''V.Version)
+-- $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''V.Version)
+instance ToJSON V.Version where
+  toJSON = toJSON . DV.showVersion
+  toEncoding = toEncoding . DV.showVersion
+
+instance FromJSON V.Version where
+  parseJSON = withText "Version" $ go . readP_to_S DV.parseVersion . unpack
+    where
+      go [(v,[])] = return v
+      go (_ : xs) = go xs
+      go _        = fail $ "could not parse Version"
+
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''V.VersionRange)
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''FlagName)
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''Pkg)
