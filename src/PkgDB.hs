@@ -15,6 +15,8 @@
  -}
 
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module PkgDB
     ( CblPkg
@@ -50,23 +52,23 @@ module PkgDB
     ) where
 
 -- {{{1 imports
-import Control.Arrow
-import Control.Exception as CE
-import Control.Monad
-import Data.List
-import Data.Maybe
-import Data.Monoid
-import Distribution.PackageDescription
-import System.IO.Error
-import qualified Distribution.Package as P
-import qualified Distribution.Version as V
-import qualified Data.Version as DV
-import Text.ParserCombinators.ReadP (readP_to_S)
-import Data.Text (unpack)
-
-import Data.Aeson
-import Data.Aeson.TH (deriveJSON, defaultOptions, Options(..), SumEncoding(..))
+import           Control.Arrow
+import           Control.Applicative
+import           Control.Exception as CE
+import           Control.Monad
+import           Data.Aeson
+import           Data.Aeson.Types
+import           Data.Aeson.TH (deriveJSON)
 import qualified Data.ByteString.Lazy.Char8 as C
+import           Data.List
+import           Data.Maybe
+import           Data.Text (unpack)
+import qualified Data.Version as DV
+import qualified Distribution.Package as P
+import           Distribution.PackageDescription
+import qualified Distribution.Version as V
+import           System.IO.Error
+import           Text.ParserCombinators.ReadP (readP_to_S)
 
 import qualified Util.Dist
 
@@ -90,7 +92,8 @@ data RepoPkgD = RepoPkgD
     { rpVersion :: V.Version
     , rpXrev :: Int
     , rpDeps :: [P.Dependency]
-    , rpFlags :: FlagAssignment, rpRelease :: Int
+    , rpFlags :: FlagAssignment
+    , rpRelease :: Int
     } deriving (Eq, Show)
 
 data CblPkg = CP String Pkg
@@ -256,10 +259,8 @@ saveDb db fp = C.writeFile fp s
         s = C.unlines $ map encode $ sort db
 
 -- {{{1 JSON instances
--- $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''V.Version)
 instance ToJSON V.Version where
   toJSON = toJSON . DV.showVersion
-  toEncoding = toEncoding . DV.showVersion
 
 instance FromJSON V.Version where
   parseJSON = withText "Version" $ go . readP_to_S DV.parseVersion . unpack
@@ -268,18 +269,49 @@ instance FromJSON V.Version where
       go (_ : xs) = go xs
       go _        = fail $ "could not parse Version"
 
-$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''V.VersionRange)
-$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''FlagName)
+instance ToJSON FlagName where
+  toJSON (FlagName s) = toJSON s
+
+instance FromJSON FlagName where
+  parseJSON = fmap FlagName . parseJSON
+
+instance ToJSON V.VersionRange where
+  toJSON = V.foldVersionRange
+    (object ["AnyVersion" .= ([]::[(Int,Int)])])
+    (\ v -> object ["ThisVersion" .= v])
+    (\ v -> object ["LaterVersion" .= v])
+    (\ v -> object ["EarlierVersion" .= v])
+    (\ vr0 vr1 -> object ["UnionVersionRanges" .= [vr0, vr1]])
+    (\ vr0 vr1 -> object ["IntersectVersionRanges" .= [vr0, vr1]])
+
+instance FromJSON V.VersionRange where
+  parseJSON = withObject "VersionRange" go
+    where
+      go o =
+        V.thisVersion <$> o .: "ThisVersion" <|>
+        V.laterVersion <$> o .: "LaterVersion" <|>
+        V.earlierVersion <$> o .: "EarlierVersion" <|>
+        V.WildcardVersion <$> o .: "WildcardVersion" <|>
+        nullaryOp V.anyVersion <$> o .: "AnyVersion" <|>
+        binaryOp V.unionVersionRanges <$> o .: "UnionVersionRanges" <|>
+        binaryOp V.intersectVersionRanges <$> o .: "IntersectVersionRanges" <|>
+        V.VersionRangeParens <$> o .: "VersionRangeParens"
+
+      nullaryOp :: a -> Value -> a
+      nullaryOp = const
+
+      binaryOp f [a, b] = f a b
+
+instance ToJSON P.Dependency where
+  toJSON (P.Dependency pn vr) = toJSON (P.unPackageName pn, vr)
+
+instance FromJSON P.Dependency where
+  parseJSON v = do
+    (pn, vr) <- parseJSON v
+    return $ P.Dependency (P.PackageName pn) vr
+
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''Pkg)
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''GhcPkgD)
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''DistroPkgD)
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''RepoPkgD)
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''CblPkg)
-
-instance ToJSON P.Dependency where
-    toJSON (P.Dependency pn vr) = toJSON (P.unPackageName pn, vr)
-
-instance FromJSON P.Dependency where
-    parseJSON v = do
-        (pn, vr) <- parseJSON v
-        return $ P.Dependency (P.PackageName pn) vr
