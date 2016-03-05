@@ -19,37 +19,37 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module PkgDB
-    ( CblPkg
-    , pkgName
-    , pkgPkg
-    , pkgVersion
-    , pkgXRev
-    , pkgDeps
-    , pkgFlags
-    , pkgRelease
-    --
-    , isGhcPkg
-    , isDistroPkg
-    , isRepoPkg
-    , isBasePkg
-    --
-    , createGhcPkg
-    , createDistroPkg
-    , createRepoPkg
-    , createCblPkg
-    --
-    , CblDB
-    , addPkg
-    , addPkg2
-    , delPkg
-    , bumpRelease
-    , lookupPkg
-    , transitiveDependants
-    , checkDependants
-    , checkAgainstDb
-    , saveDb
-    , readDb
-    ) where
+       ( CblPkg
+       , pkgName
+       , pkgPkg
+       , pkgVersion
+       , pkgXRev
+       , pkgDeps
+       , pkgFlags
+       , pkgRelease
+         --
+       , isGhcPkg
+       , isDistroPkg
+       , isRepoPkg
+       , isBasePkg
+         --
+       , createGhcPkg
+       , createDistroPkg
+       , createRepoPkg
+       , createCblPkg
+         --
+       , CblDB
+       , addPkg
+       , addPkg2
+       , delPkg
+       , bumpRelease
+       , lookupPkg
+       , transitiveDependants
+       , checkDependants
+       , checkAgainstDb
+       , saveDb
+       , readDb
+       ) where
 
 -- {{{1 imports
 import           Control.Arrow
@@ -73,47 +73,46 @@ import           Text.ParserCombinators.ReadP (readP_to_S)
 import qualified Util.Dist
 
 -- {{{1 types
-data Pkg
-    = GhcPkg GhcPkgD
-    | DistroPkg DistroPkgD
-    | RepoPkg RepoPkgD
-    deriving (Eq, Show)
+data Pkg = GhcPkg GhcPkgD
+         | DistroPkg DistroPkgD
+         | RepoPkg RepoPkgD
+         deriving (Eq, Show)
 
 data GhcPkgD = GhcPkgD { gpVersion :: V.Version }
-    deriving (Eq, Show)
+             deriving (Eq, Show)
 
 data DistroPkgD = DistroPkgD
-    { dpVersion :: V.Version
-    , dpXrev :: Int
-    , dpRelease :: Int
-    } deriving (Eq, Show)
+                  { dpVersion :: V.Version
+                  , dpXrev :: Int
+                  , dpRelease :: Int
+                  } deriving (Eq, Show)
 
 data RepoPkgD = RepoPkgD
-    { rpVersion :: V.Version
-    , rpXrev :: Int
-    , rpDeps :: [P.Dependency]
-    , rpFlags :: FlagAssignment
-    , rpRelease :: Int
-    } deriving (Eq, Show)
+                { rpVersion :: V.Version
+                , rpXrev :: Int
+                , rpDeps :: [P.Dependency]
+                , rpFlags :: FlagAssignment
+                , rpRelease :: Int
+                } deriving (Eq, Show)
 
 data CblPkg = CP String Pkg
-    deriving (Eq, Show)
+            deriving (Eq, Show)
 
 type CblDB = [CblPkg]
 
 instance Ord CblPkg where
-    compare (CP n1 (GhcPkg d1)) (CP n2 (GhcPkg d2)) =
-            compare (n1, gpVersion d1) (n2, gpVersion d2)
-    compare (CP _ GhcPkg {}) _ = LT
-    compare _ (CP _ GhcPkg {}) = GT
+  compare (CP n1 (GhcPkg d1)) (CP n2 (GhcPkg d2)) =
+    compare (n1, gpVersion d1) (n2, gpVersion d2)
+  compare (CP _ GhcPkg {}) _ = LT
+  compare _ (CP _ GhcPkg {}) = GT
 
-    compare (CP n1 (DistroPkg d1)) (CP n2 (DistroPkg d2)) =
-            compare (n1, dpVersion d1, dpRelease d1) (n2, dpVersion d2, dpRelease d2)
-    compare (CP _ DistroPkg {}) _ = LT
-    compare _ (CP _ DistroPkg {}) = GT
+  compare (CP n1 (DistroPkg d1)) (CP n2 (DistroPkg d2)) =
+    compare (n1, dpVersion d1, dpRelease d1) (n2, dpVersion d2, dpRelease d2)
+  compare (CP _ DistroPkg {}) _ = LT
+  compare _ (CP _ DistroPkg {}) = GT
 
-    compare (CP n1 (RepoPkg d1)) (CP n2 (RepoPkg d2)) =
-            compare (n1, rpVersion d1, rpRelease d1) (n2, rpVersion d2, rpRelease d2)
+  compare (CP n1 (RepoPkg d1)) (CP n2 (RepoPkg d2)) =
+    compare (n1, rpVersion d1, rpRelease d1) (n2, rpVersion d2, rpRelease d2)
 
 -- {{{1 packages
 pkgName :: CblPkg -> String
@@ -156,11 +155,11 @@ createRepoPkg n v x d fa r = CP n (RepoPkg $ RepoPkgD v x d fa r)
 
 createCblPkg :: PackageDescription -> FlagAssignment -> CblPkg
 createCblPkg pd fa = createRepoPkg name version xrev deps fa 1
-    where
-        name = Util.Dist.pkgNameStr pd
-        version = P.pkgVersion $ package pd
-        xrev = Util.Dist.pkgXRev pd
-        deps = buildDepends pd
+  where
+    name = Util.Dist.pkgNameStr pd
+    version = P.pkgVersion $ package pd
+    xrev = Util.Dist.pkgXRev pd
+    deps = buildDepends pd
 
 getDependencyOn :: String -> CblPkg -> Maybe P.Dependency
 getDependencyOn n p = find (\ d -> Util.Dist.depName d == n) (pkgDeps p)
@@ -186,9 +185,9 @@ emptyPkgDB = []
 
 addPkg :: CblDB -> String -> Pkg -> CblDB
 addPkg db n p = nubBy cmp newdb
-    where
-        cmp (CP n1 _) (CP n2 _) = n1 == n2
-        newdb = CP n p:db
+  where
+    cmp (CP n1 _) (CP n2 _) = n1 == n2
+    newdb = CP n p:db
 
 addPkg2 :: CblDB -> CblPkg -> CblDB
 addPkg2 db (CP n p) = addPkg db n p
@@ -204,59 +203,58 @@ delPkg db n = filter (\ p -> n /= pkgName p) db
 
 bumpRelease :: CblDB -> String -> CblDB
 bumpRelease db n = maybe db (addPkg2 db . doBump) (lookupPkg db n)
-    where
-        doBump (CP n' (RepoPkg d)) = CP n' (RepoPkg d { rpRelease = (rpRelease d + 1) })
-        doBump p = p
+  where
+    doBump (CP n' (RepoPkg d)) = CP n' (RepoPkg d { rpRelease = (rpRelease d + 1) })
+    doBump p = p
 
 lookupPkg :: CblDB -> String -> Maybe CblPkg
 lookupPkg [] _ = Nothing
 lookupPkg (p:db) n
-    | n == pkgName p = Just p
-    | otherwise = lookupPkg db n
+  | n == pkgName p = Just p
+  | otherwise = lookupPkg db n
 
 lookupDependants :: [CblPkg] -> String -> [String]
 lookupDependants db n = filter (/= n) $ map pkgName $ filter (`doesDependOn` n) db
-    where
-        doesDependOn p n = n `elem` map Util.Dist.depName (pkgDeps p)
+  where
+    doesDependOn p n = n `elem` map Util.Dist.depName (pkgDeps p)
 
 transitiveDependants :: CblDB -> [String] -> [String]
 transitiveDependants db names = keepLast $ concatMap transUsersOfOne names
-    where
-        transUsersOfOne n = n : transitiveDependants db (lookupDependants db n)
-        keepLast = reverse . nub . reverse
+  where
+    transUsersOfOne n = n : transitiveDependants db (lookupDependants db n)
+    keepLast = reverse . nub . reverse
 
 checkDependants :: CblDB -> String -> V.Version -> [(String, Maybe P.Dependency)]
-checkDependants db n v = let
-        d1 = mapMaybe (lookupPkg db) (lookupDependants db n)
-        -- d2 = map (\ p -> (pkgName p, getDependencyOn n p)) d1
-        d2 = map (pkgName &&& getDependencyOn n ) d1
-        fails = filter (not . V.withinRange v . Util.Dist.depVersionRange . fromJust . snd) d2
-    in fails
+checkDependants db n v =
+  let d1 = mapMaybe (lookupPkg db) (lookupDependants db n)
+      -- d2 = map (\ p -> (pkgName p, getDependencyOn n p)) d1
+      d2 = map (pkgName &&& getDependencyOn n ) d1
+      fails = filter (not . V.withinRange v . Util.Dist.depVersionRange . fromJust . snd) d2
+  in fails
 
 checkAgainstDb :: CblDB -> String -> P.Dependency -> Bool
-checkAgainstDb db name dep = let
-        dN = Util.Dist.depName dep
-        dVR = Util.Dist.depVersionRange dep
-    in (dN == name) ||
-            (case lookupPkg db dN of
-                Nothing -> False
-                Just p -> V.withinRange (pkgVersion p) dVR)
+checkAgainstDb db name dep =
+  let dN = Util.Dist.depName dep
+      dVR = Util.Dist.depVersionRange dep
+  in (dN == name) ||
+     (case lookupPkg db dN of
+         Nothing -> False
+         Just p -> V.withinRange (pkgVersion p) dVR)
 
 readDb :: FilePath -> IO CblDB
 readDb fp = handle
-    (\ e -> if isDoesNotExistError e
-        then return emptyPkgDB
-        else throwIO e)
-    $ do
-        r <- (mapM decode . C.lines) `liftM` C.readFile fp
-        case r of
-            Just a -> return a
-            Nothing -> fail "JSON parsing failed"
+  (\ e -> if isDoesNotExistError e
+          then return emptyPkgDB
+          else throwIO e)
+  $ do r <- (mapM decode . C.lines) `liftM` C.readFile fp
+       case r of
+         Just a -> return a
+         Nothing -> fail "JSON parsing failed"
 
 saveDb :: CblDB -> FilePath -> IO ()
 saveDb db fp = C.writeFile fp s
-    where
-        s = C.unlines $ map encode $ sort db
+  where
+    s = C.unlines $ map encode $ sort db
 
 -- {{{1 JSON instances
 instance ToJSON V.Version where
