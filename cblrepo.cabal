@@ -65,7 +65,8 @@ executable cblrepo
         safe ==0.3.*,
         containers ==0.5.*,
         utf8-string ==1.0.*,
-        text
+        text,
+        vector
 
 Source-Repository head
     Type:                 git

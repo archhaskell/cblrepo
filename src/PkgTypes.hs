@@ -29,6 +29,7 @@ import qualified Distribution.Package as P
 import           Distribution.PackageDescription
 import qualified Distribution.Version as V
 import           Text.ParserCombinators.ReadP (readP_to_S)
+import qualified Data.Vector as Vec
 
 data Pkg = GhcPkg GhcPkgD
          | DistroPkg DistroPkgD
@@ -72,59 +73,119 @@ instance Ord CblPkg where
     compare (n1, rpVersion d1, rpRelease d1) (n2, rpVersion d2, rpRelease d2)
 
 -- JSON instances
-instance ToJSON V.Version where
-  toJSON = toJSON . DV.showVersion
+version2Json :: V.Version -> Value
+version2Json = toJSON . DV.showVersion
 
-instance FromJSON V.Version where
-  parseJSON = withText "Version" $ go . readP_to_S DV.parseVersion . unpack
+json2Version :: Value -> Parser V.Version
+json2Version = withText "Version" $ go . readP_to_S DV.parseVersion . unpack
+  where
+    go [(v,[])] = return v
+    go (_ : xs) = go xs
+    go _        = fail "could not parse Version"
+
+dependencyList2Json :: [P.Dependency] -> Value
+dependencyList2Json = toJSON . map convDep
+  where
+    convDep (P.Dependency (P.PackageName n) vr)= (n, versionRange2Json vr)
+
+json2DependencyList :: Value -> Parser [P.Dependency]
+json2DependencyList = withArray "DependencyList" parseList
+  where
+    parseList = mapM (withArray "Dependency" parseDep) . Vec.toList
+
+    parseDep a = do
+      n <- withText "PackageName" (return . unpack) (a Vec.! 0)
+      vr <- json2VersionRange (a Vec.! 1)
+      return $ P.Dependency (P.PackageName n) vr
+
+versionRange2Json :: V.VersionRange -> Value
+versionRange2Json = V.foldVersionRange
+  (object ["AnyVersion" .= ([]::[(Int,Int)])])
+  (\ v -> object ["ThisVersion" .= version2Json v])
+  (\ v -> object ["LaterVersion" .= version2Json v])
+  (\ v -> object ["EarlierVersion" .= version2Json v])
+  (\ vr0 vr1 -> object ["UnionVersionRanges" .= [vr0, vr1]])
+  (\ vr0 vr1 -> object ["IntersectVersionRanges" .= [vr0, vr1]])
+
+json2VersionRange :: Value -> Parser V.VersionRange
+json2VersionRange = withObject "VersionRange" go
+  where
+    go :: Object -> Parser V.VersionRange
+    go o =
+      V.thisVersion <$> (o .: "ThisVersion" >>= json2Version) <|>
+      V.laterVersion <$> (o .: "LaterVersion" >>= json2Version) <|>
+      V.earlierVersion <$> (o .: "EarlierVersion" >>= json2Version) <|>
+      V.WildcardVersion <$> (o .: "WildcardVersion" >>= json2Version) <|>
+      nullaryOp V.anyVersion <$> o .: "AnyVersion" <|>
+      (o .: "UnionVersionRanges" >>= parserPair V.unionVersionRanges) <|>
+      (o .: "IntersectVersionRanges" >>= parserPair V.intersectVersionRanges)  <|>
+      V.VersionRangeParens <$> (o .: "VersionRangeParens" >>= json2VersionRange)
+
+    nullaryOp :: a -> Value -> a
+    nullaryOp = const
+
+    parserPair :: (V.VersionRange -> V.VersionRange -> V.VersionRange) -> Value -> Parser V.VersionRange
+    parserPair f = withArray "parserPair" p
+      where
+        p a = do
+          v1 <- json2VersionRange (a Vec.! 0)
+          v2 <- json2VersionRange (a Vec.! 1)
+          return $ f v1 v2
+
+flagAssignment2Json :: FlagAssignment -> Value
+flagAssignment2Json = toJSON . map convFlag
+  where
+    convFlag (FlagName s, b) = (s, b)
+
+json2FlagAssignment :: Value -> Parser FlagAssignment
+json2FlagAssignment = withArray "FlagAssignment" parseList
+  where
+    parseList = mapM (withArray "SingleFlag" parseFlag) . Vec.toList
+
+    parseFlag a = do
+      n <- withText "FlagName" (return . unpack) (a Vec.! 0)
+      b <- withBool "FlagBool" return (a Vec.! 1)
+      return (FlagName n, b)
+
+instance ToJSON GhcPkgD where
+  toJSON (GhcPkgD v) = object ["gpVersion" .= version2Json v]
+
+instance FromJSON GhcPkgD where
+  parseJSON = withObject "GhcPkgD" (\ o -> GhcPkgD <$> (o .: "gpVersion" >>= json2Version))
+
+instance ToJSON DistroPkgD where
+  toJSON (DistroPkgD v x r)= object [ "dpVersion" .= version2Json v
+                                    , "dpXrev" .= x
+                                    , "dpRelease" .= r
+                                    ]
+
+instance FromJSON DistroPkgD where
+  parseJSON = withObject "DistroPkgD" go
     where
-      go [(v,[])] = return v
-      go (_ : xs) = go xs
-      go _        = fail $ "could not parse Version"
+      go o = do
+        v <- o .: "dpVersion" >>= json2Version
+        x <- o .: "dpXrev"
+        r <- o .: "dpRelease"
+        return $ DistroPkgD v x r
 
-instance ToJSON FlagName where
-  toJSON (FlagName s) = toJSON s
+instance ToJSON RepoPkgD where
+  toJSON (RepoPkgD v x ds fs r)= object [ "rpVersion" .= version2Json v
+                                        , "rpXrev" .= x
+                                        , "rpDeps" .= dependencyList2Json ds
+                                        , "rpFlags" .= flagAssignment2Json fs
+                                        , "rpRelease" .= r
+                                        ]
 
-instance FromJSON FlagName where
-  parseJSON = fmap FlagName . parseJSON
-
-instance ToJSON V.VersionRange where
-  toJSON = V.foldVersionRange
-    (object ["AnyVersion" .= ([]::[(Int,Int)])])
-    (\ v -> object ["ThisVersion" .= v])
-    (\ v -> object ["LaterVersion" .= v])
-    (\ v -> object ["EarlierVersion" .= v])
-    (\ vr0 vr1 -> object ["UnionVersionRanges" .= [vr0, vr1]])
-    (\ vr0 vr1 -> object ["IntersectVersionRanges" .= [vr0, vr1]])
-
-instance FromJSON V.VersionRange where
-  parseJSON = withObject "VersionRange" go
+instance FromJSON RepoPkgD where
+  parseJSON = withObject "RepoPkgD" go
     where
-      go o =
-        V.thisVersion <$> o .: "ThisVersion" <|>
-        V.laterVersion <$> o .: "LaterVersion" <|>
-        V.earlierVersion <$> o .: "EarlierVersion" <|>
-        V.WildcardVersion <$> o .: "WildcardVersion" <|>
-        nullaryOp V.anyVersion <$> o .: "AnyVersion" <|>
-        binaryOp V.unionVersionRanges <$> o .: "UnionVersionRanges" <|>
-        binaryOp V.intersectVersionRanges <$> o .: "IntersectVersionRanges" <|>
-        V.VersionRangeParens <$> o .: "VersionRangeParens"
-
-      nullaryOp :: a -> Value -> a
-      nullaryOp = const
-
-      binaryOp f [a, b] = f a b
-
-instance ToJSON P.Dependency where
-  toJSON (P.Dependency pn vr) = toJSON (P.unPackageName pn, vr)
-
-instance FromJSON P.Dependency where
-  parseJSON v = do
-    (pn, vr) <- parseJSON v
-    return $ P.Dependency (P.PackageName pn) vr
+      go o = do
+        v <- o .: "rpVersion" >>= json2Version
+        x <- o .: "rpXrev"
+        ds <- o .: "rpDeps" >>= json2DependencyList
+        fs <- o .: "rpFlags" >>= json2FlagAssignment
+        r <- o .: "rpRelease"
+        return $ RepoPkgD v x ds fs r
 
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''Pkg)
-$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''GhcPkgD)
-$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''DistroPkgD)
-$(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''RepoPkgD)
 $(deriveJSON defaultOptions { sumEncoding = ObjectWithSingleField, allNullaryToStringTag = False } ''CblPkg)
