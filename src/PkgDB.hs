@@ -52,22 +52,16 @@ module PkgDB
 
 -- {{{1 imports
 import           Control.Arrow
-import           Control.Applicative
 import           Control.Exception as CE
 import           Control.Monad
 import           Data.Aeson
-import           Data.Aeson.Types
-import           Data.Aeson.TH (deriveJSON)
 import qualified Data.ByteString.Lazy.Char8 as C
 import           Data.List
 import           Data.Maybe
-import           Data.Text (unpack)
-import qualified Data.Version as DV
 import qualified Distribution.Package as P
 import           Distribution.PackageDescription
 import qualified Distribution.Version as V
 import           System.IO.Error
-import           Text.ParserCombinators.ReadP (readP_to_S)
 
 import qualified Util.Dist
 import PkgTypes
@@ -98,7 +92,7 @@ pkgFlags (CP _ (RepoPkg d)) = rpFlags d
 pkgFlags _ = []
 
 pkgRelease :: CblPkg -> Int
-pkgRelease (CP _ (GhcPkg _)) = (-1)
+pkgRelease (CP _ (GhcPkg _)) = -1
 pkgRelease (CP _ (DistroPkg d)) = dpRelease d
 pkgRelease (CP _ (RepoPkg d)) = rpRelease d
 
@@ -150,19 +144,13 @@ addPkg db n p = nubBy cmp newdb
 addPkg2 :: CblDB -> CblPkg -> CblDB
 addPkg2 db (CP n p) = addPkg db n p
 
-addGhcPkg :: CblDB -> String -> V.Version -> CblDB
-addGhcPkg db n v = addPkg2 db (createGhcPkg n v)
-
-addDistroPkg :: CblDB -> String -> V.Version -> Int -> Int -> CblDB
-addDistroPkg db n v x r = addPkg2 db (createDistroPkg n v x r)
-
 delPkg :: CblDB -> String -> CblDB
 delPkg db n = filter (\ p -> n /= pkgName p) db
 
 bumpRelease :: CblDB -> String -> CblDB
 bumpRelease db n = maybe db (addPkg2 db . doBump) (lookupPkg db n)
   where
-    doBump (CP n' (RepoPkg d)) = CP n' (RepoPkg d { rpRelease = (rpRelease d + 1) })
+    doBump (CP n' (RepoPkg d)) = CP n' (RepoPkg d { rpRelease = rpRelease d + 1 })
     doBump p = p
 
 lookupPkg :: CblDB -> String -> Maybe CblPkg
@@ -174,7 +162,7 @@ lookupPkg (p:db) n
 lookupDependants :: [CblPkg] -> String -> [String]
 lookupDependants db n = filter (/= n) $ map pkgName $ filter (`doesDependOn` n) db
   where
-    doesDependOn p n = n `elem` map Util.Dist.depName (pkgDeps p)
+    doesDependOn p n' = n' `elem` map Util.Dist.depName (pkgDeps p)
 
 transitiveDependants :: CblDB -> [String] -> [String]
 transitiveDependants db names = keepLast $ concatMap transUsersOfOne names

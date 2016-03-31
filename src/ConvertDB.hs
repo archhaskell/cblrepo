@@ -43,7 +43,7 @@ doConvertDB = map doConvert
             where
                 n = ODB.pkgName o
                 v = ODB.pkgVersion o
-                x = 0
+                x = ODB.pkgXRev o
                 d = ODB.pkgDeps o
                 f = ODB.pkgFlags o
                 r = ODB.pkgRelease o
