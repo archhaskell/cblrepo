@@ -51,7 +51,7 @@ cmdAddPkgOpts = CmdAdd
                 <$> strOption (long "patchdir" <> value "patches" <> showDefault <> help "Location of patches")
                 <*> option ghcVersionArgReader (long "ghc-version" <> value ghcDefVersion <> showDefault <> help "GHC version to use")
                 <*> many (option ghcPkgArgReader (short 'g' <> long "ghc-pkg" <> metavar "PKG,VER" <> help "GHC base package (multiple)"))
-                <*> many (option distroPkgArgReader (short 'd' <> long "distro-pkg" <> metavar "PKG,VER,REL" <> help "Distro package (multiple)"))
+                <*> many (option distroPkgArgReader (short 'd' <> long "distro-pkg" <> metavar "PKG,VER,XREV,REL" <> help "Distro package (multiple)"))
                 <*> many (option strCblFileArgReader (short 'f' <> long "cbl-file" <> metavar "FILE[:flag,-flag]" <> help "CABAL file (multiple)"))
                 <*> many (argument strCblPkgArgReader (metavar "PKGNAME,VERSION[:flag,-flag] ..."))
 
