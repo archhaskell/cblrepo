@@ -46,10 +46,8 @@ To `cblrepo` there are three types of packages:
 
     $ cblrepo add -d xmonad-contrib,0.10,1 -d zlib,0.5.3.1,2.1
 
-*Repo package* -- A package maintained using `cblrepo`.  Added using either `-u`/`--cbl-url` (adding by URL), `-f`/`--cbl-file` (adding by file name), or by just giving the package name and version on the command line (the details are then extracted from the cache).  Ex:
+*Repo package* -- A package maintained using `cblrepo`.  Added by giving the package name and version on the command line (the details are then extracted from the cache).  Ex:
 
-    $ cblrepo add -u http://hackage.haskell.org/packages/archive/dataenc/0.14.0.3/dataenc.cabal
-    $ cblrepo add -f my-cbl-files/dataenc.cabal
     $ cblrepo add dataenc,0.14.0.3
 
 The release number after adding is set to 1.
