@@ -42,9 +42,9 @@ To `cblrepo` there are three types of packages:
 
     $ cblrepo add -g base,4.3.1.0 -g array,0.3.0.2
 
-*Distro package* -- A package provided by the distribution.  Added using the `-d` (or `--distro-pkg=`) flag.  Multiple package can be added at the same time using the flag multiple times.  For each package package name, version and release is recorded.  Ex:
+*Distro package* -- A package provided by the distribution.  Added using the `-d` (or `--distro-pkg=`) flag.  Multiple package can be added at the same time using the flag multiple times.  For each package package name, version, xrevision, and release is recorded.  Ex:
 
-    $ cblrepo add -d xmonad-contrib,0.10,1 -d zlib,0.5.3.1,2.1
+    $ cblrepo add -d xmonad-contrib,0.12,2,1 -d zlib,0.6.1.1,3,2
 
 *Repo package* -- A package maintained using `cblrepo`.  Added by giving the package name and version on the command line (the details are then extracted from the cache).  Ex:
 
