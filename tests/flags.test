@@ -15,7 +15,7 @@ cblrepo add -f tests/data/flags-file0.cabal
 
 cblrepo list
 >>>
-FlagsSimple0  1.2.3_0-1 (flag3 -flag2 -flag1 flag0)
+FlagsSimple0  1.2.3.x0-1 (flag3 -flag2 -flag1 flag0)
 >>>= 0
 
 # {{{1 adding setting
@@ -25,7 +25,7 @@ cblrepo add -f tests/data/flags-file0.cabal:-flag0,flag1
 
 cblrepo list
 >>>
-FlagsSimple0  1.2.3_0-1 (flag3 -flag2 flag1 -flag0)
+FlagsSimple0  1.2.3.x0-1 (flag3 -flag2 flag1 -flag0)
 >>>= 0
 
 # {{{1 adding without setting should keep flags
@@ -35,7 +35,7 @@ cblrepo add -f tests/data/flags-file0.cabal
 
 cblrepo list
 >>>
-FlagsSimple0  1.2.3_0-1 (flag3 -flag2 flag1 -flag0)
+FlagsSimple0  1.2.3.x0-1 (flag3 -flag2 flag1 -flag0)
 >>>= 0
 
 # {{{1 clean-up

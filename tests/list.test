@@ -10,16 +10,16 @@ cblrepo add -f tests/data/foo.cabal -f tests/data/bar.cabal -f tests/data/baz.ca
 # {{{1 ordinary listing
 cblrepo list
 >>>
-bar  0_0-1
-baz  1_0-1
-foo  1.2.3_3-1
+bar  0.x0-1
+baz  1.x0-1
+foo  1.2.3.x3-1
 >>>= 0
 
 cblrepo list -f normal
 >>>
-bar  0_0-1
-baz  1_0-1
-foo  1.2.3_3-1
+bar  0.x0-1
+baz  1.x0-1
+foo  1.2.3.x3-1
 >>>= 0
 
 # {{{1 short listing
@@ -41,7 +41,7 @@ cblrepo list --format hackage
 # {{{1 list individual packages
 cblrepo list bar
 >>>
-bar  0_0-1
+bar  0.x0-1
 >>>= 0
 
 cblrepo list --format short bar

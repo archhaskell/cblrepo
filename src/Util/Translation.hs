@@ -161,7 +161,7 @@ instance Pretty ArchPkg where
             , pretty xrev
             , empty, text "# PKGBUILD options/directives"
             , pretty pkgName
-            , text "pkgver=${_ver}_${_xrev}"
+            , text "pkgver=${_ver}.x${_xrev}"
             , pretty pkgRel
             , pretty pkgDesc
             , pretty url
@@ -341,7 +341,7 @@ calcExactDeps db pd = map depString deps
         remPkgs = map DB.pkgName (filter isGhcPkg db) ++ [pkgNameStr pd]
         deps = filter (not . (`elem` remPkgs)) (map depName (buildDepends pd))
 
-        depString n = "haskell-" ++ name ++ "=" ++ ver ++ "_" ++ xrev ++ "-" ++ rel
+        depString n = "haskell-" ++ name ++ "=" ++ ver ++ ".x" ++ xrev ++ "-" ++ rel
             where
                 pkg = fromJust $ lookupPkg db n
                 name = map toLower $ DB.pkgName pkg
