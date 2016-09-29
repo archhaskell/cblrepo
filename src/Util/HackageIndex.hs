@@ -36,6 +36,7 @@ import Distribution.PackageDescription
 import Distribution.PackageDescription.Parse
 import Distribution.Text
 import System.FilePath
+import Safe (atMay)
 
 readIndexFile :: FilePath -> FilePath -> IO BSL.ByteString
 readIndexFile indexLocation indexFilename = exitOnException
@@ -57,7 +58,7 @@ buildPkgVersions idx = createPkgVerMap M.empty entries
                 Just ver -> createPkgVerMap (M.insertWith (++) (head parts) [(ver, xrev)] acc) es
             where
                 parts = splitDirectories (Tar.entryPath e)
-                ver = simpleParse $ parts !! 1
+                ver = parts `atMay` 1 >>= simpleParse
                 content = case Tar.entryContent e of
                     Tar.NormalFile c _ -> Just $ BSLU.toString c
                     _ -> Nothing
