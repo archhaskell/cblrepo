@@ -1,6 +1,6 @@
 name: cblrepo
 version: 99.999.999
-cabal-version: >= 1.6
+cabal-version: >= 1.23
 license: OtherLicense
 license-file: LICENSE-2.0
 copyright: Copyright (c) 2011 Magnus Therning
@@ -20,6 +20,9 @@ description:
             distribution.
 category: Utils, Distribution
 build-type: Custom
+
+custom-setup
+    setup-depends: base, Cabal
 
 executable cblrepo
     hs-source-dirs: src
@@ -67,6 +70,7 @@ executable cblrepo
                    utf8-string ==1.0.*,
                    text,
                    vector
+    default-language: Haskell2010
 
 Source-Repository head
     Type: git
