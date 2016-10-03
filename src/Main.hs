@@ -34,6 +34,7 @@ import Util.Cfg
 
 import Paths_cblrepo
 
+import Data.Monoid
 import Distribution.Text
 import Options.Applicative as OA
 import System.Directory
