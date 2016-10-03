@@ -81,7 +81,9 @@ cmdVersionsCmd = command "versions" (info (helper <*> cmdVersionsOpts) (fullDesc
 
 cmdUpgradesCmd = command "upgrades" (info (helper <*> cmdUpgradesOpts) (fullDesc <> progDesc "Check for packages that can be upgraded"))
   where
-    cmdUpgradesOpts = CmdUpgrades <$> switch (short 's' <> help "A shorter output suitable for scripting")
+    cmdUpgradesOpts = CmdUpgrades
+                      <$> switch (short 's' <> help "A shorter output suitable for scripting")
+                      <*> switch (short 'x' <> help "Limit list to packages with new x-revision")
 
 cmdListPkgsCmd = command "list" (info (helper <*> cmdListPkgsOpts) (fullDesc <> progDesc "List packages in repo"))
   where

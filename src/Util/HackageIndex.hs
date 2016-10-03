@@ -71,9 +71,18 @@ buildPkgVersions idx = createPkgVerMap M.empty entries
         createPkgVerMap _ (Tar.Fail _) = undefined
 
 latestVersion :: PkgVersions
-    -> String -- ^ package name
-    -> Maybe (Version, Int)
-latestVersion pnv pkg = last . sort <$> M.lookup  pkg pnv
+  -> String -- ^ package name
+  -> Version
+  -> Maybe (Version, Int)
+latestVersion pnv pkg _ = last . sort <$> M.lookup  pkg pnv
+
+thisVersion :: PkgVersions
+  -> String -- ^ package name
+  -> Version
+  -> Maybe (Version, Int) -- ^ xrev
+thisVersion pnvs pkgName pkgVer = do
+  vers <- M.lookup pkgName pnvs
+  find (\ (v, _) -> v == pkgVer) vers
 
 extractCabal :: BSL.ByteString  -- ^ the index
     -> String                   -- ^ package name

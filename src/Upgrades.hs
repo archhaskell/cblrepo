@@ -28,31 +28,33 @@ import Control.Arrow
 import Control.Monad.Reader
 import Data.Maybe
 import Distribution.Text
-import Distribution.Version
+import Distribution.Version hiding (thisVersion)
 
 upgrades :: Command ()
 upgrades = do
     db <- asks (dbFile . fst) >>= liftIO . readDb
     aD <- asks $ appDir . fst
     aCS <- asks $ idxStyle .optsCmd . fst
+    xrevsOnly <- asks $ xrevs . optsCmd . fst
     cfg <- asks snd
     availPkgsNVers <- liftIO $ buildPkgVersions <$> readIndexFile aD (getIndexFileName cfg)
     let nonBasePkgs = filter (not . isBasePkg) db
         pkgsNVers = map (pkgName &&& pkgVersion &&& pkgXRev) nonBasePkgs
-        outdated = filter
-            (\ (p, vx) -> maybe False (> vx) (latestVersion availPkgsNVers p))
-            pkgsNVers
+        filterFunc = if xrevsOnly
+            then (\ (p, (v, x)) -> maybe False (> x) (snd <$> thisVersion availPkgsNVers p v))
+            else (\ (p, vx) -> maybe False (> vx) (latestVersion availPkgsNVers p undefined))
+        outdated = filter filterFunc pkgsNVers
         printer = if aCS
-            then printOldShort
-            else printOld
-    liftIO $ mapM_ (printer availPkgsNVers) outdated
+            then printNewShort
+            else printUpgrades
+    if xrevsOnly
+      then liftIO $ mapM_ (printer thisVersion availPkgsNVers) outdated
+      else liftIO $ mapM_ (printer latestVersion availPkgsNVers) outdated
 
-printOld :: PkgVersions -> (String, (Version, Int)) -> IO ()
-printOld avail (p, (v, x)) = putStrLn $ p ++ ": " ++ display v ++ ":x" ++ show x ++ " (" ++ display lv ++ ":x" ++ show lx ++ ")"
+printUpgrades verFunc avail (pkgName, (pkgVer, pkgXRev)) = putStrLn $ pkgName ++ ": " ++ display pkgVer ++ ":x" ++ show pkgXRev ++ " (" ++ display lv ++ ":x" ++ show lx ++ ")"
     where
-        (lv, lx) = fromJust $ latestVersion avail p
+        (lv, lx) = fromJust $ verFunc avail pkgName pkgVer
 
-printOldShort :: PkgVersions -> (String, (Version, Int)) -> IO ()
-printOldShort avail (p, _) = putStrLn $ p ++ "," ++ display l
+printNewShort verFunc avail (pkgName, (pkgVer, _)) = putStrLn $ pkgName ++ "," ++ display l
     where
-        l = fst $ fromJust $ latestVersion avail p
+        l = fst $ fromJust $ verFunc avail pkgName pkgVer
