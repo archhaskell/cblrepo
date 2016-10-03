@@ -25,6 +25,7 @@ import Control.Monad.Reader
 import Data.Map as M
 import Distribution.Text
 import Distribution.Version
+import Data.List
 
 versions :: Command ()
 versions = do
@@ -35,7 +36,7 @@ versions = do
     let printFunc = if l then printLatestVersion else printAllVersions
     liftIO $ do
         pkgsNVers <- buildPkgVersions <$> readIndexFile aD (getIndexFileName cfg)
-        mapM_ (\ pkg -> printFunc (pkg, M.lookup pkg pkgsNVers)) pkgs
+        mapM_ (\ pkg -> printFunc (pkg, reverse . sort <$> M.lookup pkg pkgsNVers)) pkgs
 
 printAllVersions :: (String, Maybe [(Version, Int)]) -> IO ()
 printAllVersions (p, Nothing) = putStrLn $ p ++ ": No such package"

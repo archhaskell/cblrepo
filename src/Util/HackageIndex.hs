@@ -58,7 +58,8 @@ buildPkgVersions idx = createPkgVerMap M.empty entries
                 Just ver -> createPkgVerMap (M.insertWith (++) (head parts) [(ver, xrev)] acc) es
             where
                 parts = splitDirectories (Tar.entryPath e)
-                ver = parts `atMay` 1 >>= simpleParse
+                ver = if length parts == 3 then parts `atMay` 1 >>= simpleParse
+                      else Nothing
                 content = case Tar.entryContent e of
                     Tar.NormalFile c _ -> Just $ BSLU.toString c
                     _ -> Nothing
