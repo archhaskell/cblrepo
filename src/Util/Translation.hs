@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RecordWildCards #-}
 {-
  - Copyright 2011 Per Magnus Therning
  -
@@ -134,52 +135,33 @@ baseArchPkg = ArchPkg
 
 -- {{{2 Pretty instance
 instance Pretty ArchPkg where
-    pretty (ArchPkg
-        { apHasLibrary = hasLib
-        , apLicenseFile = licenseFile
-        , apCabalPatch = cabalPatchFile
-        , apBuildPatch = buildPatchFile
-        , apShHkgName = hkgName
-        , apShPkgName = pkgName
-        , apShPkgVer = pkgVer
-        , apShPkgRel = pkgRel
-        , apShXRev = xrev
-        , apShPkgDesc = pkgDesc
-        , apShUrl = url
-        , apShLicence = pkgLicense
-        , apShMakeDepends = makeDepends
-        , apShDepends = depends
-        , apShSource = source
-        , apShInstall = install
-        , apShSha256Sums = sha256sums
-        , apFlags = flags
-        }) = vsep
-            [ text "# custom variables"
-            , pretty hkgName
-            , maybe empty (pretty . ShVar "_licensefile") licenseFile
-            , pretty pkgVer
-            , pretty xrev
+    pretty (ArchPkg {..})
+      = vsep [ text "# custom variables"
+            , pretty apShHkgName
+            , maybe empty (pretty . ShVar "_licensefile") apLicenseFile
+            , pretty apShPkgVer
+            , pretty apShXRev
             , empty, text "# PKGBUILD options/directives"
-            , pretty pkgName
+            , pretty apShPkgName
             , text "pkgver=${_ver}.x${_xrev}"
-            , pretty pkgRel
-            , pretty pkgDesc
-            , pretty url
-            , pretty pkgLicense
+            , pretty apShPkgRel
+            , pretty apShPkgDesc
+            , pretty apShUrl
+            , pretty apLicenseFile
             , text "arch=('i686' 'x86_64')"
-            , pretty makeDepends
-            , pretty depends
+            , pretty apShMakeDepends
+            , pretty apShDepends
             , text "options=('strip' 'staticlibs')"
-            , pretty source
-            , maybe empty pretty install
-            , pretty sha256sums
+            , pretty apShSource
+            , maybe empty pretty apInstallPatch
+            , pretty apShSha256Sums
             , empty, text "# PKGBUILD functions"
             , empty
             , prepareFunction
             , empty
-            , if hasLib then libBuildFunction else exeBuildFunction
+            , if apHasLibrary then libBuildFunction else exeBuildFunction
             , empty
-            , if hasLib then libPackageFunction else exePackageFunction
+            , if apHasLibrary then libPackageFunction else exePackageFunction
             , empty
             ]
             where
@@ -190,7 +172,7 @@ instance Pretty ArchPkg where
                         empty <$>
                         maybe (text "# no source patch") (\ _ ->
                             text "patch -p4 < \"${srcdir}/source.patch\"")
-                            buildPatchFile
+                            apBuildPatch
                         ) <$>
                     char '}'
                 libBuildFunction = text "build() {" <>
@@ -216,10 +198,10 @@ instance Pretty ArchPkg where
                         ) <$>
                     char '}'
 
-                confFlags = if null flags
+                confFlags = if null apFlags
                     then empty
                     else text " \\" <>
-                        nest 4 (empty <$> (hsep . map (uncurry (<>)) $ zip (repeat $ text "-f") (map prettyFlag flags)))
+                        nest 4 (empty <$> (hsep . map (uncurry (<>)) $ zip (repeat $ text "-f") (map prettyFlag apFlags)))
 
                 libPackageFunction = text "package() {" <>
                     nest 4 (empty <$>
@@ -231,7 +213,7 @@ instance Pretty ArchPkg where
                         text "ln -s \"/usr/share/doc/${pkgname}/html\" \"${pkgdir}/usr/share/doc/ghc/html/libraries/${_hkgname}\"" <$>
                         text "runhaskell Setup copy --destdir=\"${pkgdir}\"" <$>
                         maybe empty (\ _ -> text "install -D -m644 \"${_licensefile}\" \"${pkgdir}/usr/share/licenses/${pkgname}/LICENSE\"" <$>
-                            text "rm -f \"${pkgdir}/usr/share/doc/${pkgname}/${_licensefile}\"") licenseFile
+                            text "rm -f \"${pkgdir}/usr/share/doc/${pkgname}/${_licensefile}\"") apLicenseFile
                         ) <$>
                     char '}'
 
