@@ -56,7 +56,7 @@ printBrksOth  ((n, v), brks) = do
 progName = "cblrepo"
 dbName = progName ++ ".db"
 
-ghcDefVersion = Version [8, 0, 1] []
+ghcDefVersion = Version [8, 0, 2] []
 ghcDefRelease = 1 :: Int
 ghcVersionDep :: Version -> Int -> String
 ghcVersionDep ghcVer ghcRel = "ghc=" ++ display ghcVer ++ "-" ++ show ghcRel
