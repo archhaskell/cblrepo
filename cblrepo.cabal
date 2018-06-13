@@ -1,5 +1,5 @@
 name: cblrepo
-version: 0.24.0
+version: 0.24.0.1
 cabal-version: >= 1.23
 license: OtherLicense
 license-file: LICENSE-2.0
@@ -74,6 +74,6 @@ executable cblrepo
 
 Source-Repository head
     Type: git
-    Location: https://github.com/magthe/cblrepo.git
+    Location: https://github.com/archhaskell/cblrepo.git
 
 -- vim: set tw=0 :
