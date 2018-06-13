@@ -74,6 +74,6 @@ executable cblrepo
 
 Source-Repository head
     Type: git
-    Location: https://github.com/magthe/cblrepo.git
+    Location: https://github.com/archhaskell/cblrepo.git
 
 -- vim: set tw=0 :
